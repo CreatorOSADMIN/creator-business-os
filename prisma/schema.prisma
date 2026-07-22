@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Creator {
+  id          String   @id @default(cuid())
+  fullName    String
+  creatorHandle String
+  email       String   @unique
+  country     String
+
+  // Stored as JSON-encoded strings (SQLite has no native array/JSON list type)
+  platforms       String // JSON array e.g. ["YOUTUBE","TIKTOK"]
+  platformUrls    String // JSON object e.g. {"YOUTUBE":"https://..."}
+  audienceSize    String
+  publishingFrequency String
+  creatorExperience   String
+  biggestChallenge    String
+  productInterests    String // JSON array
+
+  marketingConsent Boolean @default(false)
+  privacyAccepted  Boolean @default(false)
+
+  // SQLite has no native enum type, so status is a validated string.
+  // Allowed values (enforced in application code, see src/lib/constants.ts):
+  // NEW | CONTACTED | INTERVIEW_SCHEDULED | INTERESTED | BETA | PAID | REJECTED
+  status      String @default("NEW")
+  internalNotes String? // free text, admin-only
+
+  referralCode   String  @unique
+  referredBy     String? // referralCode of the referrer, if any
+  referralQualified Boolean @default(false)
+
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  referrer    Creator?  @relation("Referrals", fields: [referredBy], references: [referralCode])
+  referrals   Creator[] @relation("Referrals")
+
+  @@index([status])
+  @@index([country])
+}

@@ -1,0 +1,47 @@
+import type { Metadata } from "next";
+import { LegalPage } from "@/components/legal-page";
+
+export const metadata: Metadata = { title: "Terms of Service" };
+
+export default function TermsPage() {
+  return (
+    <LegalPage title="Terms of Service" updated="Draft — pending legal review">
+      <p className="rounded-lg border border-[var(--border-subtle)] bg-[var(--accent-soft)] p-4 text-sm text-[var(--accent-strong)]">
+        This is a placeholder terms document for the CreatorOS Early Access program. It must be
+        reviewed by a qualified legal professional before the public launch of the product.
+      </p>
+      <section>
+        <h2 className="font-medium text-lg">The Early Access program</h2>
+        <p>
+          By registering for CreatorOS Early Access, you are joining a waitlist for a product
+          that is still in development. Registration does not constitute purchase of, or
+          guaranteed access to, any current or future paid service.
+        </p>
+      </section>
+      <section>
+        <h2 className="font-medium text-lg">Early Access benefit</h2>
+        <p>
+          Creators who join the Early Access Program will be eligible for a 50% discount on the
+          first three months of their paid subscription after launch, subject to the final terms
+          of the program as published at that time.
+        </p>
+      </section>
+      <section>
+        <h2 className="font-medium text-lg">Referrals</h2>
+        <p>
+          Creators may share a personal referral link. Any rewards associated with referrals are
+          not automatically granted at the time of a referred creator&apos;s registration; they
+          are subject to qualification criteria to be defined and published before the referral
+          program is activated.
+        </p>
+      </section>
+      <section>
+        <h2 className="font-medium text-lg">Changes</h2>
+        <p>
+          We may update these terms as CreatorOS develops. We will communicate material changes
+          to registered creators.
+        </p>
+      </section>
+    </LegalPage>
+  );
+}

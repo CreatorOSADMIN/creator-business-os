@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f7f7f4;
+  --foreground: #14151a;
+  --ink-muted: #52545e;
+  --surface: #ffffff;
+  --surface-dark: #14151a;
+  --border-subtle: #e4e3dd;
+  --accent: #0f6f5c;
+  --accent-soft: #e4f0ec;
+  --accent-strong: #0a4f42;
+  --highlight: #e8963a;
+  --danger: #b3402f;
+  --font-display: ui-serif, Georgia, "Times New Roman", serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
+  --color-highlight: var(--highlight);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
+
+* {
+  border-color: var(--border-subtle);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono-label {
+  font-family: var(--font-mono);
+  letter-spacing: 0.08em;
+}
+
+.input {
+  width: 100%;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface);
+  padding: 0.625rem 0.875rem;
+  font-size: 0.9375rem;
+  color: var(--foreground);
+}
+
+.input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+
+::selection {
+  background: var(--accent);
+  color: white;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
