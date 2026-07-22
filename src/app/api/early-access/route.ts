@@ -5,6 +5,7 @@ import { generateReferralCode } from "@/lib/referral";
 import { sendEmail, buildConfirmationEmail } from "@/lib/email";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { verifySameOrigin } from "@/lib/verify-origin";
+import { setRegisteredCreatorCookie } from "@/lib/creator-session";
 
 export async function POST(request: NextRequest) {
   const originCheck = verifySameOrigin(request);
@@ -100,6 +101,8 @@ export async function POST(request: NextRequest) {
     // Registration must succeed even if the email provider is unavailable.
     console.error("[early-access] Failed to send confirmation email:", err);
   }
+
+  await setRegisteredCreatorCookie(creator.id);
 
   return NextResponse.json(
     {

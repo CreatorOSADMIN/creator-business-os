@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { EarlyAccessForm } from "@/components/early-access-form";
+import { getRegisteredCreatorIdFromCookie } from "@/lib/creator-session";
+import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
   title: "Join Early Access",
@@ -17,6 +20,21 @@ export default async function EarlyAccessPage({
   const params = await searchParams;
   const first = (value: string | string[] | undefined) =>
     Array.isArray(value) ? value[0] : value;
+
+  const registeredCreatorId = await getRegisteredCreatorIdFromCookie();
+  if (registeredCreatorId) {
+    // The cookie is signed and can't be forged, but the underlying record
+    // could still have been deleted — always confirm against the database
+    // before treating this browser as already registered.
+    const creator = await prisma.creator.findUnique({
+      where: { id: registeredCreatorId },
+      select: { id: true, referralCode: true },
+    });
+    if (creator) {
+      const successParams = new URLSearchParams({ id: creator.id, ref: creator.referralCode });
+      redirect(`/early-access/success?${successParams.toString()}`);
+    }
+  }
 
   return (
     <>

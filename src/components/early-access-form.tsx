@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   PLATFORMS,
@@ -90,6 +90,12 @@ export function EarlyAccessForm({
     }));
   }
 
+  useEffect(() => {
+    if (Object.keys(errors).length === 0) return;
+    const firstError = document.querySelector("[data-error='true']");
+    firstError?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [errors]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setServerError(null);
@@ -110,8 +116,6 @@ export function EarlyAccessForm({
         if (!fieldErrors[key]) fieldErrors[key] = issue.message;
       }
       setErrors(fieldErrors);
-      const firstError = document.querySelector("[data-error='true']");
-      firstError?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
 
@@ -199,27 +203,29 @@ export function EarlyAccessForm({
       </Section>
 
       <Section number="02" title="Social Platforms" subtitle="Which platforms do you actively use?">
-        <div className="flex flex-wrap gap-3">
-          {PLATFORMS.map((platform) => (
-            <label
-              key={platform.value}
-              className={`cursor-pointer rounded-full border px-4 py-2 text-sm transition ${
-                form.platforms.includes(platform.value)
-                  ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]"
-                  : "border-[var(--border-subtle)] text-[var(--ink-muted)] hover:border-[var(--foreground)]/30"
-              }`}
-            >
-              <input
-                type="checkbox"
-                className="sr-only"
-                checked={form.platforms.includes(platform.value)}
-                onChange={() => toggleArrayValue("platforms", platform.value)}
-              />
-              {platform.label}
-            </label>
-          ))}
+        <div data-error={errors.platforms ? "true" : "false"}>
+          <div className="flex flex-wrap gap-3">
+            {PLATFORMS.map((platform) => (
+              <label
+                key={platform.value}
+                className={`cursor-pointer rounded-full border px-4 py-2 text-sm transition ${
+                  form.platforms.includes(platform.value)
+                    ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]"
+                    : "border-[var(--border-subtle)] text-[var(--ink-muted)] hover:border-[var(--foreground)]/30"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  className="sr-only"
+                  checked={form.platforms.includes(platform.value)}
+                  onChange={() => toggleArrayValue("platforms", platform.value)}
+                />
+                {platform.label}
+              </label>
+            ))}
+          </div>
+          {errors.platforms && <ErrorText>{errors.platforms}</ErrorText>}
         </div>
-        {errors.platforms && <ErrorText>{errors.platforms}</ErrorText>}
 
         {form.platforms.filter((p) => p !== "OTHER").length > 0 && (
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
