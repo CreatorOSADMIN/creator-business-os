@@ -166,7 +166,7 @@ export default function AdminCreatorDetailPage() {
                             href={creator.platformUrls[p]}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-[var(--accent)] underline"
+                            className="break-all text-[var(--accent)] underline"
                           >
                             {creator.platformUrls[p]}
                           </a>

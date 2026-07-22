@@ -3,8 +3,12 @@ import { adminLoginSchema } from "@/lib/validation";
 import { verifyAdminCredentials } from "@/lib/admin-credentials";
 import { createAdminSession } from "@/lib/session";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { verifySameOrigin } from "@/lib/verify-origin";
 
 export async function POST(request: NextRequest) {
+  const originCheck = verifySameOrigin(request);
+  if (originCheck) return originCheck;
+
   const ip = getClientIp(request.headers);
   const { allowed } = rateLimit(`admin-login:${ip}`, { limit: 10, windowMs: 10 * 60 * 1000 });
   if (!allowed) {

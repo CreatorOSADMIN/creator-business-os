@@ -141,6 +141,46 @@ Da completare prima del lancio pubblico:
 - Rate limiting condiviso (Redis/Upstash) se distribuito su più istanze
 - Test automatizzati (attualmente solo verifica manuale + lint)
 
+## 11-bis. Changelog — Responsive design + Security audit (luglio 2026)
+
+Intervento di miglioramento responsive e sicurezza, senza modifiche a stack, struttura o
+funzionalità esistenti.
+
+**Responsive:**
+- `src/components/site-header.tsx`: aggiunto menu mobile (hamburger + drawer a comparsa) —
+  prima i link di navigazione erano semplicemente nascosti sotto `sm:` senza alternativa.
+- `src/app/admin/(dashboard)/layout.tsx`: aggiunta una topbar + nav orizzontale per mobile
+  (la sidebar era `hidden` sotto `sm:` senza alcuna navigazione alternativa); corretto un bug
+  di posizionamento (`absolute` senza contenitore `relative`) sul blocco email/logout.
+- `src/app/globals.css`: font-size degli input portato a `16px` sotto i 640px per evitare lo
+  zoom automatico di iOS Safari al focus; aggiunto `overflow-x: hidden` di sicurezza su
+  `html`/`body`.
+- `src/app/admin/(dashboard)/creators/[id]/page.tsx`: aggiunto `break-all` sugli URL dei
+  profili social per evitare overflow orizzontale su schermi stretti.
+
+**Sicurezza:**
+- `src/app/admin/login/page.tsx`: sanificato il parametro `?from=` usato per il redirect
+  post-login (open redirect fix) — ora sono ammessi solo path relativi che iniziano con `/`
+  (esclusi quelli protocol-relative tipo `//host`).
+- `next.config.ts`: aggiunti header di sicurezza standard (`X-Frame-Options`,
+  `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`,
+  `Strict-Transport-Security`) su tutte le risposte.
+- `src/lib/verify-origin.ts` (nuovo): helper che confronta `Origin`/`Referer` con l'host della
+  richiesta, come ulteriore livello di difesa contro il CSRF (in aggiunta al cookie di sessione
+  già `sameSite: "lax"`). Applicato a `/api/admin/login`, `/api/admin/logout`,
+  `/api/admin/creators/[id]` (PATCH) e `/api/early-access` (POST).
+- Verificato: nessun segreto/`.env` presente nel repository; `.gitignore` copre correttamente
+  `.env*` e i file del database SQLite.
+
+**Validazione eseguita:**
+- `npx eslint src` — nessun errore.
+- `npx tsc --noEmit` — stessi 3 errori pre-esistenti dovuti alla mancata generazione del
+  client Prisma nell'ambiente sandbox (vedi nota §11 sotto), confermati identici anche sul
+  commit di backup precedente alle modifiche: non sono una regressione.
+- `npm run build` — fallisce allo stesso punto (tipi Prisma mancanti) per lo stesso motivo di
+  rete descritto in §11. Da rieseguire su una macchina con accesso internet standard, dove
+  `prisma generate` scaricherà l'engine corretto e la build dovrebbe completarsi.
+
 ## 11. Nota sull'ambiente di build usato per questo progetto
 
 Questo progetto è stato scritto in un ambiente sandbox con accesso di rete limitato a un

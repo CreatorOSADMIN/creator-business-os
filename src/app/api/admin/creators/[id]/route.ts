@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
 import { serializeCreator } from "@/lib/serialize-creator";
 import { CREATOR_STATUSES } from "@/lib/constants";
+import { verifySameOrigin } from "@/lib/verify-origin";
 import { z } from "zod";
 
 const patchSchema = z.object({
@@ -29,6 +30,9 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const originCheck = verifySameOrigin(request);
+  if (originCheck) return originCheck;
+
   const { response } = await requireAdmin();
   if (response) return response;
 

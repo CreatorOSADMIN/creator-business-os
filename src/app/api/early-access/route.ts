@@ -4,8 +4,12 @@ import { creatorRegistrationSchema } from "@/lib/validation";
 import { generateReferralCode } from "@/lib/referral";
 import { sendEmail, buildConfirmationEmail } from "@/lib/email";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { verifySameOrigin } from "@/lib/verify-origin";
 
 export async function POST(request: NextRequest) {
+  const originCheck = verifySameOrigin(request);
+  if (originCheck) return originCheck;
+
   const ip = getClientIp(request.headers);
   const { allowed } = rateLimit(`early-access:${ip}`, { limit: 5, windowMs: 10 * 60 * 1000 });
   if (!allowed) {

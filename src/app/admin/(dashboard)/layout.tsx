@@ -14,8 +14,34 @@ export default async function AdminDashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-[var(--surface)]">
-      <aside className="hidden w-60 shrink-0 border-r border-[var(--border-subtle)] bg-white sm:block">
+    <div className="flex min-h-screen flex-col bg-[var(--surface)] sm:flex-row">
+      {/* Mobile top bar */}
+      <div className="flex items-center justify-between border-b border-[var(--border-subtle)] bg-white px-4 py-3 sm:hidden">
+        <div className="flex items-center gap-2">
+          <span className="flex h-7 w-7 items-center justify-center rounded-sm bg-[var(--foreground)] font-mono-label text-[11px] font-semibold text-white">
+            OS
+          </span>
+          <span className="font-display text-base font-medium">CreatorOS</span>
+        </div>
+        <LogoutButton />
+      </div>
+      <nav className="flex gap-1 overflow-x-auto border-b border-[var(--border-subtle)] bg-white px-3 py-2 text-sm sm:hidden">
+        <Link
+          href="/admin"
+          className="whitespace-nowrap rounded-lg px-3 py-2 font-medium text-[var(--foreground)] hover:bg-[var(--accent-soft)]"
+        >
+          Dashboard
+        </Link>
+        <Link
+          href="/admin/creators"
+          className="whitespace-nowrap rounded-lg px-3 py-2 font-medium text-[var(--foreground)] hover:bg-[var(--accent-soft)]"
+        >
+          Creators
+        </Link>
+      </nav>
+
+      {/* Desktop sidebar */}
+      <aside className="relative hidden w-60 shrink-0 border-r border-[var(--border-subtle)] bg-white sm:block">
         <div className="flex h-16 items-center gap-2 border-b border-[var(--border-subtle)] px-6">
           <span className="flex h-7 w-7 items-center justify-center rounded-sm bg-[var(--foreground)] font-mono-label text-[11px] font-semibold text-white">
             OS
@@ -41,8 +67,8 @@ export default async function AdminDashboardLayout({
           <LogoutButton />
         </div>
       </aside>
-      <div className="flex-1">
-        <main className="mx-auto max-w-6xl px-6 py-8 sm:px-8">{children}</main>
+      <div className="min-w-0 flex-1">
+        <main className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-8">{children}</main>
       </div>
     </div>
   );

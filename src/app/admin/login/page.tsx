@@ -4,10 +4,21 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
+/**
+ * Only allow redirecting back to a relative, same-app path. Rejects absolute
+ * URLs and protocol-relative URLs (e.g. "//evil.com") to prevent an open
+ * redirect via a crafted `?from=` query parameter.
+ */
+function sanitizeRedirectTarget(value: string | null): string {
+  if (!value) return "/admin";
+  if (!value.startsWith("/") || value.startsWith("//")) return "/admin";
+  return value;
+}
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const from = searchParams.get("from") || "/admin";
+  const from = sanitizeRedirectTarget(searchParams.get("from"));
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
