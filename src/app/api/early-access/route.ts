@@ -102,7 +102,14 @@ export async function POST(request: NextRequest) {
     console.error("[early-access] Failed to send confirmation email:", err);
   }
 
-  await setRegisteredCreatorCookie(creator.id);
+  try {
+    await setRegisteredCreatorCookie(creator.id);
+  } catch (err) {
+    // The registration itself already succeeded in the database; a cookie
+    // failure (e.g. misconfigured SESSION_SECRET) must not turn this into a
+    // failed request for the user.
+    console.error("[early-access] Failed to set recognition cookie:", err);
+  }
 
   return NextResponse.json(
     {
