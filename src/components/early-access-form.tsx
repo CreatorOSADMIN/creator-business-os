@@ -206,22 +206,19 @@ export function EarlyAccessForm({
         <div data-error={errors.platforms ? "true" : "false"}>
           <div className="flex flex-wrap gap-3">
             {PLATFORMS.map((platform) => (
-              <label
+              <button
                 key={platform.value}
+                type="button"
+                aria-pressed={form.platforms.includes(platform.value)}
+                onClick={() => toggleArrayValue("platforms", platform.value)}
                 className={`cursor-pointer rounded-full border px-4 py-2 text-sm transition ${
                   form.platforms.includes(platform.value)
                     ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]"
                     : "border-[var(--border-subtle)] text-[var(--ink-muted)] hover:border-[var(--foreground)]/30"
                 }`}
               >
-                <input
-                  type="checkbox"
-                  className="sr-only"
-                  checked={form.platforms.includes(platform.value)}
-                  onChange={() => toggleArrayValue("platforms", platform.value)}
-                />
                 {platform.label}
-              </label>
+              </button>
             ))}
           </div>
           {errors.platforms && <ErrorText>{errors.platforms}</ErrorText>}
@@ -455,25 +452,22 @@ function RadioGroup({
 }) {
   return (
     <div data-error={error ? "true" : "false"}>
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label={name}>
         {options.map((option) => (
-          <label
+          <button
             key={option.value}
+            type="button"
+            role="radio"
+            aria-checked={value === option.value}
+            onClick={() => onChange(option.value)}
             className={`cursor-pointer rounded-lg border px-4 py-2.5 text-sm transition ${
               value === option.value
                 ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]"
                 : "border-[var(--border-subtle)] text-[var(--ink-muted)] hover:border-[var(--foreground)]/30"
             }`}
           >
-            <input
-              type="radio"
-              name={name}
-              className="sr-only"
-              checked={value === option.value}
-              onChange={() => onChange(option.value)}
-            />
             {option.label}
-          </label>
+          </button>
         ))}
       </div>
       {error && <ErrorText>{error}</ErrorText>}
