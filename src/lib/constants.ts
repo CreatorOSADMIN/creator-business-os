@@ -1,3 +1,6 @@
+// Placeholder — replace with the live GoFundMe campaign URL once created.
+export const GOFUNDME_URL = "https://www.gofundme.com/f/creatoros";
+
 export const PLATFORMS = [
   { value: "YOUTUBE", label: "YouTube" },
   { value: "TIKTOK", label: "TikTok" },

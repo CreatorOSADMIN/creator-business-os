@@ -5,6 +5,7 @@ import { useState } from "react";
 
 const NAV_LINKS = [
   { href: "/#problem", label: "Why CreatorOS" },
+  { href: "/updates", label: "Updates" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
 ];

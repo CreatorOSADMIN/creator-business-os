@@ -17,6 +17,7 @@ export function SiteFooter() {
               links={[
                 { href: "/", label: "CreatorOS" },
                 { href: "/early-access", label: "Early Access" },
+                { href: "/updates", label: "Updates" },
               ]}
             />
             <FooterColumn
