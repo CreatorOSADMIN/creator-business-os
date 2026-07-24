@@ -24,11 +24,17 @@ export async function sendEmail({ to, subject, html, text }: SendEmailInput): Pr
     const pass = process.env.SMTP_PASSWORD;
 
     if (!host || !user || !pass) {
-      console.warn(
-        "[email] EMAIL_PROVIDER=smtp but SMTP_HOST/SMTP_USER/SMTP_PASSWORD are not fully set. Falling back to console logging."
+      const missing = [
+        !host && "SMTP_HOST",
+        !user && "SMTP_USER",
+        !pass && "SMTP_PASSWORD",
+      ].filter(Boolean);
+      // Falling back to console logging here would silently swallow real
+      // delivery failures in any environment where EMAIL_PROVIDER=smtp was
+      // intentionally set — the caller must know delivery did not happen.
+      throw new Error(
+        `[email] EMAIL_PROVIDER=smtp but missing required config: ${missing.join(", ")}`
       );
-      logToConsole({ to, subject, text });
-      return;
     }
 
     const transporter = nodemailer.createTransport({
@@ -38,7 +44,15 @@ export async function sendEmail({ to, subject, html, text }: SendEmailInput): Pr
       auth: { user, pass },
     });
 
-    await transporter.sendMail({ from, to, subject, html, text });
+    try {
+      await transporter.sendMail({ from, to, subject, html, text });
+    } catch (err) {
+      // Re-throw with a clear, secret-free message (never include auth/pass)
+      // so the caller's logs point at the real cause (auth, connection,
+      // rejected recipient, etc.) instead of a swallowed generic failure.
+      const reason = err instanceof Error ? err.message : String(err);
+      throw new Error(`[email] SMTP send failed (host=${host}, port=${port}): ${reason}`);
+    }
     return;
   }
 

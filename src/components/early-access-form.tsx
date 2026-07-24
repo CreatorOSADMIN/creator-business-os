@@ -51,6 +51,12 @@ const initialState: FormState = {
   website: "",
 };
 
+// Used to carry over in-progress form data when the user restarts with a
+// different email (see EarlyAccessRestartButton). Session-scoped only: never
+// persisted to the database, and always cleared as soon as it's restored.
+const DRAFT_STORAGE_KEY = "creatoros:early-access-draft";
+const DRAFT_MAX_AGE_MS = 2 * 60 * 60 * 1000; // 2 hours
+
 export function EarlyAccessForm({
   initialReferralCode,
   initialUtmSource,
@@ -62,6 +68,25 @@ export function EarlyAccessForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+
+  // Restore a saved draft (minus the email) after "Use a different email".
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(DRAFT_STORAGE_KEY);
+      sessionStorage.removeItem(DRAFT_STORAGE_KEY);
+      if (!raw) return;
+
+      const saved = JSON.parse(raw) as { savedAt?: number; data?: Partial<FormState> };
+      if (!saved.data || !saved.savedAt || Date.now() - saved.savedAt > DRAFT_MAX_AGE_MS) return;
+
+      // Intentional one-time sync from an external system (sessionStorage)
+      // on mount, not a derived/cascading render.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setForm((prev) => ({ ...prev, ...saved.data, email: "" }));
+    } catch {
+      sessionStorage.removeItem(DRAFT_STORAGE_KEY);
+    }
+  }, []);
 
   function toggleArrayValue(field: "platforms" | "productInterests", value: string) {
     setForm((prev) => {
@@ -118,7 +143,24 @@ export function EarlyAccessForm({
         setSubmitting(false);
         return;
       }
-      const params = new URLSearchParams({ email: data.email || form.email });
+      // Save a draft of the entered data (minus email/honeypot) in case the
+      // user comes back via "Use a different email" on the pending page.
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { email: _email, website: _website, ...draft } = form;
+        sessionStorage.setItem(
+          DRAFT_STORAGE_KEY,
+          JSON.stringify({ savedAt: Date.now(), data: draft })
+        );
+      } catch {
+        // sessionStorage unavailable (e.g. private browsing) — non-fatal,
+        // the user just re-enters the form manually.
+      }
+
+      const params = new URLSearchParams({
+        email: data.email || form.email,
+        sent: data.emailSent === false ? "0" : "1",
+      });
       router.push(`/early-access/pending?${params.toString()}`);
     } catch {
       setServerError("Network error. Please check your connection and try again.");

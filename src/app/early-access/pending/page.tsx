@@ -9,9 +9,10 @@ export const metadata: Metadata = { title: "Confirm your email" };
 export default async function EarlyAccessPendingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ email?: string }>;
+  searchParams: Promise<{ email?: string; sent?: string }>;
 }) {
-  const { email } = await searchParams;
+  const { email, sent } = await searchParams;
+  const emailSent = sent !== "0";
 
   return (
     <>
@@ -21,15 +22,28 @@ export default async function EarlyAccessPendingPage({
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[var(--accent-strong)]">
             ✉
           </div>
-          <h1 className="mt-6 font-display text-4xl tracking-tight">Check your email to confirm your registration.</h1>
-          <p className="mt-4 text-[var(--ink-muted)]">
-            We&apos;ve sent a confirmation link{email ? <> to <strong>{email}</strong></> : null}. Open it
-            to finish joining the CreatorOS Early Access Program. The link expires in 24 hours.
-          </p>
-          <p className="mt-4 text-sm text-[var(--ink-muted)]">
-            Didn&apos;t get it? Check your spam folder, or submit the form again with the same
-            email to receive a new link.
-          </p>
+          {emailSent ? (
+            <>
+              <h1 className="mt-6 font-display text-4xl tracking-tight">Check your email to confirm your registration.</h1>
+              <p className="mt-4 text-[var(--ink-muted)]">
+                We&apos;ve sent a confirmation link{email ? <> to <strong>{email}</strong></> : null}. Open it
+                to finish joining the CreatorOS Early Access Program. The link expires in 24 hours.
+              </p>
+              <p className="mt-4 text-sm text-[var(--ink-muted)]">
+                Didn&apos;t get it? Check your spam folder, or submit the form again with the same
+                email to receive a new link.
+              </p>
+            </>
+          ) : (
+            <>
+              <h1 className="mt-6 font-display text-4xl tracking-tight">Your registration was saved, but we couldn&apos;t send the confirmation email.</h1>
+              <p className="mt-4 text-[var(--ink-muted)]">
+                We weren&apos;t able to deliver a confirmation link{email ? <> to <strong>{email}</strong></> : null} right
+                now. Your details are safely saved — please submit the form again with the same
+                email in a few minutes to get a new link, or try a different email below.
+              </p>
+            </>
+          )}
 
           <div className="mt-10 border-t border-[var(--border-subtle)] pt-6 text-sm text-[var(--ink-muted)]">
             <p className="font-medium text-[var(--foreground)]">Wrong email?</p>

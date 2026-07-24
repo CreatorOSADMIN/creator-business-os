@@ -98,6 +98,7 @@ export async function POST(request: NextRequest) {
   // fresh token instead of a new duplicate record.
   const verificationToken = await createVerificationToken(creator.id);
 
+  let emailSent = true;
   try {
     const { subject, html, text } = buildVerificationEmail({
       fullName: creator.fullName,
@@ -105,9 +106,15 @@ export async function POST(request: NextRequest) {
     });
     await sendEmail({ to: creator.email, subject, html, text });
   } catch (err) {
-    // Registration must succeed even if the email provider is unavailable;
-    // the user can request a new link later.
-    console.error("[early-access] Failed to send verification email:", err);
+    // Registration must succeed even if the email provider is unavailable,
+    // but the response must not claim the email was sent when it wasn't —
+    // the client uses `emailSent` to show an accurate message and the user
+    // can resubmit to retry delivery.
+    emailSent = false;
+    console.error(
+      "[early-access] Failed to send verification email:",
+      err instanceof Error ? err.message : err
+    );
   }
 
   try {
@@ -126,6 +133,7 @@ export async function POST(request: NextRequest) {
       creatorId: creator.id,
       email: creator.email,
       createdAt: creator.createdAt,
+      emailSent,
     },
     { status: 201 }
   );
