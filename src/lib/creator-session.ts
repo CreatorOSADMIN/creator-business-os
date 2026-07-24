@@ -40,6 +40,12 @@ export async function setRegisteredCreatorCookie(creatorId: string) {
   });
 }
 
+/** Removes the signed creator-recognition cookie from this browser. */
+export async function clearRegisteredCreatorCookie() {
+  const cookieStore = await cookies();
+  cookieStore.delete(COOKIE_NAME);
+}
+
 /**
  * Returns the creatorId encoded in the signed cookie, or null if there is no
  * cookie or it fails signature/shape verification. The caller is still

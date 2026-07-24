@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { EarlyAccessRestartButton } from "@/components/early-access-restart-button";
 
 export const metadata: Metadata = { title: "Confirm your email" };
 
@@ -30,9 +31,19 @@ export default async function EarlyAccessPendingPage({
             email to receive a new link.
           </p>
 
+          <div className="mt-10 border-t border-[var(--border-subtle)] pt-6 text-sm text-[var(--ink-muted)]">
+            <p className="font-medium text-[var(--foreground)]">Wrong email?</p>
+            <p className="mt-1">
+              If you entered the wrong email address, you can start again with a different email.
+            </p>
+            <div className="mt-3">
+              <EarlyAccessRestartButton />
+            </div>
+          </div>
+
           <Link
             href="/"
-            className="mt-10 inline-block text-sm font-medium text-[var(--accent)] hover:underline"
+            className="mt-6 inline-block text-sm font-medium text-[var(--accent)] hover:underline"
           >
             ← Back to homepage
           </Link>
