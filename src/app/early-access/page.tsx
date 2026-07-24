@@ -28,11 +28,14 @@ export default async function EarlyAccessPage({
     // before treating this browser as already registered.
     const creator = await prisma.creator.findUnique({
       where: { id: registeredCreatorId },
-      select: { id: true, referralCode: true },
+      select: { id: true, referralCode: true, email: true, emailVerifiedAt: true },
     });
-    if (creator) {
+    if (creator?.emailVerifiedAt) {
       const successParams = new URLSearchParams({ id: creator.id, ref: creator.referralCode });
       redirect(`/early-access/success?${successParams.toString()}`);
+    } else if (creator) {
+      const pendingParams = new URLSearchParams({ email: creator.email });
+      redirect(`/early-access/pending?${pendingParams.toString()}`);
     }
   }
 

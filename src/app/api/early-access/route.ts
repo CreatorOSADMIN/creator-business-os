@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { creatorRegistrationSchema } from "@/lib/validation";
 import { generateReferralCode } from "@/lib/referral";
-import { sendEmail, buildConfirmationEmail } from "@/lib/email";
+import { sendEmail, buildVerificationEmail } from "@/lib/email";
+import { createVerificationToken } from "@/lib/email-verification";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { verifySameOrigin } from "@/lib/verify-origin";
 import { setRegisteredCreatorCookie } from "@/lib/creator-session";
@@ -44,62 +45,69 @@ export async function POST(request: NextRequest) {
   const data = parsed.data;
 
   const existing = await prisma.creator.findUnique({ where: { email: data.email } });
-  if (existing) {
+  if (existing && existing.emailVerifiedAt) {
     return NextResponse.json(
       { error: "This email address is already registered for early access." },
       { status: 409 }
     );
   }
 
-  let referredBy: string | null = null;
-  if (data.referralCode) {
-    const referrer = await prisma.creator.findUnique({
-      where: { referralCode: data.referralCode.trim().toUpperCase() },
-      select: { referralCode: true },
+  let creator = existing;
+
+  if (!creator) {
+    let referredBy: string | null = null;
+    if (data.referralCode) {
+      const referrer = await prisma.creator.findUnique({
+        where: { referralCode: data.referralCode.trim().toUpperCase() },
+        select: { referralCode: true },
+      });
+      referredBy = referrer?.referralCode ?? null;
+    }
+
+    let referralCode = generateReferralCode();
+    for (let attempts = 0; attempts < 5; attempts++) {
+      const clash = await prisma.creator.findUnique({ where: { referralCode } });
+      if (!clash) break;
+      referralCode = generateReferralCode();
+    }
+
+    creator = await prisma.creator.create({
+      data: {
+        fullName: data.fullName,
+        creatorHandle: data.creatorHandle,
+        email: data.email,
+        country: data.country,
+        platforms: JSON.stringify(data.platforms),
+        audienceSize: data.audienceSize,
+        publishingFrequency: data.publishingFrequency,
+        creatorExperience: data.creatorExperience,
+        biggestChallenge: data.biggestChallenge,
+        productInterests: JSON.stringify(data.productInterests),
+        privacyAccepted: data.privacyAccepted,
+        marketingConsent: data.marketingConsent,
+        referralCode,
+        referredBy,
+        utmSource: data.utmSource || null,
+        utmMedium: data.utmMedium || null,
+        utmCampaign: data.utmCampaign || null,
+      },
     });
-    referredBy = referrer?.referralCode ?? null;
   }
 
-  let referralCode = generateReferralCode();
-  for (let attempts = 0; attempts < 5; attempts++) {
-    const clash = await prisma.creator.findUnique({ where: { referralCode } });
-    if (!clash) break;
-    referralCode = generateReferralCode();
-  }
-
-  const creator = await prisma.creator.create({
-    data: {
-      fullName: data.fullName,
-      creatorHandle: data.creatorHandle,
-      email: data.email,
-      country: data.country,
-      platforms: JSON.stringify(data.platforms),
-      platformUrls: JSON.stringify(data.platformUrls ?? {}),
-      audienceSize: data.audienceSize,
-      publishingFrequency: data.publishingFrequency,
-      creatorExperience: data.creatorExperience,
-      biggestChallenge: data.biggestChallenge,
-      productInterests: JSON.stringify(data.productInterests),
-      privacyAccepted: data.privacyAccepted,
-      marketingConsent: data.marketingConsent,
-      referralCode,
-      referredBy,
-      utmSource: data.utmSource || null,
-      utmMedium: data.utmMedium || null,
-      utmCampaign: data.utmCampaign || null,
-    },
-  });
+  // Existing-but-unverified creators (e.g. they lost the first email) get a
+  // fresh token instead of a new duplicate record.
+  const verificationToken = await createVerificationToken(creator.id);
 
   try {
-    const { subject, html, text } = buildConfirmationEmail({
+    const { subject, html, text } = buildVerificationEmail({
       fullName: creator.fullName,
-      creatorId: creator.id,
-      referralCode: creator.referralCode,
+      verificationToken,
     });
     await sendEmail({ to: creator.email, subject, html, text });
   } catch (err) {
-    // Registration must succeed even if the email provider is unavailable.
-    console.error("[early-access] Failed to send confirmation email:", err);
+    // Registration must succeed even if the email provider is unavailable;
+    // the user can request a new link later.
+    console.error("[early-access] Failed to send verification email:", err);
   }
 
   try {
@@ -114,8 +122,9 @@ export async function POST(request: NextRequest) {
   return NextResponse.json(
     {
       ok: true,
+      pending: true,
       creatorId: creator.id,
-      referralCode: creator.referralCode,
+      email: creator.email,
       createdAt: creator.createdAt,
     },
     { status: 201 }

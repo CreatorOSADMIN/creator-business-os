@@ -13,14 +13,6 @@ const frequencyValues = PUBLISHING_FREQUENCIES.map((p) => p.value) as [string, .
 const experienceValues = CREATOR_EXPERIENCE.map((p) => p.value) as [string, ...string[]];
 const interestValues = PRODUCT_INTERESTS.map((p) => p.value) as [string, ...string[]];
 
-const urlOrEmpty = z
-  .string()
-  .trim()
-  .refine(
-    (val) => val === "" || /^https?:\/\/[^\s]+\.[^\s]+/i.test(val),
-    "Enter a valid URL starting with http:// or https://"
-  );
-
 export const creatorRegistrationSchema = z
   .object({
     fullName: z.string().trim().min(2, "Full name is required").max(200),
@@ -31,7 +23,6 @@ export const creatorRegistrationSchema = z
     platforms: z
       .array(z.enum(platformValues))
       .min(1, "Select at least one platform"),
-    platformUrls: z.record(z.string(), urlOrEmpty).default({}),
 
     audienceSize: z.enum(audienceValues, { message: "Select your audience size" }),
 
@@ -59,19 +50,6 @@ export const creatorRegistrationSchema = z
     utmSource: z.string().trim().optional(),
     utmMedium: z.string().trim().optional(),
     utmCampaign: z.string().trim().optional(),
-  })
-  .superRefine((data, ctx) => {
-    for (const platform of data.platforms) {
-      if (platform === "OTHER") continue;
-      const url = data.platformUrls?.[platform];
-      if (!url) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["platformUrls", platform],
-          message: "Provide the profile URL for this platform",
-        });
-      }
-    }
   });
 
 export type CreatorRegistrationInput = z.infer<typeof creatorRegistrationSchema>;

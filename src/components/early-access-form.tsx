@@ -25,7 +25,6 @@ type FormState = {
   email: string;
   country: string;
   platforms: string[];
-  platformUrls: Record<string, string>;
   audienceSize: string;
   publishingFrequency: string;
   creatorExperience: string;
@@ -42,7 +41,6 @@ const initialState: FormState = {
   email: "",
   country: "",
   platforms: [],
-  platformUrls: {},
   audienceSize: "",
   publishingFrequency: "",
   creatorExperience: "",
@@ -73,21 +71,8 @@ export function EarlyAccessForm({
       } else {
         set.add(value);
       }
-      const next = { ...prev, [field]: Array.from(set) };
-      if (field === "platforms" && !set.has(value)) {
-        const urls = { ...next.platformUrls };
-        delete urls[value];
-        next.platformUrls = urls;
-      }
-      return next;
+      return { ...prev, [field]: Array.from(set) };
     });
-  }
-
-  function setPlatformUrl(platform: string, url: string) {
-    setForm((prev) => ({
-      ...prev,
-      platformUrls: { ...prev.platformUrls, [platform]: url },
-    }));
   }
 
   useEffect(() => {
@@ -133,11 +118,8 @@ export function EarlyAccessForm({
         setSubmitting(false);
         return;
       }
-      const params = new URLSearchParams({
-        id: data.creatorId,
-        ref: data.referralCode,
-      });
-      router.push(`/early-access/success?${params.toString()}`);
+      const params = new URLSearchParams({ email: data.email || form.email });
+      router.push(`/early-access/pending?${params.toString()}`);
     } catch {
       setServerError("Network error. Please check your connection and try again.");
       setSubmitting(false);
@@ -226,31 +208,6 @@ export function EarlyAccessForm({
           </div>
           {errors.platforms && <ErrorText>{errors.platforms}</ErrorText>}
         </div>
-
-        {form.platforms.filter((p) => p !== "OTHER").length > 0 && (
-          <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            {form.platforms
-              .filter((p) => p !== "OTHER")
-              .map((platform) => {
-                const label = PLATFORMS.find((p) => p.value === platform)?.label ?? platform;
-                return (
-                  <Field
-                    key={platform}
-                    label={`${label} Profile URL`}
-                    error={errors[`platformUrls.${platform}`]}
-                    required
-                  >
-                    <input
-                      className="input"
-                      value={form.platformUrls[platform] || ""}
-                      onChange={(e) => setPlatformUrl(platform, e.target.value)}
-                      placeholder={`https://...`}
-                    />
-                  </Field>
-                );
-              })}
-          </div>
-        )}
       </Section>
 
       <Section number="03" title="Audience" subtitle="What is your approximate total audience?">

@@ -21,7 +21,6 @@ interface CreatorDetail {
   email: string;
   country: string;
   platforms: string[];
-  platformUrls: Record<string, string>;
   audienceSize: string;
   publishingFrequency: string;
   creatorExperience: string;
@@ -157,21 +156,8 @@ export default function AdminCreatorDetailPage() {
               value={
                 <div className="space-y-1">
                   {creator.platforms.map((p) => (
-                    <div key={p}>
-                      <span className="font-medium">{labelFor(PLATFORMS, p)}</span>
-                      {creator.platformUrls[p] && (
-                        <>
-                          {" — "}
-                          <a
-                            href={creator.platformUrls[p]}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="break-all text-[var(--accent)] underline"
-                          >
-                            {creator.platformUrls[p]}
-                          </a>
-                        </>
-                      )}
+                    <div key={p} className="font-medium">
+                      {labelFor(PLATFORMS, p)}
                     </div>
                   ))}
                 </div>

@@ -16,7 +16,6 @@ model Creator {
 
   // Stored as JSON-encoded strings (SQLite has no native array/JSON list type)
   platforms       String // JSON array e.g. ["YOUTUBE","TIKTOK"]
-  platformUrls    String // JSON object e.g. {"YOUTUBE":"https://..."}
   audienceSize    String
   publishingFrequency String
   creatorExperience   String
@@ -34,7 +33,13 @@ model Creator {
 
   referralCode   String  @unique
   referredBy     String? // referralCode of the referrer, if any
+  // Set true only once this creator's own email has been verified, so a
+  // referral isn't counted as qualified while the referred signup is still
+  // pending confirmation.
   referralQualified Boolean @default(false)
+
+  // Null until the creator clicks the link sent to their email address.
+  emailVerifiedAt DateTime?
 
   utmSource   String?
   utmMedium   String?
@@ -46,6 +51,24 @@ model Creator {
   referrer    Creator?  @relation("Referrals", fields: [referredBy], references: [referralCode])
   referrals   Creator[] @relation("Referrals")
 
+  verificationTokens EmailVerificationToken[]
+
   @@index([status])
   @@index([country])
+}
+
+model EmailVerificationToken {
+  id        String    @id @default(cuid())
+  creatorId String
+  // Only a SHA-256 hash of the token is stored; the raw token is sent to the
+  // user via email and never persisted, so a database leak alone can't be
+  // used to verify or hijack a pending registration.
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  creator Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@index([creatorId])
 }

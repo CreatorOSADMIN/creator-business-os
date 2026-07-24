@@ -55,37 +55,32 @@ function logToConsole({ to, subject, text }: { to: string; subject: string; text
   console.log("====================================================\n");
 }
 
-export function buildConfirmationEmail(params: {
-  fullName: string;
-  creatorId: string;
-  referralCode: string;
-}) {
-  const { fullName, creatorId, referralCode } = params;
+export function buildVerificationEmail(params: { fullName: string; verificationToken: string }) {
+  const { fullName, verificationToken } = params;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-  const referralLink = `${siteUrl}/early-access?ref=${referralCode}`;
+  const verificationLink = `${siteUrl}/early-access/verify?token=${verificationToken}`;
 
   const text = `Hi ${fullName},
 
-Thank you for joining the CreatorOS Early Access Program.
+Thanks for starting your CreatorOS Early Access registration.
 
-We are building the platform and will keep you updated about the next steps.
+Please confirm your email address by opening this link within 24 hours:
+${verificationLink}
 
-Your reference ID: ${creatorId}
-Your personal referral link: ${referralLink}
+If you didn't request this, you can safely ignore this email.
 
 — The CreatorOS team`;
 
   const html = `
     <div style="font-family:sans-serif;max-width:480px;margin:0 auto;">
-      <h2>You're on the list, ${escapeHtml(fullName)}.</h2>
-      <p>Thank you for joining the CreatorOS Early Access Program. We are building the platform and will keep you updated about the next steps.</p>
-      <p style="color:#666;font-size:14px;">Reference ID: ${escapeHtml(creatorId)}</p>
-      <p>Share your personal early access link with other creators:</p>
-      <p><a href="${referralLink}">${referralLink}</a></p>
+      <h2>Confirm your email, ${escapeHtml(fullName)}.</h2>
+      <p>Thanks for starting your CreatorOS Early Access registration. Please confirm your email address to complete your registration:</p>
+      <p><a href="${verificationLink}">${verificationLink}</a></p>
+      <p style="color:#666;font-size:13px;">This link expires in 24 hours. If you didn't request this, you can safely ignore this email.</p>
     </div>
   `;
 
-  return { subject: "You're on the CreatorOS Early Access list", text, html };
+  return { subject: "Confirm your email for CreatorOS Early Access", text, html };
 }
 
 function escapeHtml(value: string): string {
