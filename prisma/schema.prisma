@@ -55,6 +55,7 @@ model Creator {
 
   @@index([status])
   @@index([country])
+  @@index([referredBy])
 }
 
 model EmailVerificationToken {

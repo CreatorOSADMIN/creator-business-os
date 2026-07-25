@@ -14,6 +14,22 @@ interface Bucket {
 
 const buckets = new Map<string, Bucket>();
 
+// Buckets are never removed on the hot path (a key that stops being used
+// would otherwise sit in memory forever). Sweep expired entries on a timer
+// so long-running instances don't accumulate one entry per distinct IP
+// indefinitely. Unref'd so it never keeps the process alive on its own.
+const SWEEP_INTERVAL_MS = 10 * 60 * 1000;
+function sweepExpired() {
+  const now = Date.now();
+  for (const [key, bucket] of buckets) {
+    if (bucket.resetAt <= now) buckets.delete(key);
+  }
+}
+if (typeof setInterval !== "undefined") {
+  const timer = setInterval(sweepExpired, SWEEP_INTERVAL_MS);
+  timer.unref?.();
+}
+
 export interface RateLimitResult {
   allowed: boolean;
   remaining: number;

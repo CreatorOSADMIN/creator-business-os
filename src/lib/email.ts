@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import type { Transporter } from "nodemailer";
 
 interface SendEmailInput {
   to: string;
@@ -37,12 +38,7 @@ export async function sendEmail({ to, subject, html, text }: SendEmailInput): Pr
       );
     }
 
-    const transporter = nodemailer.createTransport({
-      host,
-      port,
-      secure: port === 465,
-      auth: { user, pass },
-    });
+    const transporter = getSmtpTransporter({ host, port, user, pass });
 
     try {
       await transporter.sendMail({ from, to, subject, html, text });
@@ -58,6 +54,33 @@ export async function sendEmail({ to, subject, html, text }: SendEmailInput): Pr
 
   // Default / development mode.
   logToConsole({ to, subject, text });
+}
+
+// Reused across calls (server modules stay warm between requests on the
+// same instance), so sends don't each pay a fresh TCP/TLS handshake — a
+// pooled connection is created once per process and kept alive.
+let cachedTransporter: Transporter | null = null;
+let cachedKey = "";
+
+function getSmtpTransporter(config: {
+  host: string;
+  port: number;
+  user: string;
+  pass: string;
+}): Transporter {
+  const key = `${config.host}:${config.port}:${config.user}`;
+  if (cachedTransporter && cachedKey === key) return cachedTransporter;
+
+  cachedTransporter = nodemailer.createTransport({
+    host: config.host,
+    port: config.port,
+    secure: config.port === 465,
+    auth: { user: config.user, pass: config.pass },
+    pool: true,
+    maxConnections: 3,
+  });
+  cachedKey = key;
+  return cachedTransporter;
 }
 
 function logToConsole({ to, subject, text }: { to: string; subject: string; text: string }) {
