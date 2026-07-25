@@ -12,23 +12,27 @@ interface SendEmailInput {
  * Sends an email using the configured provider.
  *
  * EMAIL_PROVIDER=console  -> logs the email to stdout (default, zero-config dev mode)
- * EMAIL_PROVIDER=smtp     -> sends via SMTP using SMTP_HOST/PORT/USER/PASSWORD
+ * EMAIL_PROVIDER=smtp     -> sends via SMTP.
+ *   Production uses a dedicated Gmail account, so host/port default to
+ *   Gmail's SMTP endpoint (smtp.gmail.com:465) and credentials can be given
+ *   either as SMTP_USER/SMTP_PASSWORD (existing convention) or as
+ *   EMAIL_USER/EMAIL_APP_PASSWORD (Gmail App Password). SMTP_HOST/SMTP_PORT
+ *   still override the default for non-Gmail providers.
  */
 export async function sendEmail({ to, subject, html, text }: SendEmailInput): Promise<void> {
   const provider = (process.env.EMAIL_PROVIDER || "console").toLowerCase();
   const from = process.env.EMAIL_FROM || "CreatorOS <hello@creatoros.dev>";
 
   if (provider === "smtp") {
-    const host = process.env.SMTP_HOST;
-    const port = Number(process.env.SMTP_PORT || 587);
-    const user = process.env.SMTP_USER;
-    const pass = process.env.SMTP_PASSWORD;
+    const host = process.env.SMTP_HOST || "smtp.gmail.com";
+    const port = Number(process.env.SMTP_PORT || 465);
+    const user = process.env.SMTP_USER || process.env.EMAIL_USER;
+    const pass = process.env.SMTP_PASSWORD || process.env.EMAIL_APP_PASSWORD;
 
-    if (!host || !user || !pass) {
+    if (!user || !pass) {
       const missing = [
-        !host && "SMTP_HOST",
-        !user && "SMTP_USER",
-        !pass && "SMTP_PASSWORD",
+        !user && "SMTP_USER (or EMAIL_USER)",
+        !pass && "SMTP_PASSWORD (or EMAIL_APP_PASSWORD)",
       ].filter(Boolean);
       // Falling back to console logging here would silently swallow real
       // delivery failures in any environment where EMAIL_PROVIDER=smtp was
