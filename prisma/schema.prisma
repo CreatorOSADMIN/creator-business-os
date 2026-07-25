@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -14,7 +14,8 @@ model Creator {
   email       String   @unique
   country     String
 
-  // Stored as JSON-encoded strings (SQLite has no native array/JSON list type)
+  // Stored as JSON-encoded strings (kept as-is across the SQLite->PostgreSQL
+  // migration to avoid changing application parsing logic)
   platforms       String // JSON array e.g. ["YOUTUBE","TIKTOK"]
   audienceSize    String
   publishingFrequency String
@@ -25,7 +26,8 @@ model Creator {
   marketingConsent Boolean @default(false)
   privacyAccepted  Boolean @default(false)
 
-  // SQLite has no native enum type, so status is a validated string.
+  // Kept as a validated string rather than a native enum (unchanged across
+  // the SQLite->PostgreSQL migration to avoid an app-visible schema change).
   // Allowed values (enforced in application code, see src/lib/constants.ts):
   // NEW | CONTACTED | INTERVIEW_SCHEDULED | INTERESTED | BETA | PAID | REJECTED
   status      String @default("NEW")
