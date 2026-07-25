@@ -56,59 +56,93 @@ export default function AdminCreatorDetailPage() {
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [notesError, setNotesError] = useState<string | null>(null);
+  const [statusError, setStatusError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [notFound, setNotFound] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const res = await fetch(`/api/admin/creators/${params.id}`);
-      if (cancelled) return;
-      if (res.status === 404) {
-        setError("Creator not found.");
-        return;
+      setLoading(true);
+      setLoadError(null);
+      setNotFound(false);
+      try {
+        const res = await fetch(`/api/admin/creators/${params.id}`);
+        if (cancelled) return;
+        if (res.status === 404) {
+          setNotFound(true);
+          return;
+        }
+        if (!res.ok) {
+          setLoadError("Unable to load this creator. Please try again.");
+          return;
+        }
+        const data = await res.json();
+        if (cancelled) return;
+        setCreator(data.creator);
+        setReferrals(data.referrals);
+        setNotes(data.creator.internalNotes || "");
+      } catch {
+        if (!cancelled) setLoadError("Unable to load this creator. Please try again.");
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-      const data = await res.json();
-      if (cancelled) return;
-      setCreator(data.creator);
-      setReferrals(data.referrals);
-      setNotes(data.creator.internalNotes || "");
     })();
     return () => {
       cancelled = true;
     };
-  }, [params.id]);
+  }, [params.id, reloadToken]);
 
   async function updateStatus(status: string) {
     setSaving(true);
-    const res = await fetch(`/api/admin/creators/${params.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setCreator(data.creator);
+    setStatusError(null);
+    try {
+      const res = await fetch(`/api/admin/creators/${params.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCreator(data.creator);
+      } else {
+        setStatusError("Unable to save changes. Please try again.");
+      }
+    } catch {
+      setStatusError("Unable to save changes. Please try again.");
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   }
 
   async function saveNotes() {
     setSaving(true);
-    const res = await fetch(`/api/admin/creators/${params.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ internalNotes: notes }),
-    });
-    if (res.ok) {
-      setSavedAt(Date.now());
+    setNotesError(null);
+    try {
+      const res = await fetch(`/api/admin/creators/${params.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ internalNotes: notes }),
+      });
+      if (res.ok) {
+        setSavedAt(Date.now());
+      } else {
+        setNotesError("Unable to save changes. Please try again.");
+      }
+    } catch {
+      setNotesError("Unable to save changes. Please try again.");
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   }
 
-  if (error) {
+  if (notFound) {
     return (
       <div>
-        <p className="text-sm text-[var(--danger)]">{error}</p>
+        <p className="text-sm text-[var(--danger)]">Creator not found.</p>
         <Link href="/admin/creators" className="mt-3 inline-block text-sm text-[var(--accent)] underline">
           ← Back to creators
         </Link>
@@ -116,7 +150,26 @@ export default function AdminCreatorDetailPage() {
     );
   }
 
-  if (!creator) {
+  if (loadError) {
+    return (
+      <div>
+        <p className="text-sm text-[var(--danger)]">{loadError}</p>
+        <div className="mt-3 flex items-center gap-4">
+          <button
+            onClick={() => setReloadToken((t) => t + 1)}
+            className="rounded-full bg-[var(--accent)] px-4 py-2 text-xs font-medium text-white"
+          >
+            Retry
+          </button>
+          <Link href="/admin/creators" className="text-sm text-[var(--accent)] underline">
+            ← Back to creators
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading || !creator) {
     return <p className="text-sm text-[var(--ink-muted)]">Loading…</p>;
   }
 
@@ -133,18 +186,21 @@ export default function AdminCreatorDetailPage() {
             {creator.creatorHandle} · {creator.email}
           </p>
         </div>
-        <select
-          className="input w-auto"
-          value={creator.status}
-          disabled={saving}
-          onChange={(e) => updateStatus(e.target.value)}
-        >
-          {CREATOR_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {STATUS_LABELS[s as CreatorStatusValue]}
-            </option>
-          ))}
-        </select>
+        <div className="text-right">
+          <select
+            className="input w-auto"
+            value={creator.status}
+            disabled={saving}
+            onChange={(e) => updateStatus(e.target.value)}
+          >
+            {CREATOR_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {STATUS_LABELS[s as CreatorStatusValue]}
+              </option>
+            ))}
+          </select>
+          {statusError && <p className="mt-1 text-xs text-[var(--danger)]">{statusError}</p>}
+        </div>
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[2fr_1fr]">
@@ -195,7 +251,11 @@ export default function AdminCreatorDetailPage() {
               >
                 {saving ? "Saving…" : "Save notes"}
               </button>
-              {savedAt && <span className="text-xs text-[var(--ink-muted)]">Saved</span>}
+              {notesError ? (
+                <span className="text-xs text-[var(--danger)]">{notesError}</span>
+              ) : (
+                savedAt && <span className="text-xs text-[var(--accent)]">Changes saved</span>
+              )}
             </div>
           </Card>
         </div>
