@@ -9,9 +9,17 @@ export function EarlyAccessRestartButton() {
 
   async function handleRestart() {
     setLoading(true);
-    await fetch("/api/early-access/reset", { method: "POST" });
-    router.push("/early-access");
-    router.refresh();
+    try {
+      await fetch("/api/early-access/reset", { method: "POST" });
+    } catch {
+      // Network error — the cookie may still be set, but we still let the
+      // user proceed to the form rather than leaving them stuck with no
+      // feedback. Worst case, /early-access redirects them back here.
+    } finally {
+      router.push("/early-access");
+      router.refresh();
+      setLoading(false);
+    }
   }
 
   return (

@@ -106,14 +106,23 @@ export default function UpdatesPage() {
                   <li>— Supporters help decide which parts of the roadmap move faster</li>
                 </ul>
               </div>
-              <a
-                href={GOFUNDME_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center rounded-full bg-white px-7 py-3.5 text-sm font-medium text-[var(--surface-dark)] transition hover:bg-white/90"
-              >
-                Support on GoFundMe
-              </a>
+              {GOFUNDME_URL ? (
+                <a
+                  href={GOFUNDME_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center rounded-full bg-white px-7 py-3.5 text-sm font-medium text-[var(--surface-dark)] transition hover:bg-white/90"
+                >
+                  Support on GoFundMe
+                </a>
+              ) : (
+                <Link
+                  href="/contact"
+                  className="inline-flex items-center justify-center rounded-full bg-white px-7 py-3.5 text-sm font-medium text-[var(--surface-dark)] transition hover:bg-white/90"
+                >
+                  Get in touch to support us
+                </Link>
+              )}
             </div>
           </div>
         </section>

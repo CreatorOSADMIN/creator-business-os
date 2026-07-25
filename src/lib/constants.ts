@@ -1,5 +1,7 @@
-// Placeholder — replace with the live GoFundMe campaign URL once created.
-export const GOFUNDME_URL = "https://www.gofundme.com/f/creatoros";
+// Only set once a real campaign exists — set NEXT_PUBLIC_GOFUNDME_URL in the
+// environment. Left unset, the site shows a neutral message instead of a
+// link that would go nowhere real.
+export const GOFUNDME_URL = process.env.NEXT_PUBLIC_GOFUNDME_URL || null;
 
 export const PLATFORMS = [
   { value: "YOUTUBE", label: "YouTube" },

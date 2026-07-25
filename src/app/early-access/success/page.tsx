@@ -49,12 +49,14 @@ export default async function EarlyAccessSuccessPage({
             </div>
           )}
 
-          <Link
-            href="/"
-            className="mt-10 inline-block text-sm font-medium text-[var(--accent)] hover:underline"
-          >
-            ← Back to homepage
-          </Link>
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-medium">
+            <Link href="/" className="text-[var(--accent)] hover:underline">
+              ← Back to homepage
+            </Link>
+            <Link href="/updates" className="text-[var(--accent)] hover:underline">
+              See what&apos;s next →
+            </Link>
+          </div>
         </div>
       </main>
       <SiteFooter />

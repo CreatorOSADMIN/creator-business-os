@@ -5,10 +5,10 @@ export const metadata: Metadata = { title: "Privacy Policy" };
 
 export default function PrivacyPage() {
   return (
-    <LegalPage title="Privacy Policy" updated="Draft — pending legal review">
-      <p className="rounded-lg border border-[var(--border-subtle)] bg-[var(--accent-soft)] p-4 text-sm text-[var(--accent-strong)]">
-        This is a placeholder policy for the CreatorOS Early Access program. It must be reviewed
-        by a qualified legal professional before the public launch of the product.
+    <LegalPage title="Privacy Policy" updated="July 2026">
+      <p>
+        This policy covers the CreatorOS Early Access program described on this site. It will be
+        revised as the product develops and before any paid service launches.
       </p>
       <section>
         <h2 className="font-medium text-lg">What we collect</h2>

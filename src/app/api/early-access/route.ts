@@ -47,7 +47,10 @@ export async function POST(request: NextRequest) {
   const existing = await prisma.creator.findUnique({ where: { email: data.email } });
   if (existing && existing.emailVerifiedAt) {
     return NextResponse.json(
-      { error: "This email address is already registered for early access." },
+      {
+        error:
+          "This email address is already registered for early access. If that's you, we'll be in touch — otherwise, use a different email.",
+      },
       { status: 409 }
     );
   }

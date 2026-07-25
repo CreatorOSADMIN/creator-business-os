@@ -5,10 +5,10 @@ export const metadata: Metadata = { title: "Terms of Service" };
 
 export default function TermsPage() {
   return (
-    <LegalPage title="Terms of Service" updated="Draft — pending legal review">
-      <p className="rounded-lg border border-[var(--border-subtle)] bg-[var(--accent-soft)] p-4 text-sm text-[var(--accent-strong)]">
-        This is a placeholder terms document for the CreatorOS Early Access program. It must be
-        reviewed by a qualified legal professional before the public launch of the product.
+    <LegalPage title="Terms of Service" updated="July 2026">
+      <p>
+        These terms cover the CreatorOS Early Access program described on this site. They will be
+        revised as the product develops and before any paid service launches.
       </p>
       <section>
         <h2 className="font-medium text-lg">The Early Access program</h2>

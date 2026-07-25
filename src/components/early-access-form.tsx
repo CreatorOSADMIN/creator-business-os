@@ -106,6 +106,13 @@ export function EarlyAccessForm({
     firstError?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [errors]);
 
+  useEffect(() => {
+    if (!serverError) return;
+    document
+      .querySelector("[data-server-error='true']")
+      ?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [serverError]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setServerError(null);
@@ -370,7 +377,10 @@ export function EarlyAccessForm({
       </Section>
 
       {serverError && (
-        <div className="rounded-lg border border-[var(--danger)]/30 bg-red-50 p-4 text-sm text-[var(--danger)]">
+        <div
+          data-server-error="true"
+          className="rounded-lg border border-[var(--danger)]/30 bg-red-50 p-4 text-sm text-[var(--danger)]"
+        >
           {serverError}
         </div>
       )}
