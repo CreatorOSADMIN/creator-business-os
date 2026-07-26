@@ -21,7 +21,7 @@ interface SendEmailInput {
  */
 export async function sendEmail({ to, subject, html, text }: SendEmailInput): Promise<void> {
   const provider = (process.env.EMAIL_PROVIDER || "console").toLowerCase();
-  const from = process.env.EMAIL_FROM || "CreatorOS <hello@creatoros.dev>";
+  const from = process.env.EMAIL_FROM || "CreatorOS <hello@creatoroslaunch.site>";
 
   if (provider === "smtp") {
     const host = process.env.SMTP_HOST || "smtp.gmail.com";
@@ -98,7 +98,9 @@ function logToConsole({ to, subject, text }: { to: string; subject: string; text
 
 export function buildVerificationEmail(params: { fullName: string; verificationToken: string }) {
   const { fullName, verificationToken } = params;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    (process.env.NODE_ENV === "production" ? "https://www.creatoroslaunch.site" : "http://localhost:3000");
   const verificationLink = `${siteUrl}/early-access/verify?token=${verificationToken}`;
 
   const text = `Hi ${fullName},

@@ -14,8 +14,8 @@
 | `EMAIL_APP_PASSWORD` | yes* | 16-character Gmail **App Password** (not the account password). Alias: `SMTP_PASSWORD`. |
 | `SMTP_HOST` | no | Defaults to `smtp.gmail.com` |
 | `SMTP_PORT` | no | Defaults to `465` |
-| `EMAIL_FROM` | no | Defaults to `CreatorOS <hello@creatoros.dev>` |
-| `NEXT_PUBLIC_SITE_URL` | yes | Canonical production URL (e.g. `https://creatoros.dev`); used to build the verification link. Already used elsewhere in the app. |
+| `EMAIL_FROM` | no | Defaults to `CreatorOS <hello@creatoroslaunch.site>`. Should match (or be an alias/alias-authorized address of) the authenticated `EMAIL_USER`/`SMTP_USER` account, or Gmail may rewrite/flag the `From` header. |
+| `NEXT_PUBLIC_SITE_URL` | yes | Canonical production URL: `https://www.creatoroslaunch.site`; used to build the verification link. Falls back to this same domain in production if unset, and to `http://localhost:3000` in development. |
 | `SESSION_SECRET` | yes (existing) | Required by `src/lib/creator-session.ts`; unrelated to email but required for the registration flow to fully succeed. |
 | `DATABASE_URL` | yes (existing) | Existing Prisma/Neon connection string. |
 
