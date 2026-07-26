@@ -1,8 +1,15 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { getEarlyAccessProgress } from "@/lib/early-access-progress";
 
-export default function HomePage() {
+// Keeps the Early Access progress bar fresh without a client-side fetch or
+// polling: the homepage revalidates on this cadence and re-reads the real
+// verified-creator count from the database.
+export const revalidate = 60;
+
+export default async function HomePage() {
+  const { progress, goal } = await getEarlyAccessProgress();
   return (
     <>
       <SiteHeader />
@@ -10,7 +17,7 @@ export default function HomePage() {
         <Hero />
         <Problem />
         <Solution />
-        <EarlyAccessBand />
+        <EarlyAccessBand progress={progress} goal={goal} />
       </main>
       <SiteFooter />
     </>
@@ -157,7 +164,7 @@ function Solution() {
   );
 }
 
-function EarlyAccessBand() {
+function EarlyAccessBand({ progress, goal }: { progress: number; goal: number }) {
   return (
     <section className="bg-[var(--surface-dark)] text-white">
       <div className="mx-auto max-w-6xl px-6 py-20">
@@ -176,6 +183,7 @@ function EarlyAccessBand() {
                 program terms
               </li>
             </ul>
+            <EarlyAccessProgress progress={progress} goal={goal} />
           </div>
           <Link
             href="/early-access"
@@ -186,5 +194,33 @@ function EarlyAccessBand() {
         </div>
       </div>
     </section>
+  );
+}
+
+function EarlyAccessProgress({ progress, goal }: { progress: number; goal: number }) {
+  const pct = Math.round(progress * 10) / 10;
+  return (
+    <div className="mt-8 max-w-sm">
+      <div className="flex items-center justify-between text-xs">
+        <span className="font-medium text-white/80">Early access is filling up</span>
+        <span className="font-mono-label text-white/50">{pct}%</span>
+      </div>
+      <div
+        className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10"
+        role="progressbar"
+        aria-valuenow={pct}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label="Early access spots filled"
+      >
+        <div
+          className="h-full rounded-full bg-[var(--highlight)] transition-[width] duration-500"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <p className="mt-2 text-xs text-white/50">
+        Limited to the first {goal.toLocaleString("en-US")} creators.
+      </p>
+    </div>
   );
 }

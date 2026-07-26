@@ -1,0 +1,138 @@
+diff --git a/src/app/api/early-access/progress/route.ts b/src/app/api/early-access/progress/route.ts
+new file mode 100644
+index 0000000..d3f00bf
+--- /dev/null
++++ b/src/app/api/early-access/progress/route.ts
+@@ -0,0 +1,22 @@
++import { NextRequest, NextResponse } from "next/server";
++import { rateLimit, getClientIp } from "@/lib/rate-limit";
++import { getEarlyAccessProgress } from "@/lib/early-access-progress";
++
++// Public, unauthenticated: returns only the aggregate progress percentage
++// (derived from verified-creator count) needed to render the homepage
++// progress bar. No emails, names, handles, or per-creator data.
++export const revalidate = 60;
++
++export async function GET(request: NextRequest) {
++  const ip = getClientIp(request.headers);
++  const { allowed } = rateLimit(`early-access-progress:${ip}`, {
++    limit: 30,
++    windowMs: 5 * 60 * 1000,
++  });
++  if (!allowed) {
++    return NextResponse.json({ error: "Too many requests. Please slow down." }, { status: 429 });
++  }
++
++  const { progress, goal } = await getEarlyAccessProgress();
++  return NextResponse.json({ progress, goal });
++}
+diff --git a/src/app/page.tsx b/src/app/page.tsx
+index f5a92bb..1c8cf73 100644
+--- a/src/app/page.tsx
++++ b/src/app/page.tsx
+@@ -1,8 +1,15 @@
+ import Link from "next/link";
+ import { SiteHeader } from "@/components/site-header";
+ import { SiteFooter } from "@/components/site-footer";
++import { getEarlyAccessProgress } from "@/lib/early-access-progress";
+ 
+-export default function HomePage() {
++// Keeps the Early Access progress bar fresh without a client-side fetch or
++// polling: the homepage revalidates on this cadence and re-reads the real
++// verified-creator count from the database.
++export const revalidate = 60;
++
++export default async function HomePage() {
++  const { progress, goal } = await getEarlyAccessProgress();
+   return (
+     <>
+       <SiteHeader />
+@@ -10,7 +17,7 @@ export default function HomePage() {
+         <Hero />
+         <Problem />
+         <Solution />
+-        <EarlyAccessBand />
++        <EarlyAccessBand progress={progress} goal={goal} />
+       </main>
+       <SiteFooter />
+     </>
+@@ -157,7 +164,7 @@ function Solution() {
+   );
+ }
+ 
+-function EarlyAccessBand() {
++function EarlyAccessBand({ progress, goal }: { progress: number; goal: number }) {
+   return (
+     <section className="bg-[var(--surface-dark)] text-white">
+       <div className="mx-auto max-w-6xl px-6 py-20">
+@@ -176,6 +183,7 @@ function EarlyAccessBand() {
+                 program terms
+               </li>
+             </ul>
++            <EarlyAccessProgress progress={progress} goal={goal} />
+           </div>
+           <Link
+             href="/early-access"
+@@ -188,3 +196,31 @@ function EarlyAccessBand() {
+     </section>
+   );
+ }
++
++function EarlyAccessProgress({ progress, goal }: { progress: number; goal: number }) {
++  const pct = Math.round(progress * 10) / 10;
++  return (
++    <div className="mt-8 max-w-sm">
++      <div className="flex items-center justify-between text-xs">
++        <span className="font-medium text-white/80">Early access is filling up</span>
++        <span className="font-mono-label text-white/50">{pct}%</span>
++      </div>
++      <div
++        className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10"
++        role="progressbar"
++        aria-valuenow={pct}
++        aria-valuemin={0}
++        aria-valuemax={100}
++        aria-label="Early access spots filled"
++      >
++        <div
++          className="h-full rounded-full bg-[var(--highlight)] transition-[width] duration-500"
++          style={{ width: `${pct}%` }}
++        />
++      </div>
++      <p className="mt-2 text-xs text-white/50">
++        Limited to the first {goal.toLocaleString("en-US")} creators.
++      </p>
++    </div>
++  );
++}
+diff --git a/src/lib/early-access-progress.ts b/src/lib/early-access-progress.ts
+new file mode 100644
+index 0000000..dc541f5
+--- /dev/null
++++ b/src/lib/early-access-progress.ts
+@@ -0,0 +1,25 @@
++import { prisma } from "@/lib/prisma";
++
++/** Displayed progress before any real verified creators are counted. */
++export const EARLY_ACCESS_BASE_PERCENT = 23;
++/** Share of the bar driven by real verified creators (up to the goal). */
++export const EARLY_ACCESS_RANGE_PERCENT = 77;
++/** Verified creators needed to fill the bar to 100%. */
++export const EARLY_ACCESS_GOAL = 1000;
++
++/** Real count of creators with a verified email. Never includes unverified signups. */
++export async function getVerifiedCreatorsCount(): Promise<number> {
++  return prisma.creator.count({ where: { emailVerifiedAt: { not: null } } });
++}
++
++/** progress = min(100, 23 + (verified / goal) * 77) */
++export function computeEarlyAccessProgress(verifiedCount: number): number {
++  const raw =
++    EARLY_ACCESS_BASE_PERCENT + (verifiedCount / EARLY_ACCESS_GOAL) * EARLY_ACCESS_RANGE_PERCENT;
++  return Math.min(100, raw);
++}
++
++export async function getEarlyAccessProgress() {
++  const verifiedCount = await getVerifiedCreatorsCount();
++  return { progress: computeEarlyAccessProgress(verifiedCount), goal: EARLY_ACCESS_GOAL };
++}
