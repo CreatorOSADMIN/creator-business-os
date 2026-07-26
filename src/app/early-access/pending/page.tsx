@@ -3,6 +3,8 @@ import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { EarlyAccessRestartButton } from "@/components/early-access-restart-button";
+import { EarlyAccessPendingStatus } from "@/components/early-access-pending-status";
+import { getRegisteredCreatorIdFromCookie } from "@/lib/creator-session";
 
 export const metadata: Metadata = { title: "Confirm your email" };
 
@@ -13,10 +15,14 @@ export default async function EarlyAccessPendingPage({
 }) {
   const { email, sent } = await searchParams;
   const emailSent = sent !== "0";
+  // Only worth polling if this browser is the one that registered — a
+  // direct visit to this URL with no session cookie has nothing to watch.
+  const hasSession = Boolean(await getRegisteredCreatorIdFromCookie());
 
   return (
     <>
       <SiteHeader />
+      <EarlyAccessPendingStatus enabled={hasSession} />
       <main className="flex-1">
         <div className="mx-auto max-w-xl px-6 py-24 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[var(--accent-strong)]">

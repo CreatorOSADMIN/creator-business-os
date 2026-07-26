@@ -43,11 +43,25 @@ export async function verifyCreatorEmailToken(rawToken: string): Promise<VerifyR
   const tokenHash = hashToken(rawToken);
   const record = await prisma.emailVerificationToken.findUnique({
     where: { tokenHash },
-    include: { creator: { select: { id: true, referralCode: true, referredBy: true } } },
+    include: {
+      creator: { select: { id: true, referralCode: true, referredBy: true, emailVerifiedAt: true } },
+    },
   });
 
   if (!record) return { ok: false, reason: "invalid" };
-  if (record.usedAt) return { ok: false, reason: "invalid" };
+
+  if (record.usedAt) {
+    // The token was already consumed. If it left the creator verified, this
+    // is a legitimate re-open of the same link (second device, refreshed
+    // tab, etc.) — send them back to the success screen rather than telling
+    // them the link is broken. Only a token that was never associated with a
+    // completed verification is treated as a real error.
+    if (record.creator.emailVerifiedAt) {
+      return { ok: true, creatorId: record.creator.id, referralCode: record.creator.referralCode };
+    }
+    return { ok: false, reason: "invalid" };
+  }
+
   if (record.expiresAt.getTime() < Date.now()) return { ok: false, reason: "expired" };
 
   const now = new Date();

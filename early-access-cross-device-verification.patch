@@ -1,0 +1,203 @@
+diff --git a/src/app/api/early-access/status/route.ts b/src/app/api/early-access/status/route.ts
+new file mode 100644
+index 0000000..dbab17e
+--- /dev/null
++++ b/src/app/api/early-access/status/route.ts
+@@ -0,0 +1,49 @@
++import { NextRequest, NextResponse } from "next/server";
++import { prisma } from "@/lib/prisma";
++import { getRegisteredCreatorIdFromCookie } from "@/lib/creator-session";
++import { rateLimit, getClientIp } from "@/lib/rate-limit";
++
++/**
++ * Lets the device that started registration find out whether the email was
++ * since verified (e.g. the link was opened on a different device). The
++ * creator is resolved only from this browser's signed, httpOnly session
++ * cookie — never from a query param or body — so a caller can only ever
++ * poll their own registration's status, not anyone else's.
++ */
++export async function GET(request: NextRequest) {
++  const creatorId = await getRegisteredCreatorIdFromCookie();
++  if (!creatorId) {
++    return NextResponse.json({ error: "No pending registration on this device." }, { status: 401 });
++  }
++
++  // Light polling is expected from the pending page, but cap it well above
++  // that so a runaway client/tab can't hammer the DB.
++  const ip = getClientIp(request.headers);
++  const { allowed } = rateLimit(`early-access-status:${creatorId}:${ip}`, {
++    limit: 40,
++    windowMs: 5 * 60 * 1000,
++  });
++  if (!allowed) {
++    return NextResponse.json({ error: "Too many requests. Please slow down." }, { status: 429 });
++  }
++
++  const creator = await prisma.creator.findUnique({
++    where: { id: creatorId },
++    select: { emailVerifiedAt: true, referralCode: true },
++  });
++
++  if (!creator) {
++    // Cookie outlived the record (e.g. deleted). Nothing to report.
++    return NextResponse.json({ verified: false });
++  }
++
++  if (!creator.emailVerifiedAt) {
++    return NextResponse.json({ verified: false });
++  }
++
++  return NextResponse.json({
++    verified: true,
++    id: creatorId,
++    referralCode: creator.referralCode,
++  });
++}
+diff --git a/src/app/early-access/pending/page.tsx b/src/app/early-access/pending/page.tsx
+index dd3d136..96a95e3 100644
+--- a/src/app/early-access/pending/page.tsx
++++ b/src/app/early-access/pending/page.tsx
+@@ -3,6 +3,8 @@ import Link from "next/link";
+ import { SiteHeader } from "@/components/site-header";
+ import { SiteFooter } from "@/components/site-footer";
+ import { EarlyAccessRestartButton } from "@/components/early-access-restart-button";
++import { EarlyAccessPendingStatus } from "@/components/early-access-pending-status";
++import { getRegisteredCreatorIdFromCookie } from "@/lib/creator-session";
+ 
+ export const metadata: Metadata = { title: "Confirm your email" };
+ 
+@@ -13,10 +15,14 @@ export default async function EarlyAccessPendingPage({
+ }) {
+   const { email, sent } = await searchParams;
+   const emailSent = sent !== "0";
++  // Only worth polling if this browser is the one that registered — a
++  // direct visit to this URL with no session cookie has nothing to watch.
++  const hasSession = Boolean(await getRegisteredCreatorIdFromCookie());
+ 
+   return (
+     <>
+       <SiteHeader />
++      <EarlyAccessPendingStatus enabled={hasSession} />
+       <main className="flex-1">
+         <div className="mx-auto max-w-xl px-6 py-24 text-center">
+           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[var(--accent-strong)]">
+diff --git a/src/components/early-access-pending-status.tsx b/src/components/early-access-pending-status.tsx
+new file mode 100644
+index 0000000..f54c9ff
+--- /dev/null
++++ b/src/components/early-access-pending-status.tsx
+@@ -0,0 +1,82 @@
++"use client";
++
++import { useEffect, useRef } from "react";
++import { useRouter } from "next/navigation";
++
++// Light polling only: a few seconds apart, slowing down over time, and
++// capped so an abandoned tab doesn't poll forever.
++const POLL_INTERVAL_MS = 5000;
++const SLOWDOWN_AFTER_MS = 2 * 60 * 1000; // after 2 minutes, ease off
++const SLOW_POLL_INTERVAL_MS = 15000;
++const STOP_AFTER_MS = 20 * 60 * 1000; // give up after 20 minutes
++
++interface EarlyAccessPendingStatusProps {
++  /** Whether this browser has a signed session cookie worth polling for. */
++  enabled: boolean;
++}
++
++/**
++ * Renders nothing visible — it just watches for the registration on this
++ * device to become verified (typically because the confirmation link was
++ * opened on another device) and redirects to the success/referral screen
++ * as soon as it does.
++ */
++export function EarlyAccessPendingStatus({ enabled }: EarlyAccessPendingStatusProps) {
++  const router = useRouter();
++  const startedAtRef = useRef<number | null>(null);
++
++  useEffect(() => {
++    if (!enabled) return;
++
++    startedAtRef.current = Date.now();
++    let cancelled = false;
++    let timeoutId: ReturnType<typeof setTimeout>;
++
++    async function poll() {
++      if (cancelled) return;
++
++      // Don't burn requests while the tab isn't visible; resume when it is.
++      if (document.visibilityState === "visible") {
++        try {
++          const res = await fetch("/api/early-access/status", { cache: "no-store" });
++          if (res.ok) {
++            const data = await res.json();
++            if (data.verified && data.id) {
++              const params = new URLSearchParams({ id: data.id });
++              if (data.referralCode) params.set("ref", data.referralCode);
++              router.push(`/early-access/success?${params.toString()}`);
++              return;
++            }
++          }
++        } catch {
++          // Network hiccup — just try again on the next tick.
++        }
++      }
++
++      const elapsed = Date.now() - (startedAtRef.current ?? Date.now());
++      if (elapsed >= STOP_AFTER_MS) return;
++
++      const nextInterval = elapsed >= SLOWDOWN_AFTER_MS ? SLOW_POLL_INTERVAL_MS : POLL_INTERVAL_MS;
++      timeoutId = setTimeout(poll, nextInterval);
++    }
++
++    timeoutId = setTimeout(poll, POLL_INTERVAL_MS);
++
++    function handleVisibilityChange() {
++      if (document.visibilityState === "visible") {
++        // Check right away when the user comes back to the tab.
++        clearTimeout(timeoutId);
++        poll();
++      }
++    }
++    document.addEventListener("visibilitychange", handleVisibilityChange);
++
++    return () => {
++      cancelled = true;
++      clearTimeout(timeoutId);
++      document.removeEventListener("visibilitychange", handleVisibilityChange);
++    };
++  }, [enabled, router]);
++
++  return null;
++}
+diff --git a/src/lib/email-verification.ts b/src/lib/email-verification.ts
+index df06cec..40ec321 100644
+--- a/src/lib/email-verification.ts
++++ b/src/lib/email-verification.ts
+@@ -43,11 +43,25 @@ export async function verifyCreatorEmailToken(rawToken: string): Promise<VerifyR
+   const tokenHash = hashToken(rawToken);
+   const record = await prisma.emailVerificationToken.findUnique({
+     where: { tokenHash },
+-    include: { creator: { select: { id: true, referralCode: true, referredBy: true } } },
++    include: {
++      creator: { select: { id: true, referralCode: true, referredBy: true, emailVerifiedAt: true } },
++    },
+   });
+ 
+   if (!record) return { ok: false, reason: "invalid" };
+-  if (record.usedAt) return { ok: false, reason: "invalid" };
++
++  if (record.usedAt) {
++    // The token was already consumed. If it left the creator verified, this
++    // is a legitimate re-open of the same link (second device, refreshed
++    // tab, etc.) — send them back to the success screen rather than telling
++    // them the link is broken. Only a token that was never associated with a
++    // completed verification is treated as a real error.
++    if (record.creator.emailVerifiedAt) {
++      return { ok: true, creatorId: record.creator.id, referralCode: record.creator.referralCode };
++    }
++    return { ok: false, reason: "invalid" };
++  }
++
+   if (record.expiresAt.getTime() < Date.now()) return { ok: false, reason: "expired" };
+ 
+   const now = new Date();
