@@ -65,3 +65,29 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   return NextResponse.json({ creator: serializeCreator(creator) });
 }
+
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const originCheck = verifySameOrigin(request);
+  if (originCheck) return originCheck;
+
+  const { response } = await requireAdmin();
+  if (response) return response;
+
+  const { id } = await params;
+  if (!id || typeof id !== "string") {
+    return NextResponse.json({ error: "Invalid creator id" }, { status: 400 });
+  }
+
+  try {
+    await prisma.creator.delete({ where: { id } });
+  } catch (err) {
+    // P2025 = record to delete does not exist (Prisma error code).
+    if (typeof err === "object" && err !== null && "code" in err && err.code === "P2025") {
+      return NextResponse.json({ error: "Creator not found" }, { status: 404 });
+    }
+    console.error("[admin/creators DELETE] failed", err);
+    return NextResponse.json({ error: "Unable to delete this creator. Please try again." }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true });
+}

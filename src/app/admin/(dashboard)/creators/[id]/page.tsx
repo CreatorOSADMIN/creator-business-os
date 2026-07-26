@@ -31,6 +31,7 @@ interface CreatorDetail {
   referralCode: string;
   referredBy: string | null;
   marketingConsent: boolean;
+  emailVerifiedAt: string | null;
   utmSource: string | null;
   utmMedium: string | null;
   utmCampaign: string | null;
@@ -263,6 +264,10 @@ export default function AdminCreatorDetailPage() {
         <div className="space-y-6">
           <Card title="Registration">
             <Row label="Registered" value={new Date(creator.createdAt).toLocaleString()} />
+            <Row
+              label="Email verified"
+              value={creator.emailVerifiedAt ? new Date(creator.emailVerifiedAt).toLocaleString() : "Not verified"}
+            />
             <Row label="Marketing consent" value={creator.marketingConsent ? "Yes" : "No"} />
             {creator.utmSource && <Row label="UTM source" value={creator.utmSource} />}
             {creator.utmMedium && <Row label="UTM medium" value={creator.utmMedium} />}

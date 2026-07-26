@@ -38,6 +38,12 @@ export default async function AdminDashboardLayout({
         >
           Creators
         </Link>
+        <Link
+          href="/admin/announcements"
+          className="whitespace-nowrap rounded-lg px-3 py-2 font-medium text-[var(--foreground)] hover:bg-[var(--accent-soft)]"
+        >
+          Annunci
+        </Link>
       </nav>
 
       {/* Desktop sidebar */}
@@ -60,6 +66,12 @@ export default async function AdminDashboardLayout({
             className="block rounded-lg px-3 py-2 font-medium text-[var(--foreground)] hover:bg-[var(--accent-soft)]"
           >
             Creators
+          </Link>
+          <Link
+            href="/admin/announcements"
+            className="block rounded-lg px-3 py-2 font-medium text-[var(--foreground)] hover:bg-[var(--accent-soft)]"
+          >
+            Annunci
           </Link>
         </nav>
         <div className="absolute bottom-0 w-60 border-t border-[var(--border-subtle)] p-4">

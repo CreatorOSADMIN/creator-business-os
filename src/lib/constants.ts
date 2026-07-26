@@ -23,6 +23,17 @@ export const AUDIENCE_SIZES = [
   { value: "500K_PLUS", label: "500,000+" },
 ] as const;
 
+export type AudienceSizeValue = (typeof AUDIENCE_SIZES)[number]["value"];
+
+// Real-size ordering (index in AUDIENCE_SIZES, ascending = smallest first).
+// Unknown/legacy values sort last so they don't break ordering.
+const AUDIENCE_SIZE_RANK: Record<string, number> = Object.fromEntries(
+  AUDIENCE_SIZES.map((a, i) => [a.value, i])
+);
+export function audienceSizeRank(value: string): number {
+  return AUDIENCE_SIZE_RANK[value] ?? AUDIENCE_SIZES.length;
+}
+
 export const PUBLISHING_FREQUENCIES = [
   { value: "DAILY", label: "Daily" },
   { value: "SEVERAL_PER_WEEK", label: "Several times per week" },
