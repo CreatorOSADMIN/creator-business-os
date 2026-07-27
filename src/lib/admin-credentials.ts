@@ -16,17 +16,19 @@ export async function verifyAdminCredentials(email: string, password: string): P
     throw new Error("ADMIN_EMAIL and ADMIN_PASSWORD must be set in your .env file.");
   }
 
-  if (email.trim().toLowerCase() !== adminEmail.trim().toLowerCase()) {
-    return false;
-  }
+  const emailMatches = timingSafeEqual(
+    email.trim().toLowerCase(),
+    adminEmail.trim().toLowerCase()
+  );
 
   const isHashed = /^\$2[aby]\$/.test(adminPassword);
-  if (isHashed) {
-    return bcrypt.compare(password, adminPassword);
-  }
+  const passwordMatches = isHashed
+    ? await bcrypt.compare(password, adminPassword)
+    : timingSafeEqual(password, adminPassword);
 
-  // Development fallback: constant-time-ish plain comparison.
-  return timingSafeEqual(password, adminPassword);
+  // Both checks always run (no early return on email mismatch) so a wrong
+  // email can't be distinguished from a wrong password by response timing.
+  return emailMatches && passwordMatches;
 }
 
 function timingSafeEqual(a: string, b: string): boolean {

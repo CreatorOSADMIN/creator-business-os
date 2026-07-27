@@ -6,7 +6,10 @@ import { EarlyAccessRestartButton } from "@/components/early-access-restart-butt
 import { EarlyAccessPendingStatus } from "@/components/early-access-pending-status";
 import { getRegisteredCreatorIdFromCookie } from "@/lib/creator-session";
 
-export const metadata: Metadata = { title: "Confirm your email" };
+export const metadata: Metadata = {
+  title: "Confirm your email",
+  robots: { index: false, follow: false },
+};
 
 export default async function EarlyAccessPendingPage({
   searchParams,
@@ -35,10 +38,17 @@ export default async function EarlyAccessPendingPage({
                 We&apos;ve sent a confirmation link{email ? <> to <strong>{email}</strong></> : null}. Open it
                 to finish joining the CreatorOS Early Access Program. The link expires in 24 hours.
               </p>
-              <p className="mt-4 text-sm text-[var(--ink-muted)]">
-                Didn&apos;t get it? Check your spam folder, or submit the form again with the same
-                email to receive a new link.
-              </p>
+              <div className="mt-6 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] p-5 text-left text-sm text-[var(--ink-muted)]">
+                <p className="font-medium text-[var(--foreground)]">Don&apos;t see it in your inbox?</p>
+                <ul className="mt-2 list-disc space-y-1.5 pl-4">
+                  <li>Check your <strong>Spam</strong> or Junk folder — first emails from a new sender sometimes land there.</li>
+                  <li>Using Gmail? Check the <strong>Promotions</strong> or <strong>Updates</strong> tab as well as your main inbox.</li>
+                  <li>To avoid missing future updates, add us to your contacts once you find the email.</li>
+                </ul>
+                <p className="mt-3">
+                  Still nothing after a few minutes? Submit the form again with the same email to get a new link.
+                </p>
+              </div>
             </>
           ) : (
             <>

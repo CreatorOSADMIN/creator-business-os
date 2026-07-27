@@ -5,6 +5,7 @@ import { SiteFooter } from "@/components/site-footer";
 export const metadata: Metadata = {
   title: "About",
   description: "CreatorOS is building a unified analytics and growth platform for creators.",
+  alternates: { canonical: "/about" },
 };
 
 export default function AboutPage() {

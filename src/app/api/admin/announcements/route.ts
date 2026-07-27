@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/require-admin";
 import { verifySameOrigin } from "@/lib/verify-origin";
 import { sendEmail } from "@/lib/email";
 import { rateLimit } from "@/lib/rate-limit";
+import { logAdminAction } from "@/lib/audit-log";
 
 const announcementSchema = z.object({
   subject: z.string().trim().min(1, "Subject is required").max(200),
@@ -49,7 +50,6 @@ export async function POST(request: NextRequest) {
 
   let sent = 0;
   let failed = 0;
-  const failedEmails: string[] = [];
 
   for (const creator of creators) {
     const emailCheck = emailSchema.safeParse(creator.email);
@@ -64,10 +64,15 @@ export async function POST(request: NextRequest) {
       sent += 1;
     } catch (err) {
       failed += 1;
-      failedEmails.push(emailCheck.data);
       console.error("[admin/announcements] send failed", err);
     }
   }
+
+  logAdminAction({
+    action: "announcement.send",
+    actor: session.email,
+    metadata: { subject, sent, failed, total: creators.length },
+  });
 
   return NextResponse.json({
     sent,

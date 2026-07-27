@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   title: "Updates",
   description:
     "Development updates and roadmap for CreatorOS — built in the open, and dependent on community support to keep going.",
+  alternates: { canonical: "/updates" },
 };
 
 const ROADMAP = [

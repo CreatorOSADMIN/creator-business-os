@@ -1,0 +1,360 @@
+diff --git a/src/app/about/page.tsx b/src/app/about/page.tsx
+index c28b9d4..bffecd8 100644
+--- a/src/app/about/page.tsx
++++ b/src/app/about/page.tsx
+@@ -5,6 +5,7 @@ import { SiteFooter } from "@/components/site-footer";
+ export const metadata: Metadata = {
+   title: "About",
+   description: "CreatorOS is building a unified analytics and growth platform for creators.",
++  alternates: { canonical: "/about" },
+ };
+ 
+ export default function AboutPage() {
+diff --git a/src/app/api/admin/announcements/route.ts b/src/app/api/admin/announcements/route.ts
+index 8106cdf..59ba7e1 100644
+--- a/src/app/api/admin/announcements/route.ts
++++ b/src/app/api/admin/announcements/route.ts
+@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/require-admin";
+ import { verifySameOrigin } from "@/lib/verify-origin";
+ import { sendEmail } from "@/lib/email";
+ import { rateLimit } from "@/lib/rate-limit";
++import { logAdminAction } from "@/lib/audit-log";
+ 
+ const announcementSchema = z.object({
+   subject: z.string().trim().min(1, "Subject is required").max(200),
+@@ -49,7 +50,6 @@ export async function POST(request: NextRequest) {
+ 
+   let sent = 0;
+   let failed = 0;
+-  const failedEmails: string[] = [];
+ 
+   for (const creator of creators) {
+     const emailCheck = emailSchema.safeParse(creator.email);
+@@ -64,11 +64,16 @@ export async function POST(request: NextRequest) {
+       sent += 1;
+     } catch (err) {
+       failed += 1;
+-      failedEmails.push(emailCheck.data);
+       console.error("[admin/announcements] send failed", err);
+     }
+   }
+ 
++  logAdminAction({
++    action: "announcement.send",
++    actor: session.email,
++    metadata: { subject, sent, failed, total: creators.length },
++  });
++
+   return NextResponse.json({
+     sent,
+     failed,
+diff --git a/src/app/api/admin/creators/[id]/route.ts b/src/app/api/admin/creators/[id]/route.ts
+index 8dfc12d..ae04185 100644
+--- a/src/app/api/admin/creators/[id]/route.ts
++++ b/src/app/api/admin/creators/[id]/route.ts
+@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/require-admin";
+ import { serializeCreator } from "@/lib/serialize-creator";
+ import { CREATOR_STATUSES } from "@/lib/constants";
+ import { verifySameOrigin } from "@/lib/verify-origin";
++import { logAdminAction } from "@/lib/audit-log";
+ import { z } from "zod";
+ 
+ const patchSchema = z.object({
+@@ -33,7 +34,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
+   const originCheck = verifySameOrigin(request);
+   if (originCheck) return originCheck;
+ 
+-  const { response } = await requireAdmin();
++  const { session, response } = await requireAdmin();
+   if (response) return response;
+ 
+   const { id } = await params;
+@@ -63,6 +64,16 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
+     },
+   });
+ 
++  logAdminAction({
++    action: "creator.update",
++    actor: session.email,
++    creatorId: id,
++    metadata: {
++      statusChanged: parsed.data.status !== undefined,
++      notesChanged: parsed.data.internalNotes !== undefined,
++    },
++  });
++
+   return NextResponse.json({ creator: serializeCreator(creator) });
+ }
+ 
+@@ -70,7 +81,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
+   const originCheck = verifySameOrigin(request);
+   if (originCheck) return originCheck;
+ 
+-  const { response } = await requireAdmin();
++  const { session, response } = await requireAdmin();
+   if (response) return response;
+ 
+   const { id } = await params;
+@@ -89,5 +100,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
+     return NextResponse.json({ error: "Unable to delete this creator. Please try again." }, { status: 500 });
+   }
+ 
++  logAdminAction({ action: "creator.delete", actor: session.email, creatorId: id });
++
+   return NextResponse.json({ success: true });
+ }
+diff --git a/src/app/api/admin/creators/route.ts b/src/app/api/admin/creators/route.ts
+index 2c9fc50..fe8768b 100644
+--- a/src/app/api/admin/creators/route.ts
++++ b/src/app/api/admin/creators/route.ts
+@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
+ import { prisma } from "@/lib/prisma";
+ import { requireAdmin } from "@/lib/require-admin";
+ import { serializeCreator } from "@/lib/serialize-creator";
+-import { CREATOR_STATUSES, AUDIENCE_SIZES, audienceSizeRank } from "@/lib/constants";
++import { CREATOR_STATUSES, AUDIENCE_SIZES, PLATFORMS, audienceSizeRank } from "@/lib/constants";
+ import type { Prisma } from "@prisma/client";
+ 
+ const SORTABLE_FIELDS = ["createdAt", "audienceSize", "fullName", "status"] as const;
+@@ -30,11 +30,20 @@ export async function GET(request: NextRequest) {
+   const where: Prisma.CreatorWhereInput = {};
+ 
+   if (search) {
+-    where.OR = [
++    const searchOr: Prisma.CreatorWhereInput[] = [
+       { fullName: { contains: search } },
+       { creatorHandle: { contains: search } },
+       { email: { contains: search } },
+     ];
++    // Also let the free-text box match a platform name (e.g. "youtube"),
++    // so search covers name/handle/email/platform without a separate field.
++    const matchedPlatform = PLATFORMS.find(
++      (p) => p.label.toLowerCase() === search.toLowerCase() || p.value.toLowerCase() === search.toLowerCase()
++    );
++    if (matchedPlatform) {
++      searchOr.push({ platforms: { contains: `"${matchedPlatform.value}"` } });
++    }
++    where.OR = searchOr;
+   }
+ 
+   if (status && (CREATOR_STATUSES as readonly string[]).includes(status)) {
+diff --git a/src/app/contact/page.tsx b/src/app/contact/page.tsx
+index 593b784..a05b5c8 100644
+--- a/src/app/contact/page.tsx
++++ b/src/app/contact/page.tsx
+@@ -2,7 +2,7 @@ import type { Metadata } from "next";
+ import { SiteHeader } from "@/components/site-header";
+ import { SiteFooter } from "@/components/site-footer";
+ 
+-export const metadata: Metadata = { title: "Contact" };
++export const metadata: Metadata = { title: "Contact", alternates: { canonical: "/contact" } };
+ 
+ export default function ContactPage() {
+   return (
+diff --git a/src/app/early-access/page.tsx b/src/app/early-access/page.tsx
+index da4dfc9..276127b 100644
+--- a/src/app/early-access/page.tsx
++++ b/src/app/early-access/page.tsx
+@@ -10,6 +10,7 @@ export const metadata: Metadata = {
+   title: "Join Early Access",
+   description:
+     "Become an early creator on CreatorOS. Join a limited early access program and help shape the platform.",
++  alternates: { canonical: "/early-access" },
+ };
+ 
+ export default async function EarlyAccessPage({
+diff --git a/src/app/early-access/pending/page.tsx b/src/app/early-access/pending/page.tsx
+index 96a95e3..54ee5dc 100644
+--- a/src/app/early-access/pending/page.tsx
++++ b/src/app/early-access/pending/page.tsx
+@@ -6,7 +6,10 @@ import { EarlyAccessRestartButton } from "@/components/early-access-restart-butt
+ import { EarlyAccessPendingStatus } from "@/components/early-access-pending-status";
+ import { getRegisteredCreatorIdFromCookie } from "@/lib/creator-session";
+ 
+-export const metadata: Metadata = { title: "Confirm your email" };
++export const metadata: Metadata = {
++  title: "Confirm your email",
++  robots: { index: false, follow: false },
++};
+ 
+ export default async function EarlyAccessPendingPage({
+   searchParams,
+diff --git a/src/app/early-access/success/page.tsx b/src/app/early-access/success/page.tsx
+index 807e441..cfd6797 100644
+--- a/src/app/early-access/success/page.tsx
++++ b/src/app/early-access/success/page.tsx
+@@ -3,7 +3,10 @@ import Link from "next/link";
+ import { SiteHeader } from "@/components/site-header";
+ import { SiteFooter } from "@/components/site-footer";
+ 
+-export const metadata: Metadata = { title: "You're on the list" };
++export const metadata: Metadata = {
++  title: "You're on the list",
++  robots: { index: false, follow: false },
++};
+ 
+ export default async function EarlyAccessSuccessPage({
+   searchParams,
+diff --git a/src/app/early-access/verify/page.tsx b/src/app/early-access/verify/page.tsx
+index 1175916..c219eac 100644
+--- a/src/app/early-access/verify/page.tsx
++++ b/src/app/early-access/verify/page.tsx
+@@ -5,7 +5,10 @@ import { SiteHeader } from "@/components/site-header";
+ import { SiteFooter } from "@/components/site-footer";
+ import { verifyCreatorEmailToken } from "@/lib/email-verification";
+ 
+-export const metadata: Metadata = { title: "Confirm your email" };
++export const metadata: Metadata = {
++  title: "Confirm your email",
++  robots: { index: false, follow: false },
++};
+ 
+ export default async function EarlyAccessVerifyPage({
+   searchParams,
+diff --git a/src/app/layout.tsx b/src/app/layout.tsx
+index b247d04..ba5d6f4 100644
+--- a/src/app/layout.tsx
++++ b/src/app/layout.tsx
+@@ -11,6 +11,9 @@ export const metadata: Metadata = {
+   },
+   description:
+     "CreatorOS is building a unified analytics and growth platform for digital creators. Join the Early Access program.",
++  alternates: {
++    canonical: siteUrl,
++  },
+   openGraph: {
+     title: "CreatorOS — Build smarter. Grow with data.",
+     description:
+@@ -18,12 +21,36 @@ export const metadata: Metadata = {
+     url: siteUrl,
+     siteName: "CreatorOS",
+     type: "website",
++    locale: "en_US",
++  },
++  twitter: {
++    card: "summary",
++    title: "CreatorOS — Build smarter. Grow with data.",
++    description:
++      "A unified analytics and growth platform for digital creators, currently in early access.",
+   },
+   icons: {
+     icon: "/favicon.ico",
+   },
+ };
+ 
++// Static structured data — no user input involved, safe to inline.
++const structuredData = [
++  {
++    "@context": "https://schema.org",
++    "@type": "Organization",
++    name: "CreatorOS",
++    url: siteUrl,
++    logo: `${siteUrl}/favicon.ico`,
++  },
++  {
++    "@context": "https://schema.org",
++    "@type": "WebSite",
++    name: "CreatorOS",
++    url: siteUrl,
++  },
++];
++
+ export default function RootLayout({
+   children,
+ }: Readonly<{
+@@ -31,7 +58,15 @@ export default function RootLayout({
+ }>) {
+   return (
+     <html lang="en" className="h-full antialiased">
+-      <body className="min-h-full flex flex-col font-sans">{children}</body>
++      <body className="min-h-full flex flex-col font-sans">
++        {children}
++        <script
++          type="application/ld+json"
++          // Structured data is a static, developer-authored object (no user
++          // input), so this is safe from injection.
++          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
++        />
++      </body>
+     </html>
+   );
+ }
+diff --git a/src/app/privacy/page.tsx b/src/app/privacy/page.tsx
+index fda84a9..ee5ddcf 100644
+--- a/src/app/privacy/page.tsx
++++ b/src/app/privacy/page.tsx
+@@ -1,7 +1,7 @@
+ import type { Metadata } from "next";
+ import { LegalPage } from "@/components/legal-page";
+ 
+-export const metadata: Metadata = { title: "Privacy Policy" };
++export const metadata: Metadata = { title: "Privacy Policy", alternates: { canonical: "/privacy" } };
+ 
+ export default function PrivacyPage() {
+   return (
+diff --git a/src/app/terms/page.tsx b/src/app/terms/page.tsx
+index be9d130..94b0a2f 100644
+--- a/src/app/terms/page.tsx
++++ b/src/app/terms/page.tsx
+@@ -1,7 +1,7 @@
+ import type { Metadata } from "next";
+ import { LegalPage } from "@/components/legal-page";
+ 
+-export const metadata: Metadata = { title: "Terms of Service" };
++export const metadata: Metadata = { title: "Terms of Service", alternates: { canonical: "/terms" } };
+ 
+ export default function TermsPage() {
+   return (
+diff --git a/src/app/updates/page.tsx b/src/app/updates/page.tsx
+index a8aa030..844b5eb 100644
+--- a/src/app/updates/page.tsx
++++ b/src/app/updates/page.tsx
+@@ -8,6 +8,7 @@ export const metadata: Metadata = {
+   title: "Updates",
+   description:
+     "Development updates and roadmap for CreatorOS — built in the open, and dependent on community support to keep going.",
++  alternates: { canonical: "/updates" },
+ };
+ 
+ const ROADMAP = [
+diff --git a/src/lib/audit-log.ts b/src/lib/audit-log.ts
+new file mode 100644
+index 0000000..4fc3109
+--- /dev/null
++++ b/src/lib/audit-log.ts
+@@ -0,0 +1,35 @@
++/**
++ * Structured audit logging for sensitive admin actions.
++ *
++ * Writes a single-line JSON record to stdout for every admin write action
++ * (creator deletion, creator edits, announcement sends). This is
++ * intentionally log-only — no database table, no new dependency — so it can
++ * be picked up by whatever log aggregation the deployment already uses
++ * (Vercel logs, journald, etc.) without a schema change.
++ */
++
++export type AuditAction = "creator.delete" | "creator.update" | "announcement.send";
++
++interface AuditLogInput {
++  action: AuditAction;
++  /** Email of the admin performing the action, from the session. */
++  actor: string;
++  /** Creator affected by this action, if any. */
++  creatorId?: string;
++  /** Small, non-sensitive extra context (e.g. changed fields, send counts). */
++  metadata?: Record<string, string | number | boolean | null>;
++}
++
++export function logAdminAction({ action, actor, creatorId, metadata }: AuditLogInput): void {
++  const record = {
++    type: "admin_audit",
++    timestamp: new Date().toISOString(),
++    action,
++    actor,
++    ...(creatorId ? { creatorId } : {}),
++    ...(metadata ? { metadata } : {}),
++  };
++  // Kept as a plain console.log (not console.error) so it doesn't get mixed
++  // in with real error monitoring/alerting pipelines.
++  console.log(`[audit] ${JSON.stringify(record)}`);
++}

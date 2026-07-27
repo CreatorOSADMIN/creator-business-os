@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/require-admin";
 import { serializeCreator } from "@/lib/serialize-creator";
 import { CREATOR_STATUSES } from "@/lib/constants";
 import { verifySameOrigin } from "@/lib/verify-origin";
+import { logAdminAction } from "@/lib/audit-log";
 import { z } from "zod";
 
 const patchSchema = z.object({
@@ -33,7 +34,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const originCheck = verifySameOrigin(request);
   if (originCheck) return originCheck;
 
-  const { response } = await requireAdmin();
+  const { session, response } = await requireAdmin();
   if (response) return response;
 
   const { id } = await params;
@@ -63,6 +64,16 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     },
   });
 
+  logAdminAction({
+    action: "creator.update",
+    actor: session.email,
+    creatorId: id,
+    metadata: {
+      statusChanged: parsed.data.status !== undefined,
+      notesChanged: parsed.data.internalNotes !== undefined,
+    },
+  });
+
   return NextResponse.json({ creator: serializeCreator(creator) });
 }
 
@@ -70,7 +81,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   const originCheck = verifySameOrigin(request);
   if (originCheck) return originCheck;
 
-  const { response } = await requireAdmin();
+  const { session, response } = await requireAdmin();
   if (response) return response;
 
   const { id } = await params;
@@ -88,6 +99,8 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     console.error("[admin/creators DELETE] failed", err);
     return NextResponse.json({ error: "Unable to delete this creator. Please try again." }, { status: 500 });
   }
+
+  logAdminAction({ action: "creator.delete", actor: session.email, creatorId: id });
 
   return NextResponse.json({ success: true });
 }

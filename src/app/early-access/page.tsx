@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   title: "Join Early Access",
   description:
     "Become an early creator on CreatorOS. Join a limited early access program and help shape the platform.",
+  alternates: { canonical: "/early-access" },
 };
 
 export default async function EarlyAccessPage({

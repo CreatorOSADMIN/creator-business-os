@@ -1,0 +1,58 @@
+diff --git a/src/app/early-access/pending/page.tsx b/src/app/early-access/pending/page.tsx
+index 96a95e3..ba6b7e3 100644
+--- a/src/app/early-access/pending/page.tsx
++++ b/src/app/early-access/pending/page.tsx
+@@ -35,10 +35,17 @@ export default async function EarlyAccessPendingPage({
+                 We&apos;ve sent a confirmation link{email ? <> to <strong>{email}</strong></> : null}. Open it
+                 to finish joining the CreatorOS Early Access Program. The link expires in 24 hours.
+               </p>
+-              <p className="mt-4 text-sm text-[var(--ink-muted)]">
+-                Didn&apos;t get it? Check your spam folder, or submit the form again with the same
+-                email to receive a new link.
+-              </p>
++              <div className="mt-6 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] p-5 text-left text-sm text-[var(--ink-muted)]">
++                <p className="font-medium text-[var(--foreground)]">Don&apos;t see it in your inbox?</p>
++                <ul className="mt-2 list-disc space-y-1.5 pl-4">
++                  <li>Check your <strong>Spam</strong> or Junk folder — first emails from a new sender sometimes land there.</li>
++                  <li>Using Gmail? Check the <strong>Promotions</strong> or <strong>Updates</strong> tab as well as your main inbox.</li>
++                  <li>To avoid missing future updates, add us to your contacts once you find the email.</li>
++                </ul>
++                <p className="mt-3">
++                  Still nothing after a few minutes? Submit the form again with the same email to get a new link.
++                </p>
++              </div>
+             </>
+           ) : (
+             <>
+diff --git a/src/lib/admin-credentials.ts b/src/lib/admin-credentials.ts
+index 18ca5de..5d458de 100644
+--- a/src/lib/admin-credentials.ts
++++ b/src/lib/admin-credentials.ts
+@@ -16,17 +16,19 @@ export async function verifyAdminCredentials(email: string, password: string): P
+     throw new Error("ADMIN_EMAIL and ADMIN_PASSWORD must be set in your .env file.");
+   }
+ 
+-  if (email.trim().toLowerCase() !== adminEmail.trim().toLowerCase()) {
+-    return false;
+-  }
++  const emailMatches = timingSafeEqual(
++    email.trim().toLowerCase(),
++    adminEmail.trim().toLowerCase()
++  );
+ 
+   const isHashed = /^\$2[aby]\$/.test(adminPassword);
+-  if (isHashed) {
+-    return bcrypt.compare(password, adminPassword);
+-  }
++  const passwordMatches = isHashed
++    ? await bcrypt.compare(password, adminPassword)
++    : timingSafeEqual(password, adminPassword);
+ 
+-  // Development fallback: constant-time-ish plain comparison.
+-  return timingSafeEqual(password, adminPassword);
++  // Both checks always run (no early return on email mismatch) so a wrong
++  // email can't be distinguished from a wrong password by response timing.
++  return emailMatches && passwordMatches;
+ }
+ 
+ function timingSafeEqual(a: string, b: string): boolean {

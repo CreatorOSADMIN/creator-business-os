@@ -5,7 +5,10 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { verifyCreatorEmailToken } from "@/lib/email-verification";
 
-export const metadata: Metadata = { title: "Confirm your email" };
+export const metadata: Metadata = {
+  title: "Confirm your email",
+  robots: { index: false, follow: false },
+};
 
 export default async function EarlyAccessVerifyPage({
   searchParams,

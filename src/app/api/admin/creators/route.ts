@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
 import { serializeCreator } from "@/lib/serialize-creator";
-import { CREATOR_STATUSES, AUDIENCE_SIZES, audienceSizeRank } from "@/lib/constants";
+import { CREATOR_STATUSES, AUDIENCE_SIZES, PLATFORMS, audienceSizeRank } from "@/lib/constants";
 import type { Prisma } from "@prisma/client";
 
 const SORTABLE_FIELDS = ["createdAt", "audienceSize", "fullName", "status"] as const;
@@ -30,11 +30,20 @@ export async function GET(request: NextRequest) {
   const where: Prisma.CreatorWhereInput = {};
 
   if (search) {
-    where.OR = [
+    const searchOr: Prisma.CreatorWhereInput[] = [
       { fullName: { contains: search } },
       { creatorHandle: { contains: search } },
       { email: { contains: search } },
     ];
+    // Also let the free-text box match a platform name (e.g. "youtube"),
+    // so search covers name/handle/email/platform without a separate field.
+    const matchedPlatform = PLATFORMS.find(
+      (p) => p.label.toLowerCase() === search.toLowerCase() || p.value.toLowerCase() === search.toLowerCase()
+    );
+    if (matchedPlatform) {
+      searchOr.push({ platforms: { contains: `"${matchedPlatform.value}"` } });
+    }
+    where.OR = searchOr;
   }
 
   if (status && (CREATOR_STATUSES as readonly string[]).includes(status)) {
