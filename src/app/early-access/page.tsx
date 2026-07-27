@@ -54,6 +54,11 @@ export default async function EarlyAccessPage({
             contacted as the platform takes shape, and you&apos;ll keep the benefits reserved for
             our earliest members.
           </p>
+          <div className="mt-6 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] p-4 text-sm text-[var(--ink-muted)]">
+            A quick note before you start: please answer honestly. We only use these details to
+            understand creators better and prioritize what to build first. Your answers stay
+            private — we never publish or share them.
+          </div>
           <EarlyAccessForm
             initialReferralCode={first(params.ref)}
             initialUtmSource={first(params.utm_source)}

@@ -17,6 +17,7 @@ export default async function HomePage() {
         <Hero />
         <Problem />
         <Solution />
+        <DevelopmentStatus />
         <EarlyAccessBand progress={progress} goal={goal} />
       </main>
       <SiteFooter />
@@ -159,6 +160,48 @@ function Solution() {
             </div>
           ))}
         </div>
+      </div>
+    </section>
+  );
+}
+
+function DevelopmentStatus() {
+  const stages = [
+    { label: "Foundation & early access", state: "In progress" },
+    { label: "Unified analytics", state: "Planned" },
+    { label: "Insight & recommendations", state: "Planned" },
+  ];
+  return (
+    <section className="border-b border-[var(--border-subtle)] bg-[var(--surface)]">
+      <div className="mx-auto max-w-6xl px-6 py-20">
+        <p className="font-mono-label text-xs uppercase text-[var(--accent)]">Project status</p>
+        <h2 className="mt-3 max-w-xl font-display text-3xl tracking-tight sm:text-4xl">
+          CreatorOS is currently in development.
+        </h2>
+        <p className="mt-4 max-w-2xl text-[var(--ink-muted)]">
+          We&apos;re building the first version, not maintaining a finished product. Early
+          adopters help define what CreatorOS becomes — the project is alive and changes as we
+          learn from the creators who join us.
+        </p>
+        <div className="mt-10 flex flex-wrap gap-3">
+          {stages.map((stage) => (
+            <div
+              key={stage.label}
+              className="flex items-center gap-2 rounded-full border border-[var(--border-subtle)] px-4 py-2 text-sm"
+            >
+              <span className="font-medium">{stage.label}</span>
+              <span className="rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-[11px] font-medium text-[var(--accent)]">
+                {stage.state}
+              </span>
+            </div>
+          ))}
+        </div>
+        <Link
+          href="/updates"
+          className="mt-6 inline-block text-sm font-medium text-[var(--foreground)] underline decoration-[var(--border-subtle)] underline-offset-4 hover:decoration-[var(--accent)]"
+        >
+          See the full roadmap →
+        </Link>
       </div>
     </section>
   );

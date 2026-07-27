@@ -52,7 +52,7 @@ export default function UpdatesPage() {
               <p>
                 This page tracks where CreatorOS actually stands — what&apos;s built, what&apos;s
                 next, and how the project is funded. No polished announcements, just an honest
-                account of progress.
+                account of progress, updated as the project itself develops.
               </p>
               <p>
                 CreatorOS is self-funded and community-supported. Development speed depends

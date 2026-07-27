@@ -23,6 +23,13 @@ export async function sendEmail({ to, subject, html, text }: SendEmailInput): Pr
   const provider = (process.env.EMAIL_PROVIDER || "console").toLowerCase();
   const from = process.env.EMAIL_FROM || "CreatorOS <hello@creatoroslaunch.site>";
 
+  console.log(
+    `[email] sendEmail invoked (provider=${provider || "unset"}, ` +
+      `EMAIL_USER=${maskEmail(process.env.EMAIL_USER)}, ` +
+      `EMAIL_APP_PASSWORD=${Boolean(process.env.EMAIL_APP_PASSWORD)}, ` +
+      `to=${maskEmail(to)})`
+  );
+
   if (provider === "smtp") {
     const host = process.env.SMTP_HOST || "smtp.gmail.com";
     const port = Number(process.env.SMTP_PORT || 465);
@@ -42,15 +49,31 @@ export async function sendEmail({ to, subject, html, text }: SendEmailInput): Pr
       );
     }
 
+    // A Gmail App Password is expected to be sent from the same mailbox it
+    // was generated for. A mismatch here is a very common cause of "it
+    // worked before we switched Gmail accounts" — flag it without failing
+    // the request, since EMAIL_FROM may intentionally use a display alias.
+    if (from.includes("@") && !from.toLowerCase().includes(user.toLowerCase())) {
+      console.warn(
+        `[email] EMAIL_FROM does not appear to match the authenticated SMTP user (${maskEmail(user)}). ` +
+          "Gmail may reject or silently rewrite the From header for a mismatched account."
+      );
+    }
+
+    console.log(`[email] SMTP send starting (host=${host}, port=${port}, secure=${port === 465})`);
     const transporter = getSmtpTransporter({ host, port, user, pass });
 
     try {
-      await transporter.sendMail({ from, to, subject, html, text });
+      const info = await transporter.sendMail({ from, to, subject, html, text });
+      console.log(
+        `[email] SMTP send succeeded (messageId=${info.messageId}, accepted=${info.accepted?.length ?? 0}, rejected=${info.rejected?.length ?? 0})`
+      );
     } catch (err) {
       // Re-throw with a clear, secret-free message (never include auth/pass)
       // so the caller's logs point at the real cause (auth, connection,
       // rejected recipient, etc.) instead of a swallowed generic failure.
       const reason = err instanceof Error ? err.message : String(err);
+      console.error(`[email] SMTP send failed (host=${host}, port=${port}): ${reason}`);
       throw new Error(`[email] SMTP send failed (host=${host}, port=${port}): ${reason}`);
     }
     return;
@@ -58,6 +81,15 @@ export async function sendEmail({ to, subject, html, text }: SendEmailInput): Pr
 
   // Default / development mode.
   logToConsole({ to, subject, text });
+}
+
+/** Masks an email address for logging, e.g. "j***e@example.com". Never logs full addresses or secrets. */
+function maskEmail(value: string | undefined): string {
+  if (!value) return "unset";
+  const [local, domain] = value.split("@");
+  if (!domain) return "invalid";
+  const maskedLocal = local.length <= 2 ? `${local[0] ?? ""}*` : `${local[0]}***${local[local.length - 1]}`;
+  return `${maskedLocal}@${domain}`;
 }
 
 // Reused across calls (server modules stay warm between requests on the
