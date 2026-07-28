@@ -28,4 +28,20 @@
 3. Google Account → Security → App Passwords → generate one for "Mail".
 4. Use that 16-character value as `EMAIL_APP_PASSWORD` (do not use the normal account password).
 
+## Error tracking (Sentry) — optional
+
+| Variable | Required | Notes |
+|---|---|---|
+| `SENTRY_DSN` | no | Server/edge error reporting. Leave unset to disable Sentry entirely (default for local dev/CI). |
+| `NEXT_PUBLIC_SENTRY_DSN` | no | Same DSN, exposed to the browser bundle for client-side error reporting. Leave unset to disable. |
+| `SENTRY_AUTH_TOKEN` | no | Only needed to upload source maps during `next build` for readable stack traces in Sentry. Build succeeds without it (source maps are simply skipped). |
+| `SENTRY_ORG` / `SENTRY_PROJECT` | no | Used together with `SENTRY_AUTH_TOKEN` for source map upload. |
+
+All Sentry events are scrubbed in `src/lib/sentry-scrub.ts` before being sent: no cookies, request headers/body, user identity, or any field whose name looks like a password/secret/token.
+
+## Startup validation
+
+`src/lib/env.ts` validates all required variables (`DATABASE_URL`, `SESSION_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `NEXT_PUBLIC_SITE_URL`, ...) with Zod. A missing/invalid variable is reported clearly in server logs on startup (see `src/instrumentation.ts`) without ever printing the actual value. See `.env.test.example` for a full list with dummy values.
+
+
 Never commit real values for any of the above — set them in the Vercel project's Environment Variables settings.
