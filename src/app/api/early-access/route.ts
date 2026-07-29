@@ -7,6 +7,7 @@ import { createVerificationToken } from "@/lib/email-verification";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { verifySameOrigin } from "@/lib/verify-origin";
 import { setRegisteredCreatorCookie } from "@/lib/creator-session";
+import { logger } from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
   const originCheck = verifySameOrigin(request);
@@ -114,10 +115,11 @@ export async function POST(request: NextRequest) {
     // the client uses `emailSent` to show an accurate message and the user
     // can resubmit to retry delivery.
     emailSent = false;
-    console.error(
-      "[early-access] Failed to send verification email:",
-      err instanceof Error ? err.message : err
-    );
+    logger.error("early-access: failed to send verification email", {
+      scope: "early-access",
+      creatorId: creator.id,
+      err,
+    });
   }
 
   try {
@@ -126,7 +128,11 @@ export async function POST(request: NextRequest) {
     // The registration itself already succeeded in the database; a cookie
     // failure (e.g. misconfigured SESSION_SECRET) must not turn this into a
     // failed request for the user.
-    console.error("[early-access] Failed to set recognition cookie:", err);
+    logger.error("early-access: failed to set recognition cookie", {
+      scope: "early-access",
+      creatorId: creator.id,
+      err,
+    });
   }
 
   return NextResponse.json(

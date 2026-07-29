@@ -5,6 +5,7 @@ import { serializeCreator } from "@/lib/serialize-creator";
 import { CREATOR_STATUSES } from "@/lib/constants";
 import { verifySameOrigin } from "@/lib/verify-origin";
 import { logAdminAction } from "@/lib/audit-log";
+import { logger } from "@/lib/logger";
 import { z } from "zod";
 
 const patchSchema = z.object({
@@ -96,7 +97,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     if (typeof err === "object" && err !== null && "code" in err && err.code === "P2025") {
       return NextResponse.json({ error: "Creator not found" }, { status: 404 });
     }
-    console.error("[admin/creators DELETE] failed", err);
+    logger.error("creators: delete failed", { scope: "admin-creators-delete", creatorId: id, err });
     return NextResponse.json({ error: "Unable to delete this creator. Please try again." }, { status: 500 });
   }
 

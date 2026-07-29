@@ -2,6 +2,8 @@ import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { getEarlyAccessProgress } from "@/lib/early-access-progress";
+import { TrackEventOnMount } from "@/components/analytics/track-event-on-mount";
+import { TrackedLink } from "@/components/analytics/tracked-link";
 
 // Keeps the Early Access progress bar fresh without a client-side fetch or
 // polling: the homepage revalidates on this cadence and re-reads the real
@@ -13,6 +15,7 @@ export default async function HomePage() {
   return (
     <>
       <SiteHeader />
+      <TrackEventOnMount event="homepage_view" />
       <main className="flex-1">
         <Hero />
         <Problem />
@@ -43,12 +46,14 @@ function Hero() {
             audience, their content, and their growth — across every platform they publish on.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-4">
-            <Link
+            <TrackedLink
               href="/early-access"
+              event="cta_click"
+              eventProps={{ location: "hero" }}
               className="rounded-full bg-[var(--accent)] px-6 py-3 text-sm font-medium text-white transition hover:bg-[var(--accent-strong)]"
             >
               Join Early Access
-            </Link>
+            </TrackedLink>
             <Link
               href="#problem"
               className="text-sm font-medium text-[var(--foreground)] underline decoration-[var(--border-subtle)] underline-offset-4 hover:decoration-[var(--accent)]"

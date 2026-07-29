@@ -3,9 +3,10 @@ export async function register() {
   // missing, so the problem is visible in Vercel/server logs immediately
   // instead of surfacing later as an opaque runtime error.
   const { validateEnvOrReport } = await import("@/lib/env");
+  const { logger } = await import("@/lib/logger");
   const check = validateEnvOrReport();
   if (!check.ok) {
-    console.error(`[startup] Environment validation failed:\n${check.message}`);
+    logger.error("startup: environment validation failed", { message: check.message });
   }
 
   if (process.env.NEXT_RUNTIME === "nodejs") {

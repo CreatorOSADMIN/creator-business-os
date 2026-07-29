@@ -4,6 +4,7 @@ import { verifyAdminCredentials } from "@/lib/admin-credentials";
 import { createAdminSession } from "@/lib/session";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { verifySameOrigin } from "@/lib/verify-origin";
+import { logger } from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
   const originCheck = verifySameOrigin(request);
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
   try {
     valid = await verifyAdminCredentials(parsed.data.email, parsed.data.password);
   } catch (err) {
-    console.error("[admin-login] Configuration error:", err);
+    logger.error("admin-login: configuration error", { scope: "admin-login", err });
     return NextResponse.json(
       { error: "Admin authentication is not configured correctly on the server." },
       { status: 500 }

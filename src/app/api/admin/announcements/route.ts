@@ -6,6 +6,7 @@ import { verifySameOrigin } from "@/lib/verify-origin";
 import { sendEmail } from "@/lib/email";
 import { rateLimit } from "@/lib/rate-limit";
 import { logAdminAction } from "@/lib/audit-log";
+import { logger } from "@/lib/logger";
 
 const announcementSchema = z.object({
   subject: z.string().trim().min(1, "Subject is required").max(200),
@@ -64,7 +65,7 @@ export async function POST(request: NextRequest) {
       sent += 1;
     } catch (err) {
       failed += 1;
-      console.error("[admin/announcements] send failed", err);
+      logger.error("announcements: send failed", { scope: "admin-announcements", err });
     }
   }
 

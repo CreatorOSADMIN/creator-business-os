@@ -11,6 +11,7 @@ import {
   COUNTRIES,
 } from "@/lib/constants";
 import { creatorRegistrationSchema } from "@/lib/validation";
+import { trackEvent } from "@/lib/analytics";
 
 interface Props {
   initialReferralCode?: string;
@@ -68,6 +69,11 @@ export function EarlyAccessForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+
+  // Fires once when the form mounts (i.e. the person opened /early-access).
+  useEffect(() => {
+    trackEvent("early_access_form_open");
+  }, []);
 
   // Restore a saved draft (minus the email) after "Use a different email".
   useEffect(() => {
@@ -152,6 +158,7 @@ export function EarlyAccessForm({
       }
       // Save a draft of the entered data (minus email/honeypot) in case the
       // user comes back via "Use a different email" on the pending page.
+      trackEvent("early_access_form_submit");
       try {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { email: _email, website: _website, ...draft } = form;

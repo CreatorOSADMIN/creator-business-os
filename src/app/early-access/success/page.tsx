@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { TrackEventOnMount } from "@/components/analytics/track-event-on-mount";
 
 export const metadata: Metadata = {
   title: "You're on the list",
@@ -20,6 +21,7 @@ export default async function EarlyAccessSuccessPage({
   return (
     <>
       <SiteHeader />
+      {id && <TrackEventOnMount event="email_verified" props={{ creatorId: id }} />}
       <main className="flex-1">
         <div className="mx-auto max-w-xl px-6 py-24 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[var(--accent-strong)]">
