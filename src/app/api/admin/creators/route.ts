@@ -68,15 +68,18 @@ export async function GET(request: NextRequest) {
     where.emailVerifiedAt = null;
   }
 
-  const total = await prisma.creator.count({ where });
-
   if (sortBy === "createdAt") {
-    const creators = await prisma.creator.findMany({
-      where,
-      orderBy: { createdAt: sort },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    });
+    // Count and page fetch are independent — run them concurrently instead
+    // of sequentially to cut this endpoint's latency roughly in half.
+    const [total, creators] = await Promise.all([
+      prisma.creator.count({ where }),
+      prisma.creator.findMany({
+        where,
+        orderBy: { createdAt: sort },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+    ]);
     return NextResponse.json({ total, page, pageSize, creators: creators.map(serializeCreator) });
   }
 
@@ -84,7 +87,10 @@ export async function GET(request: NextRequest) {
   // need (audienceSize is a category, not a number), so fetch the filtered
   // set and sort/paginate in memory. Fine for an early-access-sized list;
   // revisit with a DB-level ranking column if this ever needs to scale.
-  const all = await prisma.creator.findMany({ where, orderBy: { createdAt: "desc" } });
+  const [total, all] = await Promise.all([
+    prisma.creator.count({ where }),
+    prisma.creator.findMany({ where, orderBy: { createdAt: "desc" } }),
+  ]);
   const dir = sort === "asc" ? 1 : -1;
   all.sort((a, b) => {
     if (sortBy === "audienceSize") return dir * (audienceSizeRank(a.audienceSize) - audienceSizeRank(b.audienceSize));

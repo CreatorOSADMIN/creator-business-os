@@ -69,6 +69,11 @@ export function EarlyAccessForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  // Anti-bot: timestamp captured when the form becomes interactive. Sent
+  // alongside (not part of) the validated payload so the API can reject
+  // submissions completed implausibly fast, without exposing the check to
+  // the client bundle's validation logic.
+  const [formRenderedAt] = useState(() => Date.now());
 
   // Fires once when the form mounts (i.e. the person opened /early-access).
   useEffect(() => {
@@ -148,7 +153,7 @@ export function EarlyAccessForm({
       const res = await fetch("/api/early-access", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(parsed.data),
+        body: JSON.stringify({ ...parsed.data, formRenderedAt }),
       });
       const data = await res.json();
       if (!res.ok) {

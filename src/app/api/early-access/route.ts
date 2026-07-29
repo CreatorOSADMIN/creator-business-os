@@ -15,8 +15,22 @@ export async function POST(request: NextRequest) {
   if (originCheck) return originCheck;
 
   const ip = getClientIp(request.headers);
+
+  // Short-window burst guard in addition to the existing 10-minute quota:
+  // catches scripted floods (many requests in a few seconds) that would
+  // otherwise still fit under the longer-window limit.
+  const burst = rateLimit(`early-access-burst:${ip}`, { limit: 3, windowMs: 30 * 1000 });
+  if (!burst.allowed) {
+    logger.warn("early-access: burst rate limit exceeded", { scope: "early-access", ip });
+    return NextResponse.json(
+      { error: "Too many submissions. Please try again later." },
+      { status: 429 }
+    );
+  }
+
   const { allowed } = rateLimit(`early-access:${ip}`, { limit: 5, windowMs: 10 * 60 * 1000 });
   if (!allowed) {
+    logger.warn("early-access: rate limit exceeded", { scope: "early-access", ip });
     return NextResponse.json(
       { error: "Too many submissions. Please try again later." },
       { status: 429 }
@@ -33,7 +47,29 @@ export async function POST(request: NextRequest) {
   // Honeypot field: bots that fill hidden fields are silently rejected
   // without revealing detection logic to the client.
   if (typeof body === "object" && body !== null && "website" in body && (body as { website?: string }).website) {
+    logger.warn("early-access: rejected — honeypot field filled", { scope: "early-access", ip });
     return NextResponse.json({ ok: true, creatorId: "ignored" }, { status: 201 });
+  }
+
+  // Fill-time check: the form has ~15 required inputs across several
+  // sections, so a genuine person needs at least a couple of seconds to
+  // complete it. Anything submitted faster than that is almost certainly
+  // scripted. Responds identically to a real success so the check stays
+  // invisible to whatever is submitting. Missing/invalid timestamps (e.g.
+  // an older client build) are treated as "unknown" and let through rather
+  // than blocking real users.
+  const MIN_FILL_TIME_MS = 1500;
+  if (typeof body === "object" && body !== null && "formRenderedAt" in body) {
+    const renderedAt = Number((body as { formRenderedAt?: unknown }).formRenderedAt);
+    const elapsed = Date.now() - renderedAt;
+    if (Number.isFinite(renderedAt) && elapsed >= 0 && elapsed < MIN_FILL_TIME_MS) {
+      logger.warn("early-access: rejected — filled too fast (likely automated)", {
+        scope: "early-access",
+        ip,
+        elapsedMs: elapsed,
+      });
+      return NextResponse.json({ ok: true, creatorId: "ignored" }, { status: 201 });
+    }
   }
 
   const parsed = creatorRegistrationSchema.safeParse(body);
