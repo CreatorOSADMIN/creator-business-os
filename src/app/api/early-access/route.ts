@@ -8,6 +8,7 @@ import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { verifySameOrigin } from "@/lib/verify-origin";
 import { setRegisteredCreatorCookie } from "@/lib/creator-session";
 import { logger } from "@/lib/logger";
+import { PRIVACY_POLICY_VERSION } from "@/lib/constants";
 
 export async function POST(request: NextRequest) {
   const originCheck = verifySameOrigin(request);
@@ -58,6 +59,20 @@ export async function POST(request: NextRequest) {
 
   let creator = existing;
 
+  if (creator) {
+    // Re-submission of an unverified signup: the consent checkbox was
+    // re-confirmed on this submit, so refresh the GDPR audit trail too.
+    creator = await prisma.creator.update({
+      where: { id: creator.id },
+      data: {
+        privacyAccepted: data.privacyAccepted,
+        marketingConsent: data.marketingConsent,
+        gdprConsentAt: new Date(),
+        privacyPolicyVersion: PRIVACY_POLICY_VERSION,
+      },
+    });
+  }
+
   if (!creator) {
     let referredBy: string | null = null;
     if (data.referralCode) {
@@ -89,6 +104,8 @@ export async function POST(request: NextRequest) {
         productInterests: JSON.stringify(data.productInterests),
         privacyAccepted: data.privacyAccepted,
         marketingConsent: data.marketingConsent,
+        gdprConsentAt: new Date(),
+        privacyPolicyVersion: PRIVACY_POLICY_VERSION,
         referralCode,
         referredBy,
         utmSource: data.utmSource || null,

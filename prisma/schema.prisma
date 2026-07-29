@@ -25,6 +25,11 @@ model Creator {
 
   marketingConsent Boolean @default(false)
   privacyAccepted  Boolean @default(false)
+  // GDPR audit trail: when consent was given and which Privacy Policy
+  // version was in effect at that time. Null for records created before
+  // this field existed.
+  gdprConsentAt        DateTime?
+  privacyPolicyVersion String?
 
   // Kept as a validated string rather than a native enum (unchanged across
   // the SQLite->PostgreSQL migration to avoid an app-visible schema change).

@@ -60,10 +60,12 @@ export const PRODUCT_INTERESTS = [
 
 export const CREATOR_STATUSES = [
   "NEW",
+  "VERIFIED",
   "CONTACTED",
   "INTERVIEW_SCHEDULED",
   "INTERESTED",
   "BETA",
+  "CONVERTED",
   "PAID",
   "REJECTED",
 ] as const;
@@ -72,23 +74,32 @@ export type CreatorStatusValue = (typeof CREATOR_STATUSES)[number];
 
 export const STATUS_LABELS: Record<CreatorStatusValue, string> = {
   NEW: "New",
+  VERIFIED: "Verified",
   CONTACTED: "Contacted",
   INTERVIEW_SCHEDULED: "Interview scheduled",
   INTERESTED: "Interested",
   BETA: "Beta",
+  CONVERTED: "Converted",
   PAID: "Paid",
   REJECTED: "Rejected",
 };
 
 export const STATUS_COLORS: Record<CreatorStatusValue, string> = {
   NEW: "bg-neutral-200 text-neutral-800",
+  VERIFIED: "bg-sky-100 text-sky-800",
   CONTACTED: "bg-blue-100 text-blue-800",
   INTERVIEW_SCHEDULED: "bg-purple-100 text-purple-800",
   INTERESTED: "bg-amber-100 text-amber-800",
   BETA: "bg-teal-100 text-teal-800",
+  CONVERTED: "bg-emerald-100 text-emerald-800",
   PAID: "bg-emerald-100 text-emerald-800",
   REJECTED: "bg-red-100 text-red-800",
 };
+
+// Bumped whenever the Privacy Policy content changes materially. Stored on
+// each Creator record at signup time so we always know which version of the
+// policy a given consent was given under (GDPR accountability requirement).
+export const PRIVACY_POLICY_VERSION = "1.0";
 
 // ISO-ish country list, kept intentionally broad for a global audience.
 export const COUNTRIES = [

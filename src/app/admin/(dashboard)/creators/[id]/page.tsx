@@ -31,6 +31,9 @@ interface CreatorDetail {
   referralCode: string;
   referredBy: string | null;
   marketingConsent: boolean;
+  privacyAccepted: boolean;
+  gdprConsentAt: string | null;
+  privacyPolicyVersion: string | null;
   emailVerifiedAt: string | null;
   utmSource: string | null;
   utmMedium: string | null;
@@ -269,6 +272,13 @@ export default function AdminCreatorDetailPage() {
               value={creator.emailVerifiedAt ? new Date(creator.emailVerifiedAt).toLocaleString() : "Not verified"}
             />
             <Row label="Marketing consent" value={creator.marketingConsent ? "Yes" : "No"} />
+            <Row label="Privacy Policy consent" value={creator.privacyAccepted ? "Given" : "Not given"} />
+            {creator.gdprConsentAt && (
+              <Row label="Consent given at" value={new Date(creator.gdprConsentAt).toLocaleString()} />
+            )}
+            {creator.privacyPolicyVersion && (
+              <Row label="Privacy Policy version accepted" value={creator.privacyPolicyVersion} />
+            )}
             {creator.utmSource && <Row label="UTM source" value={creator.utmSource} />}
             {creator.utmMedium && <Row label="UTM medium" value={creator.utmMedium} />}
             {creator.utmCampaign && <Row label="UTM campaign" value={creator.utmCampaign} />}

@@ -73,6 +73,11 @@ describe("statusUpdateSchema", () => {
     expect(statusUpdateSchema.safeParse({ status: "INTERESTED" }).success).toBe(true);
   });
 
+  it("accepts the GDPR/lead-management statuses (verified, converted)", () => {
+    expect(statusUpdateSchema.safeParse({ status: "VERIFIED" }).success).toBe(true);
+    expect(statusUpdateSchema.safeParse({ status: "CONVERTED" }).success).toBe(true);
+  });
+
   it("rejects an unknown status", () => {
     expect(statusUpdateSchema.safeParse({ status: "MADE_UP" }).success).toBe(false);
   });

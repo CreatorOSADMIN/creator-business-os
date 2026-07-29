@@ -23,6 +23,9 @@ interface CreatorRow {
   status: string;
   createdAt: string;
   emailVerifiedAt: string | null;
+  privacyAccepted: boolean;
+  gdprConsentAt: string | null;
+  utmSource: string | null;
 }
 
 const SORT_OPTIONS = [
@@ -253,6 +256,8 @@ export default function AdminCreatorsPage() {
               <th className="px-4 py-3 font-medium">Audience</th>
               <th className="px-4 py-3 font-medium">Status</th>
               <th className="px-4 py-3 font-medium">Verified</th>
+              <th className="px-4 py-3 font-medium">GDPR consent</th>
+              <th className="px-4 py-3 font-medium">Source</th>
               <th className="px-4 py-3 font-medium">Registered</th>
               <th className="px-4 py-3 font-medium">Actions</th>
             </tr>
@@ -260,14 +265,14 @@ export default function AdminCreatorsPage() {
           <tbody className="divide-y divide-[var(--border-subtle)]">
             {loading && (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-[var(--ink-muted)]">
+                <td colSpan={10} className="px-4 py-8 text-center text-[var(--ink-muted)]">
                   Loading…
                 </td>
               </tr>
             )}
             {!loading && creators.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-[var(--ink-muted)]">
+                <td colSpan={10} className="px-4 py-8 text-center text-[var(--ink-muted)]">
                   No creators match these filters.
                 </td>
               </tr>
@@ -304,6 +309,18 @@ export default function AdminCreatorsPage() {
                       </span>
                     )}
                   </td>
+                  <td className="px-4 py-3">
+                    {creator.privacyAccepted ? (
+                      <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-800">
+                        Consent given
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-800">
+                        No consent
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-[var(--ink-muted)]">{creator.utmSource || "—"}</td>
                   <td className="px-4 py-3 text-[var(--ink-muted)]">
                     {new Date(creator.createdAt).toLocaleDateString()}
                   </td>

@@ -5,6 +5,7 @@ import {
   PUBLISHING_FREQUENCIES,
   CREATOR_EXPERIENCE,
   PRODUCT_INTERESTS,
+  CREATOR_STATUSES,
 } from "./constants";
 
 const platformValues = PLATFORMS.map((p) => p.value) as [string, ...string[]];
@@ -60,15 +61,7 @@ export const adminLoginSchema = z.object({
 });
 
 export const statusUpdateSchema = z.object({
-  status: z.enum([
-    "NEW",
-    "CONTACTED",
-    "INTERVIEW_SCHEDULED",
-    "INTERESTED",
-    "BETA",
-    "PAID",
-    "REJECTED",
-  ]),
+  status: z.enum(CREATOR_STATUSES),
 });
 
 export const internalNoteSchema = z.object({

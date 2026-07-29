@@ -1,0 +1,401 @@
+diff --git a/prisma/migrations/20260729000000_add_gdpr_consent_fields/migration.sql b/prisma/migrations/20260729000000_add_gdpr_consent_fields/migration.sql
+new file mode 100644
+index 0000000..922642c
+--- /dev/null
++++ b/prisma/migrations/20260729000000_add_gdpr_consent_fields/migration.sql
+@@ -0,0 +1,4 @@
++-- Add GDPR consent audit-trail fields to Creator.
++-- Nullable: existing rows have no recorded consent timestamp/version.
++ALTER TABLE "Creator" ADD COLUMN "gdprConsentAt" TIMESTAMP(3);
++ALTER TABLE "Creator" ADD COLUMN "privacyPolicyVersion" TEXT;
+diff --git a/prisma/schema.prisma b/prisma/schema.prisma
+index 6be2f81..1194181 100644
+--- a/prisma/schema.prisma
++++ b/prisma/schema.prisma
+@@ -25,6 +25,11 @@ model Creator {
+ 
+   marketingConsent Boolean @default(false)
+   privacyAccepted  Boolean @default(false)
++  // GDPR audit trail: when consent was given and which Privacy Policy
++  // version was in effect at that time. Null for records created before
++  // this field existed.
++  gdprConsentAt        DateTime?
++  privacyPolicyVersion String?
+ 
+   // Kept as a validated string rather than a native enum (unchanged across
+   // the SQLite->PostgreSQL migration to avoid an app-visible schema change).
+diff --git a/src/app/admin/(dashboard)/creators/[id]/page.tsx b/src/app/admin/(dashboard)/creators/[id]/page.tsx
+index 866960f..2ca8622 100644
+--- a/src/app/admin/(dashboard)/creators/[id]/page.tsx
++++ b/src/app/admin/(dashboard)/creators/[id]/page.tsx
+@@ -31,6 +31,9 @@ interface CreatorDetail {
+   referralCode: string;
+   referredBy: string | null;
+   marketingConsent: boolean;
++  privacyAccepted: boolean;
++  gdprConsentAt: string | null;
++  privacyPolicyVersion: string | null;
+   emailVerifiedAt: string | null;
+   utmSource: string | null;
+   utmMedium: string | null;
+@@ -269,6 +272,13 @@ export default function AdminCreatorDetailPage() {
+               value={creator.emailVerifiedAt ? new Date(creator.emailVerifiedAt).toLocaleString() : "Not verified"}
+             />
+             <Row label="Marketing consent" value={creator.marketingConsent ? "Yes" : "No"} />
++            <Row label="Privacy Policy consent" value={creator.privacyAccepted ? "Given" : "Not given"} />
++            {creator.gdprConsentAt && (
++              <Row label="Consent given at" value={new Date(creator.gdprConsentAt).toLocaleString()} />
++            )}
++            {creator.privacyPolicyVersion && (
++              <Row label="Privacy Policy version accepted" value={creator.privacyPolicyVersion} />
++            )}
+             {creator.utmSource && <Row label="UTM source" value={creator.utmSource} />}
+             {creator.utmMedium && <Row label="UTM medium" value={creator.utmMedium} />}
+             {creator.utmCampaign && <Row label="UTM campaign" value={creator.utmCampaign} />}
+diff --git a/src/app/admin/(dashboard)/creators/page.tsx b/src/app/admin/(dashboard)/creators/page.tsx
+index d151e2d..7c760d6 100644
+--- a/src/app/admin/(dashboard)/creators/page.tsx
++++ b/src/app/admin/(dashboard)/creators/page.tsx
+@@ -23,6 +23,9 @@ interface CreatorRow {
+   status: string;
+   createdAt: string;
+   emailVerifiedAt: string | null;
++  privacyAccepted: boolean;
++  gdprConsentAt: string | null;
++  utmSource: string | null;
+ }
+ 
+ const SORT_OPTIONS = [
+@@ -253,6 +256,8 @@ export default function AdminCreatorsPage() {
+               <th className="px-4 py-3 font-medium">Audience</th>
+               <th className="px-4 py-3 font-medium">Status</th>
+               <th className="px-4 py-3 font-medium">Verified</th>
++              <th className="px-4 py-3 font-medium">GDPR consent</th>
++              <th className="px-4 py-3 font-medium">Source</th>
+               <th className="px-4 py-3 font-medium">Registered</th>
+               <th className="px-4 py-3 font-medium">Actions</th>
+             </tr>
+@@ -260,14 +265,14 @@ export default function AdminCreatorsPage() {
+           <tbody className="divide-y divide-[var(--border-subtle)]">
+             {loading && (
+               <tr>
+-                <td colSpan={8} className="px-4 py-8 text-center text-[var(--ink-muted)]">
++                <td colSpan={10} className="px-4 py-8 text-center text-[var(--ink-muted)]">
+                   Loading…
+                 </td>
+               </tr>
+             )}
+             {!loading && creators.length === 0 && (
+               <tr>
+-                <td colSpan={8} className="px-4 py-8 text-center text-[var(--ink-muted)]">
++                <td colSpan={10} className="px-4 py-8 text-center text-[var(--ink-muted)]">
+                   No creators match these filters.
+                 </td>
+               </tr>
+@@ -304,6 +309,18 @@ export default function AdminCreatorsPage() {
+                       </span>
+                     )}
+                   </td>
++                  <td className="px-4 py-3">
++                    {creator.privacyAccepted ? (
++                      <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-800">
++                        Consent given
++                      </span>
++                    ) : (
++                      <span className="rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-800">
++                        No consent
++                      </span>
++                    )}
++                  </td>
++                  <td className="px-4 py-3 text-[var(--ink-muted)]">{creator.utmSource || "—"}</td>
+                   <td className="px-4 py-3 text-[var(--ink-muted)]">
+                     {new Date(creator.createdAt).toLocaleDateString()}
+                   </td>
+diff --git a/src/app/api/admin/creators/export/route.ts b/src/app/api/admin/creators/export/route.ts
+index af6d66d..6c3c99c 100644
+--- a/src/app/api/admin/creators/export/route.ts
++++ b/src/app/api/admin/creators/export/route.ts
+@@ -2,23 +2,29 @@ import { NextResponse } from "next/server";
+ import { prisma } from "@/lib/prisma";
+ import { requireAdmin } from "@/lib/require-admin";
+ import { toCsv } from "@/lib/csv";
++import { LEAD_CSV_HEADERS, buildLeadCsvRow } from "@/lib/lead-export";
+ 
+ export async function GET() {
+   const { response } = await requireAdmin();
+   if (response) return response;
+ 
+   const creators = await prisma.creator.findMany({
+-    select: { email: true, createdAt: true, emailVerifiedAt: true },
++    select: {
++      email: true,
++      createdAt: true,
++      emailVerifiedAt: true,
++      status: true,
++      privacyAccepted: true,
++      gdprConsentAt: true,
++      privacyPolicyVersion: true,
++      utmSource: true,
++    },
+     orderBy: { createdAt: "desc" },
+   });
+ 
+-  const rows = creators.map((c) => [
+-    c.email,
+-    c.createdAt.toISOString(),
+-    c.emailVerifiedAt ? "verified" : "pending",
+-  ]);
++  const rows = creators.map(buildLeadCsvRow);
+ 
+-  const csv = toCsv(["email", "signup_date", "verification_status"], rows);
++  const csv = toCsv([...LEAD_CSV_HEADERS], rows);
+   const filename = `early-access-leads-${new Date().toISOString().slice(0, 10)}.csv`;
+ 
+   return new NextResponse(csv, {
+diff --git a/src/app/api/early-access/route.ts b/src/app/api/early-access/route.ts
+index a5185f7..8994718 100644
+--- a/src/app/api/early-access/route.ts
++++ b/src/app/api/early-access/route.ts
+@@ -8,6 +8,7 @@ import { rateLimit, getClientIp } from "@/lib/rate-limit";
+ import { verifySameOrigin } from "@/lib/verify-origin";
+ import { setRegisteredCreatorCookie } from "@/lib/creator-session";
+ import { logger } from "@/lib/logger";
++import { PRIVACY_POLICY_VERSION } from "@/lib/constants";
+ 
+ export async function POST(request: NextRequest) {
+   const originCheck = verifySameOrigin(request);
+@@ -58,6 +59,20 @@ export async function POST(request: NextRequest) {
+ 
+   let creator = existing;
+ 
++  if (creator) {
++    // Re-submission of an unverified signup: the consent checkbox was
++    // re-confirmed on this submit, so refresh the GDPR audit trail too.
++    creator = await prisma.creator.update({
++      where: { id: creator.id },
++      data: {
++        privacyAccepted: data.privacyAccepted,
++        marketingConsent: data.marketingConsent,
++        gdprConsentAt: new Date(),
++        privacyPolicyVersion: PRIVACY_POLICY_VERSION,
++      },
++    });
++  }
++
+   if (!creator) {
+     let referredBy: string | null = null;
+     if (data.referralCode) {
+@@ -89,6 +104,8 @@ export async function POST(request: NextRequest) {
+         productInterests: JSON.stringify(data.productInterests),
+         privacyAccepted: data.privacyAccepted,
+         marketingConsent: data.marketingConsent,
++        gdprConsentAt: new Date(),
++        privacyPolicyVersion: PRIVACY_POLICY_VERSION,
+         referralCode,
+         referredBy,
+         utmSource: data.utmSource || null,
+diff --git a/src/lib/__tests__/lead-export.test.ts b/src/lib/__tests__/lead-export.test.ts
+new file mode 100644
+index 0000000..1d48b42
+--- /dev/null
++++ b/src/lib/__tests__/lead-export.test.ts
+@@ -0,0 +1,58 @@
++import { describe, it, expect } from "vitest";
++import { LEAD_CSV_HEADERS, buildLeadCsvRow, type LeadExportRecord } from "@/lib/lead-export";
++
++function makeRecord(overrides: Partial<LeadExportRecord> = {}): LeadExportRecord {
++  return {
++    email: "jane@example.com",
++    createdAt: new Date("2026-07-01T10:00:00.000Z"),
++    emailVerifiedAt: new Date("2026-07-01T10:15:00.000Z"),
++    status: "NEW",
++    privacyAccepted: true,
++    gdprConsentAt: new Date("2026-07-01T10:00:00.000Z"),
++    privacyPolicyVersion: "1.0",
++    utmSource: "newsletter",
++    ...overrides,
++  };
++}
++
++describe("LEAD_CSV_HEADERS", () => {
++  it("has one header per row column", () => {
++    expect(LEAD_CSV_HEADERS.length).toBe(8);
++  });
++});
++
++describe("buildLeadCsvRow", () => {
++  it("builds a fully-populated row in header order", () => {
++    const row = buildLeadCsvRow(makeRecord());
++    expect(row).toEqual([
++      "jane@example.com",
++      "2026-07-01T10:00:00.000Z",
++      "verified",
++      "NEW",
++      "true",
++      "2026-07-01T10:00:00.000Z",
++      "1.0",
++      "newsletter",
++    ]);
++    expect(row.length).toBe(LEAD_CSV_HEADERS.length);
++  });
++
++  it("reports pending verification when emailVerifiedAt is null", () => {
++    const row = buildLeadCsvRow(makeRecord({ emailVerifiedAt: null }));
++    expect(row[2]).toBe("pending");
++  });
++
++  it("reports false consent and blank audit fields when consent was not given", () => {
++    const row = buildLeadCsvRow(
++      makeRecord({ privacyAccepted: false, gdprConsentAt: null, privacyPolicyVersion: null })
++    );
++    expect(row[4]).toBe("false");
++    expect(row[5]).toBe("");
++    expect(row[6]).toBe("");
++  });
++
++  it("leaves UTM source blank when absent", () => {
++    const row = buildLeadCsvRow(makeRecord({ utmSource: null }));
++    expect(row[7]).toBe("");
++  });
++});
+diff --git a/src/lib/__tests__/validation.test.ts b/src/lib/__tests__/validation.test.ts
+index 327bc42..b58d86b 100644
+--- a/src/lib/__tests__/validation.test.ts
++++ b/src/lib/__tests__/validation.test.ts
+@@ -73,6 +73,11 @@ describe("statusUpdateSchema", () => {
+     expect(statusUpdateSchema.safeParse({ status: "INTERESTED" }).success).toBe(true);
+   });
+ 
++  it("accepts the GDPR/lead-management statuses (verified, converted)", () => {
++    expect(statusUpdateSchema.safeParse({ status: "VERIFIED" }).success).toBe(true);
++    expect(statusUpdateSchema.safeParse({ status: "CONVERTED" }).success).toBe(true);
++  });
++
+   it("rejects an unknown status", () => {
+     expect(statusUpdateSchema.safeParse({ status: "MADE_UP" }).success).toBe(false);
+   });
+diff --git a/src/lib/constants.ts b/src/lib/constants.ts
+index 3eeaba4..9cee44b 100644
+--- a/src/lib/constants.ts
++++ b/src/lib/constants.ts
+@@ -60,10 +60,12 @@ export const PRODUCT_INTERESTS = [
+ 
+ export const CREATOR_STATUSES = [
+   "NEW",
++  "VERIFIED",
+   "CONTACTED",
+   "INTERVIEW_SCHEDULED",
+   "INTERESTED",
+   "BETA",
++  "CONVERTED",
+   "PAID",
+   "REJECTED",
+ ] as const;
+@@ -72,24 +74,33 @@ export type CreatorStatusValue = (typeof CREATOR_STATUSES)[number];
+ 
+ export const STATUS_LABELS: Record<CreatorStatusValue, string> = {
+   NEW: "New",
++  VERIFIED: "Verified",
+   CONTACTED: "Contacted",
+   INTERVIEW_SCHEDULED: "Interview scheduled",
+   INTERESTED: "Interested",
+   BETA: "Beta",
++  CONVERTED: "Converted",
+   PAID: "Paid",
+   REJECTED: "Rejected",
+ };
+ 
+ export const STATUS_COLORS: Record<CreatorStatusValue, string> = {
+   NEW: "bg-neutral-200 text-neutral-800",
++  VERIFIED: "bg-sky-100 text-sky-800",
+   CONTACTED: "bg-blue-100 text-blue-800",
+   INTERVIEW_SCHEDULED: "bg-purple-100 text-purple-800",
+   INTERESTED: "bg-amber-100 text-amber-800",
+   BETA: "bg-teal-100 text-teal-800",
++  CONVERTED: "bg-emerald-100 text-emerald-800",
+   PAID: "bg-emerald-100 text-emerald-800",
+   REJECTED: "bg-red-100 text-red-800",
+ };
+ 
++// Bumped whenever the Privacy Policy content changes materially. Stored on
++// each Creator record at signup time so we always know which version of the
++// policy a given consent was given under (GDPR accountability requirement).
++export const PRIVACY_POLICY_VERSION = "1.0";
++
+ // ISO-ish country list, kept intentionally broad for a global audience.
+ export const COUNTRIES = [
+   "Afghanistan","Albania","Algeria","Argentina","Armenia","Australia","Austria","Azerbaijan",
+diff --git a/src/lib/lead-export.ts b/src/lib/lead-export.ts
+new file mode 100644
+index 0000000..9afae6c
+--- /dev/null
++++ b/src/lib/lead-export.ts
+@@ -0,0 +1,39 @@
++import type { Creator } from "@prisma/client";
++
++/** Column headers for the admin lead export CSV, in row order. */
++export const LEAD_CSV_HEADERS = [
++  "email",
++  "signup_date",
++  "verification_status",
++  "lead_status",
++  "gdpr_consent",
++  "gdpr_consent_at",
++  "privacy_policy_version",
++  "utm_source",
++] as const;
++
++export type LeadExportRecord = Pick<
++  Creator,
++  | "email"
++  | "createdAt"
++  | "emailVerifiedAt"
++  | "status"
++  | "privacyAccepted"
++  | "gdprConsentAt"
++  | "privacyPolicyVersion"
++  | "utmSource"
++>;
++
++/** Builds a single CSV row (matching LEAD_CSV_HEADERS) for one lead record. */
++export function buildLeadCsvRow(creator: LeadExportRecord): string[] {
++  return [
++    creator.email,
++    creator.createdAt.toISOString(),
++    creator.emailVerifiedAt ? "verified" : "pending",
++    creator.status,
++    creator.privacyAccepted ? "true" : "false",
++    creator.gdprConsentAt ? creator.gdprConsentAt.toISOString() : "",
++    creator.privacyPolicyVersion || "",
++    creator.utmSource || "",
++  ];
++}
+diff --git a/src/lib/validation.ts b/src/lib/validation.ts
+index 16858e3..fd0db51 100644
+--- a/src/lib/validation.ts
++++ b/src/lib/validation.ts
+@@ -5,6 +5,7 @@ import {
+   PUBLISHING_FREQUENCIES,
+   CREATOR_EXPERIENCE,
+   PRODUCT_INTERESTS,
++  CREATOR_STATUSES,
+ } from "./constants";
+ 
+ const platformValues = PLATFORMS.map((p) => p.value) as [string, ...string[]];
+@@ -60,15 +61,7 @@ export const adminLoginSchema = z.object({
+ });
+ 
+ export const statusUpdateSchema = z.object({
+-  status: z.enum([
+-    "NEW",
+-    "CONTACTED",
+-    "INTERVIEW_SCHEDULED",
+-    "INTERESTED",
+-    "BETA",
+-    "PAID",
+-    "REJECTED",
+-  ]),
++  status: z.enum(CREATOR_STATUSES),
+ });
+ 
+ export const internalNoteSchema = z.object({
