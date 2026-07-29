@@ -1,0 +1,113 @@
+diff --git a/.env.example b/.env.example
+index 1d19dc5..fbf12e3 100644
+--- a/.env.example
++++ b/.env.example
+@@ -19,3 +19,6 @@ SMTP_USER=""
+ SMTP_PASSWORD=""
+ 
+ NEXT_PUBLIC_SITE_URL="http://localhost:3000"
++
++# Google Analytics 4 (optional — defaults to the production property if unset)
++NEXT_PUBLIC_GA_MEASUREMENT_ID="G-QE1TGJ9CMF"
+diff --git a/src/app/layout.tsx b/src/app/layout.tsx
+index ba5d6f4..5c699d6 100644
+--- a/src/app/layout.tsx
++++ b/src/app/layout.tsx
+@@ -1,5 +1,7 @@
+ import type { Metadata } from "next";
+ import "./globals.css";
++import { GoogleAnalytics } from "@/components/analytics/google-analytics";
++import { getPublicEnv } from "@/lib/env";
+ 
+ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+ 
+@@ -59,6 +61,7 @@ export default function RootLayout({
+   return (
+     <html lang="en" className="h-full antialiased">
+       <body className="min-h-full flex flex-col font-sans">
++        <GoogleAnalytics measurementId={getPublicEnv().NEXT_PUBLIC_GA_MEASUREMENT_ID} />
+         {children}
+         <script
+           type="application/ld+json"
+diff --git a/src/components/analytics/google-analytics.tsx b/src/components/analytics/google-analytics.tsx
+new file mode 100644
+index 0000000..20828e2
+--- /dev/null
++++ b/src/components/analytics/google-analytics.tsx
+@@ -0,0 +1,53 @@
++"use client";
++
++import { useEffect } from "react";
++import Script from "next/script";
++import {
++  registerAnalyticsProvider,
++  type AnalyticsEvent,
++  type AnalyticsProps,
++} from "@/lib/analytics";
++
++declare global {
++  interface Window {
++    dataLayer: unknown[];
++    gtag?: (...args: unknown[]) => void;
++  }
++}
++
++/**
++ * Wires the app's existing `trackEvent` API to real GA4 (gtag.js).
++ *
++ * - Loads gtag.js with `next/script` (`afterInteractive`) for optimal
++ *   loading without blocking hydration.
++ * - Disables gtag's automatic `page_view` (`send_page_view: false`) since
++ *   the app already fires an explicit `homepage_view` custom event.
++ * - Registers a provider on mount so every existing `trackEvent(...)` call
++ *   site (form, tracked links, etc.) starts sending real GA4 events with
++ *   no changes needed elsewhere.
++ */
++export function GoogleAnalytics({ measurementId }: { measurementId: string }) {
++  useEffect(() => {
++    registerAnalyticsProvider((event: AnalyticsEvent, props?: AnalyticsProps) => {
++      window.gtag?.("event", event, props ?? {});
++    });
++  }, []);
++
++  return (
++    <>
++      <Script
++        src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`}
++        strategy="afterInteractive"
++      />
++      <Script id="ga4-init" strategy="afterInteractive">
++        {`
++          window.dataLayer = window.dataLayer || [];
++          function gtag(){dataLayer.push(arguments);}
++          window.gtag = gtag;
++          gtag('js', new Date());
++          gtag('config', '${measurementId}', { send_page_view: false });
++        `}
++      </Script>
++    </>
++  );
++}
+diff --git a/src/lib/env.ts b/src/lib/env.ts
+index c0a8193..0726d77 100644
+--- a/src/lib/env.ts
++++ b/src/lib/env.ts
+@@ -35,6 +35,10 @@ const publicSchema = z.object({
+   NEXT_PUBLIC_SITE_URL: z.string().url("NEXT_PUBLIC_SITE_URL must be a valid URL"),
+   NEXT_PUBLIC_GOFUNDME_URL: z.string().url().optional().or(z.literal("")),
+   NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional().or(z.literal("")),
++  // GA4 Measurement ID. Defaults to the project's production property so
++  // analytics work out of the box; override via env var for other GA4
++  // properties (e.g. staging) without touching this file.
++  NEXT_PUBLIC_GA_MEASUREMENT_ID: z.string().min(1).default("G-QE1TGJ9CMF"),
+ });
+ 
+ type ServerEnv = z.infer<typeof serverSchema>;
+@@ -76,6 +80,7 @@ export function getPublicEnv(): PublicEnv {
+     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+     NEXT_PUBLIC_GOFUNDME_URL: process.env.NEXT_PUBLIC_GOFUNDME_URL,
+     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
++    NEXT_PUBLIC_GA_MEASUREMENT_ID: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID,
+   });
+   if (!result.success) {
+     throw new Error(

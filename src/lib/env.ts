@@ -35,6 +35,10 @@ const publicSchema = z.object({
   NEXT_PUBLIC_SITE_URL: z.string().url("NEXT_PUBLIC_SITE_URL must be a valid URL"),
   NEXT_PUBLIC_GOFUNDME_URL: z.string().url().optional().or(z.literal("")),
   NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional().or(z.literal("")),
+  // GA4 Measurement ID. Defaults to the project's production property so
+  // analytics work out of the box; override via env var for other GA4
+  // properties (e.g. staging) without touching this file.
+  NEXT_PUBLIC_GA_MEASUREMENT_ID: z.string().min(1).default("G-QE1TGJ9CMF"),
 });
 
 type ServerEnv = z.infer<typeof serverSchema>;
@@ -76,6 +80,7 @@ export function getPublicEnv(): PublicEnv {
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
     NEXT_PUBLIC_GOFUNDME_URL: process.env.NEXT_PUBLIC_GOFUNDME_URL,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
+    NEXT_PUBLIC_GA_MEASUREMENT_ID: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID,
   });
   if (!result.success) {
     throw new Error(
