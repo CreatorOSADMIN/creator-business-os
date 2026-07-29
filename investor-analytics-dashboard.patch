@@ -1,0 +1,373 @@
+diff --git a/src/app/admin/(dashboard)/analytics/page.tsx b/src/app/admin/(dashboard)/analytics/page.tsx
+new file mode 100644
+index 0000000..74d3a8e
+--- /dev/null
++++ b/src/app/admin/(dashboard)/analytics/page.tsx
+@@ -0,0 +1,65 @@
++import { prisma } from "@/lib/prisma";
++import { computeGrowthSeries, countSince, conversionRate } from "@/lib/analytics-stats";
++import { GrowthChart } from "@/components/admin/growth-chart";
++
++const GROWTH_WINDOW_DAYS = 30;
++
++export default async function AdminAnalyticsPage() {
++  const creators = await prisma.creator.findMany({
++    select: { createdAt: true, emailVerifiedAt: true },
++  });
++
++  const now = new Date();
++  const createdAt = creators.map((c) => c.createdAt);
++
++  const total = creators.length;
++  const verified = creators.filter((c) => c.emailVerifiedAt !== null).length;
++
++  const since7 = new Date(now);
++  since7.setUTCDate(since7.getUTCDate() - 7);
++  const since30 = new Date(now);
++  since30.setUTCDate(since30.getUTCDate() - 30);
++
++  const last7Days = countSince(createdAt, since7);
++  const last30Days = countSince(createdAt, since30);
++  const series = computeGrowthSeries(createdAt, GROWTH_WINDOW_DAYS, now);
++
++  return (
++    <div>
++      <h1 className="font-display text-2xl tracking-tight">Analytics</h1>
++      <p className="mt-1 text-sm text-[var(--ink-muted)]">
++        Investor-ready snapshot of Early Access growth.
++      </p>
++
++      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
++        <KpiCard label="Total signups" value={total} highlight />
++        <KpiCard label="Verified emails" value={verified} />
++        <KpiCard label="Conversion rate" value={`${conversionRate(verified, total)}%`} />
++        <KpiCard label="Last 7 days" value={last7Days} />
++        <KpiCard label="Last 30 days" value={last30Days} />
++      </div>
++
++      <div className="mt-8 rounded-xl border border-[var(--border-subtle)] bg-white p-5">
++        <h2 className="font-medium">Signups over the last {GROWTH_WINDOW_DAYS} days</h2>
++        <div className="mt-4">
++          <GrowthChart data={series} />
++        </div>
++      </div>
++    </div>
++  );
++}
++
++function KpiCard({ label, value, highlight }: { label: string; value: string | number; highlight?: boolean }) {
++  return (
++    <div
++      className={`rounded-xl border border-[var(--border-subtle)] p-4 ${
++        highlight ? "bg-[var(--surface-dark)] text-white" : "bg-white"
++      }`}
++    >
++      <p className={`font-mono-label text-[11px] uppercase ${highlight ? "text-white/60" : "text-[var(--ink-muted)]"}`}>
++        {label}
++      </p>
++      <p className="mt-1.5 font-display text-2xl">{value}</p>
++    </div>
++  );
++}
+diff --git a/src/app/admin/(dashboard)/creators/page.tsx b/src/app/admin/(dashboard)/creators/page.tsx
+index 7f952cf..d151e2d 100644
+--- a/src/app/admin/(dashboard)/creators/page.tsx
++++ b/src/app/admin/(dashboard)/creators/page.tsx
+@@ -117,7 +117,16 @@ export default function AdminCreatorsPage() {
+     <div>
+       <div className="flex flex-wrap items-center justify-between gap-4">
+         <h1 className="font-display text-2xl tracking-tight">Creators</h1>
+-        <p className="text-sm text-[var(--ink-muted)]">{total} total</p>
++        <div className="flex items-center gap-3">
++          <p className="text-sm text-[var(--ink-muted)]">{total} total</p>
++          <a
++            href="/api/admin/creators/export"
++            className="input w-auto text-sm"
++            download
++          >
++            Export CSV
++          </a>
++        </div>
+       </div>
+ 
+       <div className="mt-5 flex flex-wrap gap-3">
+diff --git a/src/app/admin/(dashboard)/layout.tsx b/src/app/admin/(dashboard)/layout.tsx
+index 876c33d..3eee5bc 100644
+--- a/src/app/admin/(dashboard)/layout.tsx
++++ b/src/app/admin/(dashboard)/layout.tsx
+@@ -38,6 +38,12 @@ export default async function AdminDashboardLayout({
+         >
+           Creators
+         </Link>
++        <Link
++          href="/admin/analytics"
++          className="whitespace-nowrap rounded-lg px-3 py-2 font-medium text-[var(--foreground)] hover:bg-[var(--accent-soft)]"
++        >
++          Analytics
++        </Link>
+         <Link
+           href="/admin/announcements"
+           className="whitespace-nowrap rounded-lg px-3 py-2 font-medium text-[var(--foreground)] hover:bg-[var(--accent-soft)]"
+@@ -67,6 +73,12 @@ export default async function AdminDashboardLayout({
+           >
+             Creators
+           </Link>
++          <Link
++            href="/admin/analytics"
++            className="block rounded-lg px-3 py-2 font-medium text-[var(--foreground)] hover:bg-[var(--accent-soft)]"
++          >
++            Analytics
++          </Link>
+           <Link
+             href="/admin/announcements"
+             className="block rounded-lg px-3 py-2 font-medium text-[var(--foreground)] hover:bg-[var(--accent-soft)]"
+diff --git a/src/app/api/admin/creators/export/route.ts b/src/app/api/admin/creators/export/route.ts
+new file mode 100644
+index 0000000..af6d66d
+--- /dev/null
++++ b/src/app/api/admin/creators/export/route.ts
+@@ -0,0 +1,31 @@
++import { NextResponse } from "next/server";
++import { prisma } from "@/lib/prisma";
++import { requireAdmin } from "@/lib/require-admin";
++import { toCsv } from "@/lib/csv";
++
++export async function GET() {
++  const { response } = await requireAdmin();
++  if (response) return response;
++
++  const creators = await prisma.creator.findMany({
++    select: { email: true, createdAt: true, emailVerifiedAt: true },
++    orderBy: { createdAt: "desc" },
++  });
++
++  const rows = creators.map((c) => [
++    c.email,
++    c.createdAt.toISOString(),
++    c.emailVerifiedAt ? "verified" : "pending",
++  ]);
++
++  const csv = toCsv(["email", "signup_date", "verification_status"], rows);
++  const filename = `early-access-leads-${new Date().toISOString().slice(0, 10)}.csv`;
++
++  return new NextResponse(csv, {
++    status: 200,
++    headers: {
++      "Content-Type": "text/csv; charset=utf-8",
++      "Content-Disposition": `attachment; filename="${filename}"`,
++    },
++  });
++}
+diff --git a/src/components/admin/growth-chart.tsx b/src/components/admin/growth-chart.tsx
+new file mode 100644
+index 0000000..b587989
+--- /dev/null
++++ b/src/components/admin/growth-chart.tsx
+@@ -0,0 +1,43 @@
++import type { GrowthPoint } from "@/lib/analytics-stats";
++
++const WIDTH = 700;
++const HEIGHT = 160;
++const BAR_GAP = 2;
++
++export function GrowthChart({ data }: { data: GrowthPoint[] }) {
++  if (data.length === 0) {
++    return <p className="text-sm text-[var(--ink-muted)]">No data yet.</p>;
++  }
++
++  const max = Math.max(1, ...data.map((d) => d.count));
++  const barWidth = WIDTH / data.length - BAR_GAP;
++
++  return (
++    <svg
++      viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
++      className="h-40 w-full"
++      role="img"
++      aria-label="Early access signups per day over the selected period"
++    >
++      {data.map((point, i) => {
++        const barHeight = (point.count / max) * (HEIGHT - 20);
++        const x = i * (barWidth + BAR_GAP);
++        const y = HEIGHT - barHeight;
++        return (
++          <g key={point.date}>
++            <rect
++              x={x}
++              y={y}
++              width={Math.max(barWidth, 1)}
++              height={barHeight}
++              rx={1.5}
++              style={{ fill: "var(--accent)" }}
++            >
++              <title>{`${point.date}: ${point.count}`}</title>
++            </rect>
++          </g>
++        );
++      })}
++    </svg>
++  );
++}
+diff --git a/src/lib/__tests__/analytics-stats.test.ts b/src/lib/__tests__/analytics-stats.test.ts
+new file mode 100644
+index 0000000..2f14c8d
+--- /dev/null
++++ b/src/lib/__tests__/analytics-stats.test.ts
+@@ -0,0 +1,51 @@
++import { describe, it, expect } from "vitest";
++import { computeGrowthSeries, countSince, conversionRate } from "@/lib/analytics-stats";
++
++describe("computeGrowthSeries", () => {
++  it("returns one bucket per day with no gaps, oldest first", () => {
++    const now = new Date("2026-07-29T12:00:00Z");
++    const series = computeGrowthSeries([], 7, now);
++    expect(series).toHaveLength(7);
++    expect(series[0].date).toBe("2026-07-23");
++    expect(series[6].date).toBe("2026-07-29");
++    expect(series.every((p) => p.count === 0)).toBe(true);
++  });
++
++  it("counts signups into their UTC day bucket", () => {
++    const now = new Date("2026-07-29T12:00:00Z");
++    const createdAt = [
++      new Date("2026-07-29T01:00:00Z"),
++      new Date("2026-07-29T23:00:00Z"),
++      new Date("2026-07-28T10:00:00Z"),
++    ];
++    const series = computeGrowthSeries(createdAt, 7, now);
++    expect(series.find((p) => p.date === "2026-07-29")?.count).toBe(2);
++    expect(series.find((p) => p.date === "2026-07-28")?.count).toBe(1);
++  });
++
++  it("ignores signups outside the requested window", () => {
++    const now = new Date("2026-07-29T12:00:00Z");
++    const createdAt = [new Date("2026-06-01T00:00:00Z")];
++    const series = computeGrowthSeries(createdAt, 7, now);
++    expect(series.reduce((sum, p) => sum + p.count, 0)).toBe(0);
++  });
++});
++
++describe("countSince", () => {
++  it("counts only dates on or after the cutoff", () => {
++    const since = new Date("2026-07-20T00:00:00Z");
++    const dates = [new Date("2026-07-19T00:00:00Z"), new Date("2026-07-20T00:00:00Z"), new Date("2026-07-25T00:00:00Z")];
++    expect(countSince(dates, since)).toBe(2);
++  });
++});
++
++describe("conversionRate", () => {
++  it("returns 0 when total is 0", () => {
++    expect(conversionRate(0, 0)).toBe(0);
++  });
++
++  it("computes a percentage rounded to one decimal", () => {
++    expect(conversionRate(1, 3)).toBe(33.3);
++    expect(conversionRate(2, 4)).toBe(50);
++  });
++});
+diff --git a/src/lib/__tests__/csv.test.ts b/src/lib/__tests__/csv.test.ts
+new file mode 100644
+index 0000000..642c3d0
+--- /dev/null
++++ b/src/lib/__tests__/csv.test.ts
+@@ -0,0 +1,31 @@
++import { describe, it, expect } from "vitest";
++import { toCsv, toCsvValue } from "@/lib/csv";
++
++describe("toCsvValue", () => {
++  it("returns plain values unchanged", () => {
++    expect(toCsvValue("hello@example.com")).toBe("hello@example.com");
++  });
++
++  it("quotes and escapes values containing commas, quotes, or newlines", () => {
++    expect(toCsvValue("a,b")).toBe('"a,b"');
++    expect(toCsvValue('say "hi"')).toBe('"say ""hi"""');
++    expect(toCsvValue("line1\nline2")).toBe('"line1\nline2"');
++  });
++});
++
++describe("toCsv", () => {
++  it("builds a header row plus data rows joined with CRLF", () => {
++    const csv = toCsv(
++      ["email", "signup_date", "verification_status"],
++      [
++        ["a@example.com", "2026-07-01T00:00:00.000Z", "verified"],
++        ["b@example.com", "2026-07-02T00:00:00.000Z", "pending"],
++      ]
++    );
++    expect(csv).toBe(
++      "email,signup_date,verification_status\r\n" +
++        "a@example.com,2026-07-01T00:00:00.000Z,verified\r\n" +
++        "b@example.com,2026-07-02T00:00:00.000Z,pending"
++    );
++  });
++});
+diff --git a/src/lib/analytics-stats.ts b/src/lib/analytics-stats.ts
+new file mode 100644
+index 0000000..6b5e3d4
+--- /dev/null
++++ b/src/lib/analytics-stats.ts
+@@ -0,0 +1,46 @@
++export interface GrowthPoint {
++  date: string; // YYYY-MM-DD (UTC)
++  count: number;
++}
++
++function utcDayKey(date: Date): string {
++  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
++    .toISOString()
++    .slice(0, 10);
++}
++
++/**
++ * Buckets registration timestamps into daily counts covering the last
++ * `days` days (UTC calendar days, inclusive of `now`'s day). Days with no
++ * signups are included with a count of 0 so the series has no gaps.
++ */
++export function computeGrowthSeries(createdAt: Date[], days: number, now: Date = new Date()): GrowthPoint[] {
++  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
++  const start = new Date(end);
++  start.setUTCDate(start.getUTCDate() - (days - 1));
++
++  const buckets = new Map<string, number>();
++  for (const cursor = new Date(start); cursor <= end; cursor.setUTCDate(cursor.getUTCDate() + 1)) {
++    buckets.set(utcDayKey(cursor), 0);
++  }
++
++  for (const date of createdAt) {
++    const key = utcDayKey(date);
++    if (buckets.has(key)) {
++      buckets.set(key, (buckets.get(key) ?? 0) + 1);
++    }
++  }
++
++  return Array.from(buckets.entries()).map(([date, count]) => ({ date, count }));
++}
++
++/** Counts how many of the given timestamps fall on or after `since`. */
++export function countSince(createdAt: Date[], since: Date): number {
++  return createdAt.filter((date) => date >= since).length;
++}
++
++/** Rounds a verified/total ratio to one decimal place as a percentage (0 when total is 0). */
++export function conversionRate(verified: number, total: number): number {
++  if (total <= 0) return 0;
++  return Math.round((verified / total) * 1000) / 10;
++}
+diff --git a/src/lib/csv.ts b/src/lib/csv.ts
+new file mode 100644
+index 0000000..c40525f
+--- /dev/null
++++ b/src/lib/csv.ts
+@@ -0,0 +1,12 @@
++/** Escapes a single CSV field per RFC 4180 (quotes values containing commas, quotes, or newlines). */
++export function toCsvValue(value: string): string {
++  if (/[",\r\n]/.test(value)) {
++    return `"${value.replace(/"/g, '""')}"`;
++  }
++  return value;
++}
++
++/** Builds a CSV document (CRLF line endings) from a header row and data rows. */
++export function toCsv(headers: string[], rows: string[][]): string {
++  return [headers, ...rows].map((row) => row.map(toCsvValue).join(",")).join("\r\n");
++}

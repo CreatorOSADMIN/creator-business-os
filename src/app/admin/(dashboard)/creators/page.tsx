@@ -117,7 +117,16 @@ export default function AdminCreatorsPage() {
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-display text-2xl tracking-tight">Creators</h1>
-        <p className="text-sm text-[var(--ink-muted)]">{total} total</p>
+        <div className="flex items-center gap-3">
+          <p className="text-sm text-[var(--ink-muted)]">{total} total</p>
+          <a
+            href="/api/admin/creators/export"
+            className="input w-auto text-sm"
+            download
+          >
+            Export CSV
+          </a>
+        </div>
       </div>
 
       <div className="mt-5 flex flex-wrap gap-3">

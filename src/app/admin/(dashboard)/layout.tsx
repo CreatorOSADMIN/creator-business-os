@@ -39,6 +39,12 @@ export default async function AdminDashboardLayout({
           Creators
         </Link>
         <Link
+          href="/admin/analytics"
+          className="whitespace-nowrap rounded-lg px-3 py-2 font-medium text-[var(--foreground)] hover:bg-[var(--accent-soft)]"
+        >
+          Analytics
+        </Link>
+        <Link
           href="/admin/announcements"
           className="whitespace-nowrap rounded-lg px-3 py-2 font-medium text-[var(--foreground)] hover:bg-[var(--accent-soft)]"
         >
@@ -66,6 +72,12 @@ export default async function AdminDashboardLayout({
             className="block rounded-lg px-3 py-2 font-medium text-[var(--foreground)] hover:bg-[var(--accent-soft)]"
           >
             Creators
+          </Link>
+          <Link
+            href="/admin/analytics"
+            className="block rounded-lg px-3 py-2 font-medium text-[var(--foreground)] hover:bg-[var(--accent-soft)]"
+          >
+            Analytics
           </Link>
           <Link
             href="/admin/announcements"
