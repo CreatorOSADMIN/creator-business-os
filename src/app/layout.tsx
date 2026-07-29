@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { getPublicEnv } from "@/lib/env";
 import { getSiteUrl } from "@/lib/site-url";
 
@@ -76,6 +77,7 @@ export default function RootLayout({
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col font-sans">
         <GoogleAnalytics measurementId={getPublicEnv().NEXT_PUBLIC_GA_MEASUREMENT_ID} />
+        <SpeedInsights />
         {children}
         <script
           type="application/ld+json"
