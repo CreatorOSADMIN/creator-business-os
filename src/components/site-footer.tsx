@@ -11,7 +11,7 @@ export function SiteFooter() {
               Building the operating system for independent creators. Currently in early access.
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-8 text-sm sm:grid-cols-4">
+          <nav aria-label="Footer" className="grid grid-cols-2 gap-8 text-sm sm:grid-cols-4">
             <FooterColumn
               title="Product"
               links={[
@@ -34,7 +34,7 @@ export function SiteFooter() {
                 { href: "/terms", label: "Terms" },
               ]}
             />
-          </div>
+          </nav>
         </div>
         <div className="mt-10 flex flex-col gap-2 border-t border-[var(--border-subtle)] pt-6 text-xs text-[var(--ink-muted)] sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} CreatorOS. All rights reserved.</p>

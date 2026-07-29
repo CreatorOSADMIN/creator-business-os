@@ -15,8 +15,11 @@
 export type AnalyticsEvent =
   | "homepage_view"
   | "cta_click"
+  | "early_access_click"
   | "early_access_form_open"
+  | "early_access_form_start"
   | "early_access_form_submit"
+  | "early_access_signup"
   | "email_verified";
 
 export type AnalyticsProps = Record<string, string | number | boolean | null | undefined>;

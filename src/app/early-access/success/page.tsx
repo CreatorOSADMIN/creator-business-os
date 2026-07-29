@@ -3,6 +3,7 @@ import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { TrackEventOnMount } from "@/components/analytics/track-event-on-mount";
+import { getSiteUrl } from "@/lib/site-url";
 
 export const metadata: Metadata = {
   title: "You're on the list",
@@ -15,13 +16,16 @@ export default async function EarlyAccessSuccessPage({
   searchParams: Promise<{ id?: string; ref?: string }>;
 }) {
   const { id, ref } = await searchParams;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const siteUrl = getSiteUrl();
   const referralLink = ref ? `${siteUrl}/early-access?ref=${ref}` : null;
 
   return (
     <>
       <SiteHeader />
       {id && <TrackEventOnMount event="email_verified" props={{ creatorId: id }} />}
+      {/* Primary GA4 conversion event — mark "early_access_signup" as a
+          conversion in the GA4 property's Admin > Events settings. */}
+      {id && <TrackEventOnMount event="early_access_signup" props={{ creatorId: id }} />}
       <main className="flex-1">
         <div className="mx-auto max-w-xl px-6 py-24 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[var(--accent-strong)]">

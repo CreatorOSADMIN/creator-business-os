@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
+import { getSiteUrl } from "@/lib/site-url";
 
 interface SendEmailInput {
   to: string;
@@ -130,9 +131,7 @@ function logToConsole({ to, subject, text }: { to: string; subject: string; text
 
 export function buildVerificationEmail(params: { fullName: string; verificationToken: string }) {
   const { fullName, verificationToken } = params;
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.NODE_ENV === "production" ? "https://www.creatoroslaunch.site" : "http://localhost:3000");
+  const siteUrl = getSiteUrl();
   const verificationLink = `${siteUrl}/early-access/verify?token=${verificationToken}`;
 
   const text = `Hi ${fullName},

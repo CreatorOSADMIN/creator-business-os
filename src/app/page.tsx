@@ -48,7 +48,7 @@ function Hero() {
           <div className="mt-8 flex flex-wrap items-center gap-4">
             <TrackedLink
               href="/early-access"
-              event="cta_click"
+              event="early_access_click"
               eventProps={{ location: "hero" }}
               className="rounded-full bg-[var(--accent)] px-6 py-3 text-sm font-medium text-white transition hover:bg-[var(--accent-strong)]"
             >
@@ -233,12 +233,14 @@ function EarlyAccessBand({ progress, goal }: { progress: number; goal: number })
             </ul>
             <EarlyAccessProgress progress={progress} goal={goal} />
           </div>
-          <Link
+          <TrackedLink
             href="/early-access"
+            event="early_access_click"
+            eventProps={{ location: "band" }}
             className="inline-flex items-center justify-center rounded-full bg-white px-7 py-3.5 text-sm font-medium text-[var(--surface-dark)] transition hover:bg-white/90"
           >
             Join the Early Access Program
-          </Link>
+          </TrackedLink>
         </div>
       </div>
     </section>

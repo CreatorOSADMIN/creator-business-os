@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { cloneElement, isValidElement, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   PLATFORMS,
@@ -78,6 +78,7 @@ export function EarlyAccessForm({
   // Fires once when the form mounts (i.e. the person opened /early-access).
   useEffect(() => {
     trackEvent("early_access_form_open");
+    trackEvent("early_access_form_start");
   }, []);
 
   // Restore a saved draft (minus the email) after "Use a different email".
@@ -203,7 +204,7 @@ export function EarlyAccessForm({
 
       <Section number="01" title="Basic Information">
         <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="Full Name" error={errors.fullName} required>
+          <Field id="fullName" label="Full Name" error={errors.fullName} required>
             <input
               className="input"
               value={form.fullName}
@@ -211,7 +212,7 @@ export function EarlyAccessForm({
               placeholder="Jane Doe"
             />
           </Field>
-          <Field label="Creator Name / Handle" error={errors.creatorHandle} required>
+          <Field id="creatorHandle" label="Creator Name / Handle" error={errors.creatorHandle} required>
             <input
               className="input"
               value={form.creatorHandle}
@@ -219,7 +220,7 @@ export function EarlyAccessForm({
               placeholder="@janedoe"
             />
           </Field>
-          <Field label="Email Address" error={errors.email} required>
+          <Field id="email" label="Email Address" error={errors.email} required>
             <input
               type="email"
               className="input"
@@ -228,7 +229,7 @@ export function EarlyAccessForm({
               placeholder="jane@example.com"
             />
           </Field>
-          <Field label="Country" error={errors.country} required>
+          <Field id="country" label="Country" error={errors.country} required>
             <select
               className="input"
               value={form.country}
@@ -309,9 +310,10 @@ export function EarlyAccessForm({
         title="Creator Problem"
         subtitle="What is the biggest challenge you currently face as a creator?"
       >
-        <Field label="" error={errors.biggestChallenge}>
+        <Field id="biggestChallenge" label="" error={errors.biggestChallenge}>
           <textarea
             className="input min-h-32"
+            aria-label="Biggest challenge you currently face as a creator"
             value={form.biggestChallenge}
             onChange={(e) => setForm((p) => ({ ...p, biggestChallenge: e.target.value }))}
             placeholder="Tell us in your own words..."
@@ -434,31 +436,46 @@ function Section({
 }
 
 function Field({
+  id,
   label,
   error,
   required,
   children,
 }: {
+  id: string;
   label: string;
   error?: string;
   required?: boolean;
   children: React.ReactNode;
 }) {
+  const errorId = `${id}-error`;
+  const input = isValidElement(children)
+    ? cloneElement(children as React.ReactElement<Record<string, unknown>>, {
+        id,
+        "aria-invalid": error ? true : undefined,
+        "aria-describedby": error ? errorId : undefined,
+      })
+    : children;
+
   return (
     <div data-error={error ? "true" : "false"}>
       {label && (
-        <label className="mb-1.5 block text-sm font-medium">
+        <label htmlFor={id} className="mb-1.5 block text-sm font-medium">
           {label} {required && <span className="text-[var(--danger)]">*</span>}
         </label>
       )}
-      {children}
-      {error && <ErrorText>{error}</ErrorText>}
+      {input}
+      {error && <ErrorText id={errorId}>{error}</ErrorText>}
     </div>
   );
 }
 
-function ErrorText({ children }: { children: React.ReactNode }) {
-  return <p className="mt-1.5 text-xs text-[var(--danger)]">{children}</p>;
+function ErrorText({ children, id }: { children: React.ReactNode; id?: string }) {
+  return (
+    <p id={id} className="mt-1.5 text-xs text-[var(--danger)]">
+      {children}
+    </p>
+  );
 }
 
 function RadioGroup({

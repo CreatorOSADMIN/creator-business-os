@@ -2,8 +2,21 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
 import { getPublicEnv } from "@/lib/env";
+import { getSiteUrl } from "@/lib/site-url";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+const siteUrl = getSiteUrl();
+// Canonical brand domain per organization records — used for structured
+// data only, independent of the deployment's NEXT_PUBLIC_SITE_URL.
+const ORGANIZATION_URL = "https://creatoroslaunch.site";
+// NOTE: these are the brand's assumed handles based on the "creatoros"
+// naming used across the codebase (email domain, site domain). Verify and
+// update if the real handles differ.
+const SOCIAL_PROFILES = [
+  "https://www.instagram.com/creator__os_/",
+  "https://www.tiktok.com/@creator.os__?lang=it-IT",
+  "https://www.youtube.com/@CreatorOS_OF",
+  "https://x.com/CreatorOS_",
+];
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -42,8 +55,9 @@ const structuredData = [
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "CreatorOS",
-    url: siteUrl,
-    logo: `${siteUrl}/favicon.ico`,
+    url: ORGANIZATION_URL,
+    logo: `${ORGANIZATION_URL}/favicon.ico`,
+    sameAs: SOCIAL_PROFILES,
   },
   {
     "@context": "https://schema.org",
