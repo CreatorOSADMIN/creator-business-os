@@ -14,6 +14,7 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
+    "db:backup-check": "node scripts/backup-check.mjs",
     "hash-password": "node scripts/hash-password.js"
   },
   "dependencies": {
