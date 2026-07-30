@@ -85,15 +85,15 @@ export const STATUS_LABELS: Record<CreatorStatusValue, string> = {
 };
 
 export const STATUS_COLORS: Record<CreatorStatusValue, string> = {
-  NEW: "bg-neutral-200 text-neutral-800",
-  VERIFIED: "bg-sky-100 text-sky-800",
-  CONTACTED: "bg-blue-100 text-blue-800",
-  INTERVIEW_SCHEDULED: "bg-purple-100 text-purple-800",
-  INTERESTED: "bg-amber-100 text-amber-800",
-  BETA: "bg-teal-100 text-teal-800",
-  CONVERTED: "bg-emerald-100 text-emerald-800",
-  PAID: "bg-emerald-100 text-emerald-800",
-  REJECTED: "bg-red-100 text-red-800",
+  NEW: "badge-neutral",
+  VERIFIED: "badge-accent",
+  CONTACTED: "badge-accent",
+  INTERVIEW_SCHEDULED: "badge-highlight",
+  INTERESTED: "badge-highlight",
+  BETA: "badge-accent",
+  CONVERTED: "badge-accent",
+  PAID: "badge-accent",
+  REJECTED: "badge-danger",
 };
 
 // Bumped whenever the Privacy Policy content changes materially. Stored on

@@ -312,9 +312,9 @@ export default function AdminCreatorDetailPage() {
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-[var(--border-subtle)] bg-white p-5">
-      <h2 className="font-medium">{title}</h2>
-      <div className="mt-3 space-y-2.5">{children}</div>
+    <div className="card p-5 sm:p-6">
+      <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
+      <div className="mt-4 space-y-3">{children}</div>
     </div>
   );
 }
@@ -322,7 +322,7 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="text-sm">
-      <p className="text-xs uppercase text-[var(--ink-muted)]">{label}</p>
+      <p className="text-xs uppercase tracking-wide text-[var(--ink-muted)]">{label}</p>
       <div className="mt-0.5">{value}</div>
     </div>
   );

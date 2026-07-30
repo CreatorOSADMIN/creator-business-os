@@ -51,14 +51,14 @@ function LoginForm() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[var(--surface-dark)] px-6">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-xl">
-        <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-[var(--foreground)] font-mono-label text-xs font-semibold text-white">
+      <div className="card w-full max-w-sm p-8 shadow-[var(--shadow-lg)]">
+        <span className="flex h-9 w-9 items-center justify-center rounded-md bg-[var(--accent)] font-mono-label text-xs font-semibold text-[#08100e]">
           OS
         </span>
-        <h1 className="mt-5 font-display text-2xl tracking-tight">Admin sign in</h1>
+        <h1 className="mt-6 font-display text-2xl tracking-tight">Admin sign in</h1>
         <p className="mt-1 text-sm text-[var(--ink-muted)]">CreatorOS administration panel</p>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+        <form onSubmit={handleSubmit} className="mt-7 space-y-4">
           <div>
             <label className="mb-1.5 block text-sm font-medium">Email</label>
             <input
@@ -81,11 +81,7 @@ function LoginForm() {
             />
           </div>
           {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full rounded-full bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-white transition hover:bg-[var(--accent-strong)] disabled:opacity-60"
-          >
+          <button type="submit" disabled={submitting} className="btn btn-primary w-full">
             {submitting ? "Signing in…" : "Sign in"}
           </button>
         </form>

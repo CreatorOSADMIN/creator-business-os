@@ -49,13 +49,15 @@ export default function AdminAnnouncementsPage() {
   return (
     <div>
       <h1 className="font-display text-2xl tracking-tight">Annunci</h1>
-      <p className="mt-1 text-sm text-[var(--ink-muted)]">
+      <p className="mt-1.5 text-sm text-[var(--ink-muted)]">
         Invia un&apos;email a tutti i creator iscritti alla lista Early Access.
       </p>
 
-      <div className="mt-6 max-w-2xl space-y-4 rounded-xl border border-[var(--border-subtle)] bg-white p-5">
+      <div className="card mt-6 max-w-2xl space-y-5 p-5 sm:p-6">
         <div>
-          <label className="mb-1 block text-xs font-medium uppercase text-[var(--ink-muted)]">Oggetto</label>
+          <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[var(--ink-muted)]">
+            Oggetto
+          </label>
           <input
             className="input"
             value={subject}
@@ -65,7 +67,9 @@ export default function AdminAnnouncementsPage() {
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium uppercase text-[var(--ink-muted)]">Corpo</label>
+          <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[var(--ink-muted)]">
+            Corpo
+          </label>
           <textarea
             className="input min-h-64"
             value={body}
@@ -76,11 +80,7 @@ export default function AdminAnnouncementsPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <button
-            onClick={handleSend}
-            disabled={!canSend}
-            className="rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-          >
+          <button onClick={handleSend} disabled={!canSend} className="btn btn-primary">
             {sending ? "Invio in corso…" : "Invia annuncio"}
           </button>
         </div>
@@ -88,8 +88,8 @@ export default function AdminAnnouncementsPage() {
         {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
 
         {result && (
-          <div className="rounded-lg bg-[var(--accent-soft)]/40 p-4 text-sm">
-            <p className="font-medium">Annuncio inviato.</p>
+          <div className="badge-accent rounded-lg border p-4 text-sm">
+            <p className="font-medium text-[var(--foreground)]">Annuncio inviato.</p>
             <p className="mt-1 text-[var(--ink-muted)]">
               Inviate: {result.sent} · Fallite: {result.failed} · Totale: {result.total}
             </p>

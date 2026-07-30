@@ -124,7 +124,7 @@ export default function AdminCreatorsPage() {
           <p className="text-sm text-[var(--ink-muted)]">{total} total</p>
           <a
             href="/api/admin/creators/export"
-            className="input w-auto text-sm"
+            className="btn btn-secondary text-sm"
             download
           >
             Export CSV
@@ -132,16 +132,27 @@ export default function AdminCreatorsPage() {
         </div>
       </div>
 
-      <div className="mt-5 flex flex-wrap gap-3">
-        <input
-          className="input max-w-xs"
-          placeholder="Search name, handle, email…"
-          value={search}
-          onChange={(e) => {
-            setPage(1);
-            setSearch(e.target.value);
-          }}
-        />
+      <div className="card mt-5 flex flex-wrap gap-3 p-4">
+        <div className="relative max-w-xs flex-1">
+          <svg
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ink-muted)]"
+            viewBox="0 0 20 20"
+            fill="none"
+            aria-hidden="true"
+          >
+            <circle cx="9" cy="9" r="6.5" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M14 14L18 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          <input
+            className="input pl-9"
+            placeholder="Search name, handle, email…"
+            value={search}
+            onChange={(e) => {
+              setPage(1);
+              setSearch(e.target.value);
+            }}
+          />
+        </div>
         <select
           className="input w-auto"
           value={status}
@@ -229,7 +240,7 @@ export default function AdminCreatorsPage() {
           ))}
         </select>
         <button
-          className="input w-auto text-sm"
+          className="btn btn-secondary text-sm"
           onClick={() => setSort((s) => (s === "desc" ? "asc" : "desc"))}
         >
           {sort === "desc" ? "↓ Descending" : "↑ Ascending"}
@@ -246,9 +257,9 @@ export default function AdminCreatorsPage() {
         </p>
       )}
 
-      <div className="mt-5 overflow-x-auto rounded-xl border border-[var(--border-subtle)] bg-white">
+      <div className="card-flush mt-5 overflow-x-auto">
         <table className="w-full min-w-[1000px] text-left text-sm">
-          <thead className="border-b border-[var(--border-subtle)] text-xs uppercase text-[var(--ink-muted)]">
+          <thead className="table-head text-xs uppercase tracking-wide text-[var(--ink-muted)]">
             <tr>
               <th className="px-4 py-3 font-medium">Creator</th>
               <th className="px-4 py-3 font-medium">Country</th>
@@ -265,21 +276,23 @@ export default function AdminCreatorsPage() {
           <tbody className="divide-y divide-[var(--border-subtle)]">
             {loading && (
               <tr>
-                <td colSpan={10} className="px-4 py-8 text-center text-[var(--ink-muted)]">
+                <td colSpan={10} className="px-4 py-10 text-center text-[var(--ink-muted)]">
                   Loading…
                 </td>
               </tr>
             )}
             {!loading && creators.length === 0 && (
               <tr>
-                <td colSpan={10} className="px-4 py-8 text-center text-[var(--ink-muted)]">
-                  No creators match these filters.
+                <td colSpan={10} className="p-0">
+                  <div className="empty-state">
+                    <p className="text-sm">No creators match these filters.</p>
+                  </div>
                 </td>
               </tr>
             )}
             {!loading &&
               creators.map((creator) => (
-                <tr key={creator.id} className="hover:bg-[var(--accent-soft)]/40">
+                <tr key={creator.id} className="table-row">
                   <td className="px-4 py-3">
                     <Link href={`/admin/creators/${creator.id}`} className="block">
                       <p className="font-medium text-[var(--foreground)]">{creator.fullName}</p>
@@ -290,34 +303,22 @@ export default function AdminCreatorsPage() {
                   <td className="px-4 py-3">{creator.platforms.join(", ")}</td>
                   <td className="px-4 py-3">{audienceLabel(creator.audienceSize)}</td>
                   <td className="px-4 py-3">
-                    <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                        STATUS_COLORS[creator.status as CreatorStatusValue] ?? "bg-neutral-100"
-                      }`}
-                    >
+                    <span className={`badge ${STATUS_COLORS[creator.status as CreatorStatusValue] ?? "badge-neutral"}`}>
                       {STATUS_LABELS[creator.status as CreatorStatusValue] ?? creator.status}
                     </span>
                   </td>
                   <td className="px-4 py-3">
                     {creator.emailVerifiedAt ? (
-                      <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-800">
-                        Verified
-                      </span>
+                      <span className="badge badge-accent">Verified</span>
                     ) : (
-                      <span className="rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-medium text-neutral-600">
-                        Not verified
-                      </span>
+                      <span className="badge badge-neutral">Not verified</span>
                     )}
                   </td>
                   <td className="px-4 py-3">
                     {creator.privacyAccepted ? (
-                      <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-800">
-                        Consent given
-                      </span>
+                      <span className="badge badge-accent">Consent given</span>
                     ) : (
-                      <span className="rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-800">
-                        No consent
-                      </span>
+                      <span className="badge badge-danger">No consent</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-[var(--ink-muted)]">{creator.utmSource || "—"}</td>
@@ -350,9 +351,9 @@ export default function AdminCreatorsPage() {
       </div>
 
       {totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-center gap-3 text-sm">
+        <div className="mt-5 flex items-center justify-center gap-3 text-sm">
           <button
-            className="disabled:opacity-40"
+            className="btn btn-ghost disabled:opacity-40"
             disabled={page <= 1}
             onClick={() => setPage((p) => p - 1)}
           >
@@ -362,7 +363,7 @@ export default function AdminCreatorsPage() {
             Page {page} of {totalPages}
           </span>
           <button
-            className="disabled:opacity-40"
+            className="btn btn-ghost disabled:opacity-40"
             disabled={page >= totalPages}
             onClick={() => setPage((p) => p + 1)}
           >

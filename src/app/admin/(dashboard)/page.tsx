@@ -37,9 +37,9 @@ export default async function AdminDashboardPage() {
   return (
     <div>
       <h1 className="font-display text-2xl tracking-tight">Dashboard</h1>
-      <p className="mt-1 text-sm text-[var(--ink-muted)]">Overview of Early Access registrations.</p>
+      <p className="mt-1.5 text-sm text-[var(--ink-muted)]">Overview of Early Access registrations.</p>
 
-      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="mt-7 grid grid-cols-2 gap-3.5 sm:grid-cols-4">
         <KpiCard label="Total Creators" value={total} highlight />
         {CREATOR_STATUSES.map((status) => (
           <KpiCard key={status} label={STATUS_LABELS[status as CreatorStatusValue]} value={byStatus[status]} />
@@ -50,21 +50,21 @@ export default async function AdminDashboardPage() {
         <Panel title="Recent registrations">
           <div className="divide-y divide-[var(--border-subtle)]">
             {recent.length === 0 && (
-              <p className="py-6 text-sm text-[var(--ink-muted)]">No creators yet.</p>
+              <div className="empty-state">
+                <p className="text-sm">No creators yet.</p>
+              </div>
             )}
             {recent.map((creator) => (
               <Link
                 key={creator.id}
                 href={`/admin/creators/${creator.id}`}
-                className="flex items-center justify-between py-3 text-sm hover:text-[var(--accent)]"
+                className="flex items-center justify-between gap-4 py-3.5 text-sm transition-colors hover:text-[var(--accent)]"
               >
-                <div>
-                  <p className="font-medium">{creator.fullName}</p>
-                  <p className="text-xs text-[var(--ink-muted)]">{creator.email}</p>
+                <div className="min-w-0">
+                  <p className="truncate font-medium">{creator.fullName}</p>
+                  <p className="truncate text-xs text-[var(--ink-muted)]">{creator.email}</p>
                 </div>
-                <span
-                  className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_COLORS[creator.status as CreatorStatusValue] ?? "bg-neutral-100"}`}
-                >
+                <span className={`badge ${STATUS_COLORS[creator.status as CreatorStatusValue] ?? "badge-neutral"}`}>
                   {STATUS_LABELS[creator.status as CreatorStatusValue] ?? creator.status}
                 </span>
               </Link>
@@ -100,23 +100,23 @@ export default async function AdminDashboardPage() {
 function KpiCard({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
   return (
     <div
-      className={`rounded-xl border border-[var(--border-subtle)] p-4 ${
-        highlight ? "bg-[var(--surface-dark)] text-white" : "bg-white"
+      className={`card card-interactive p-4 ${
+        highlight ? "bg-[var(--surface-dark)]" : "bg-[var(--surface)]"
       }`}
     >
-      <p className={`font-mono-label text-[11px] uppercase ${highlight ? "text-white/60" : "text-[var(--ink-muted)]"}`}>
+      <p className={`font-mono-label text-[11px] uppercase ${highlight ? "text-[var(--accent)]" : "text-[var(--ink-muted)]"}`}>
         {label}
       </p>
-      <p className="mt-1.5 font-display text-2xl">{value}</p>
+      <p className="stat-value mt-1.5">{value}</p>
     </div>
   );
 }
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-[var(--border-subtle)] bg-white p-5">
-      <h2 className="font-medium">{title}</h2>
-      <div className="mt-3">{children}</div>
+    <div className="card p-5 sm:p-6">
+      <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
+      <div className="mt-4">{children}</div>
     </div>
   );
 }
@@ -133,8 +133,11 @@ function DistributionList({ data, total }: { data: { label: string; value: numbe
               {d.value} {total > 0 && <span className="text-[var(--ink-muted)]">({Math.round((d.value / total) * 100)}%)</span>}
             </span>
           </div>
-          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-[var(--accent-soft)]">
-            <div className="h-full rounded-full bg-[var(--accent)]" style={{ width: `${(d.value / max) * 100}%` }} />
+          <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[var(--surface-2)]">
+            <div
+              className="h-full rounded-full bg-[var(--accent)] transition-[width] duration-300"
+              style={{ width: `${(d.value / max) * 100}%` }}
+            />
           </div>
         </div>
       ))}
