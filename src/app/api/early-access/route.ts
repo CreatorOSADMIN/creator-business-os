@@ -8,6 +8,7 @@ import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { verifySameOrigin } from "@/lib/verify-origin";
 import { setRegisteredCreatorCookie } from "@/lib/creator-session";
 import { logger } from "@/lib/logger";
+import { reportIncident } from "@/lib/monitoring";
 import { PRIVACY_POLICY_VERSION } from "@/lib/constants";
 
 export async function POST(request: NextRequest) {
@@ -94,66 +95,75 @@ export async function POST(request: NextRequest) {
   }
 
   let creator = existing;
+  let verificationToken: string;
 
-  if (creator) {
-    // Re-submission of an unverified signup: the consent checkbox was
-    // re-confirmed on this submit, so refresh the GDPR audit trail too.
-    creator = await prisma.creator.update({
-      where: { id: creator.id },
-      data: {
-        privacyAccepted: data.privacyAccepted,
-        marketingConsent: data.marketingConsent,
-        gdprConsentAt: new Date(),
-        privacyPolicyVersion: PRIVACY_POLICY_VERSION,
-      },
-    });
-  }
-
-  if (!creator) {
-    let referredBy: string | null = null;
-    if (data.referralCode) {
-      const referrer = await prisma.creator.findUnique({
-        where: { referralCode: data.referralCode.trim().toUpperCase() },
-        select: { referralCode: true },
+  try {
+    if (creator) {
+      // Re-submission of an unverified signup: the consent checkbox was
+      // re-confirmed on this submit, so refresh the GDPR audit trail too.
+      creator = await prisma.creator.update({
+        where: { id: creator.id },
+        data: {
+          privacyAccepted: data.privacyAccepted,
+          marketingConsent: data.marketingConsent,
+          gdprConsentAt: new Date(),
+          privacyPolicyVersion: PRIVACY_POLICY_VERSION,
+        },
       });
-      referredBy = referrer?.referralCode ?? null;
     }
 
-    let referralCode = generateReferralCode();
-    for (let attempts = 0; attempts < 5; attempts++) {
-      const clash = await prisma.creator.findUnique({ where: { referralCode } });
-      if (!clash) break;
-      referralCode = generateReferralCode();
+    if (!creator) {
+      let referredBy: string | null = null;
+      if (data.referralCode) {
+        const referrer = await prisma.creator.findUnique({
+          where: { referralCode: data.referralCode.trim().toUpperCase() },
+          select: { referralCode: true },
+        });
+        referredBy = referrer?.referralCode ?? null;
+      }
+
+      let referralCode = generateReferralCode();
+      for (let attempts = 0; attempts < 5; attempts++) {
+        const clash = await prisma.creator.findUnique({ where: { referralCode } });
+        if (!clash) break;
+        referralCode = generateReferralCode();
+      }
+
+      creator = await prisma.creator.create({
+        data: {
+          fullName: data.fullName,
+          creatorHandle: data.creatorHandle,
+          email: data.email,
+          country: data.country,
+          platforms: JSON.stringify(data.platforms),
+          audienceSize: data.audienceSize,
+          publishingFrequency: data.publishingFrequency,
+          creatorExperience: data.creatorExperience,
+          biggestChallenge: data.biggestChallenge,
+          productInterests: JSON.stringify(data.productInterests),
+          privacyAccepted: data.privacyAccepted,
+          marketingConsent: data.marketingConsent,
+          gdprConsentAt: new Date(),
+          privacyPolicyVersion: PRIVACY_POLICY_VERSION,
+          referralCode,
+          referredBy,
+          utmSource: data.utmSource || null,
+          utmMedium: data.utmMedium || null,
+          utmCampaign: data.utmCampaign || null,
+        },
+      });
     }
 
-    creator = await prisma.creator.create({
-      data: {
-        fullName: data.fullName,
-        creatorHandle: data.creatorHandle,
-        email: data.email,
-        country: data.country,
-        platforms: JSON.stringify(data.platforms),
-        audienceSize: data.audienceSize,
-        publishingFrequency: data.publishingFrequency,
-        creatorExperience: data.creatorExperience,
-        biggestChallenge: data.biggestChallenge,
-        productInterests: JSON.stringify(data.productInterests),
-        privacyAccepted: data.privacyAccepted,
-        marketingConsent: data.marketingConsent,
-        gdprConsentAt: new Date(),
-        privacyPolicyVersion: PRIVACY_POLICY_VERSION,
-        referralCode,
-        referredBy,
-        utmSource: data.utmSource || null,
-        utmMedium: data.utmMedium || null,
-        utmCampaign: data.utmCampaign || null,
-      },
-    });
+    // Existing-but-unverified creators (e.g. they lost the first email) get a
+    // fresh token instead of a new duplicate record.
+    verificationToken = await createVerificationToken(creator.id);
+  } catch (err) {
+    // Unexpected DB failure while creating/updating the registration itself
+    // (as opposed to the best-effort email/cookie steps below, which are
+    // handled separately since registration already succeeded by then).
+    reportIncident("signup_failed", { scope: "early-access", ip, err });
+    return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
-
-  // Existing-but-unverified creators (e.g. they lost the first email) get a
-  // fresh token instead of a new duplicate record.
-  const verificationToken = await createVerificationToken(creator.id);
 
   let emailSent = true;
   try {
@@ -168,11 +178,7 @@ export async function POST(request: NextRequest) {
     // the client uses `emailSent` to show an accurate message and the user
     // can resubmit to retry delivery.
     emailSent = false;
-    logger.error("early-access: failed to send verification email", {
-      scope: "early-access",
-      creatorId: creator.id,
-      err,
-    });
+    reportIncident("signup_email_failed", { scope: "early-access", creatorId: creator.id, err });
   }
 
   try {
@@ -181,11 +187,7 @@ export async function POST(request: NextRequest) {
     // The registration itself already succeeded in the database; a cookie
     // failure (e.g. misconfigured SESSION_SECRET) must not turn this into a
     // failed request for the user.
-    logger.error("early-access: failed to set recognition cookie", {
-      scope: "early-access",
-      creatorId: creator.id,
-      err,
-    });
+    reportIncident("signup_cookie_failed", { scope: "early-access", creatorId: creator.id, err });
   }
 
   return NextResponse.json(

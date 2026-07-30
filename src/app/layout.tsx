@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { GoogleAnalytics } from "@/components/analytics/google-analytics";
-import { SpeedInsights } from "@vercel/speed-insights/next";
+import { AnalyticsGate } from "@/components/consent/analytics-gate";
+import { ConsentBootstrapScript } from "@/components/consent/consent-bootstrap-script";
+import { CookieConsentBanner } from "@/components/consent/cookie-consent-banner";
 import { getPublicEnv } from "@/lib/env";
 import { getSiteUrl } from "@/lib/site-url";
 
@@ -76,9 +77,10 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col font-sans">
-        <GoogleAnalytics measurementId={getPublicEnv().NEXT_PUBLIC_GA_MEASUREMENT_ID} />
-        <SpeedInsights />
+        <ConsentBootstrapScript />
+        <AnalyticsGate measurementId={getPublicEnv().NEXT_PUBLIC_GA_MEASUREMENT_ID} />
         {children}
+        <CookieConsentBanner />
         <script
           type="application/ld+json"
           // Structured data is a static, developer-authored object (no user

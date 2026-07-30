@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CookiePreferencesLink } from "@/components/consent/cookie-preferences-link";
 
 export function SiteFooter() {
   return (
@@ -33,6 +34,7 @@ export function SiteFooter() {
                 { href: "/privacy", label: "Privacy Policy" },
                 { href: "/terms", label: "Terms" },
               ]}
+              extra={<CookiePreferencesLink />}
             />
           </nav>
         </div>
@@ -48,9 +50,11 @@ export function SiteFooter() {
 function FooterColumn({
   title,
   links,
+  extra,
 }: {
   title: string;
   links: { href: string; label: string }[];
+  extra?: React.ReactNode;
 }) {
   return (
     <div>
@@ -63,6 +67,7 @@ function FooterColumn({
             </Link>
           </li>
         ))}
+        {extra && <li>{extra}</li>}
       </ul>
     </div>
   );

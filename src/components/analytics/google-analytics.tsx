@@ -8,15 +8,15 @@ import {
   type AnalyticsProps,
 } from "@/lib/analytics";
 
-declare global {
-  interface Window {
-    dataLayer: unknown[];
-    gtag?: (...args: unknown[]) => void;
-  }
-}
+// `window.gtag`/`window.dataLayer` are declared globally in `@/lib/consent`.
 
 /**
  * Wires the app's existing `trackEvent` API to real GA4 (gtag.js).
+ *
+ * Only ever rendered by `AnalyticsGate` once analytics consent has been
+ * granted (see `src/components/consent`), so this component itself doesn't
+ * need to check consent — it just needs to make sure Consent Mode reflects
+ * "granted" before `config` runs, in case gtag.js hadn't loaded yet.
  *
  * - Loads gtag.js with `next/script` (`afterInteractive`) for optimal
  *   loading without blocking hydration.
@@ -45,6 +45,7 @@ export function GoogleAnalytics({ measurementId }: { measurementId: string }) {
           function gtag(){dataLayer.push(arguments);}
           window.gtag = gtag;
           gtag('js', new Date());
+          gtag('consent', 'update', { analytics_storage: 'granted' });
           gtag('config', '${measurementId}', { send_page_view: false });
         `}
       </Script>
