@@ -12,11 +12,9 @@ import { CONSENT_UPDATED_EVENT, getStoredConsent, type StoredConsent } from "@/l
  * reload required.
  */
 export function AnalyticsGate({ measurementId }: { measurementId: string }) {
-  const [consent, setConsent] = useState<StoredConsent | null>(null);
+  const [consent, setConsent] = useState<StoredConsent | null>(() => getStoredConsent());
 
   useEffect(() => {
-    setConsent(getStoredConsent());
-
     function handleUpdate(event: Event) {
       setConsent((event as CustomEvent<StoredConsent>).detail);
     }

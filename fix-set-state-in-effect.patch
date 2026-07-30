@@ -1,0 +1,45 @@
+diff --git a/src/components/consent/analytics-gate.tsx b/src/components/consent/analytics-gate.tsx
+index 9344c58..09660ab 100644
+--- a/src/components/consent/analytics-gate.tsx
++++ b/src/components/consent/analytics-gate.tsx
+@@ -12,11 +12,9 @@ import { CONSENT_UPDATED_EVENT, getStoredConsent, type StoredConsent } from "@/l
+  * reload required.
+  */
+ export function AnalyticsGate({ measurementId }: { measurementId: string }) {
+-  const [consent, setConsent] = useState<StoredConsent | null>(null);
++  const [consent, setConsent] = useState<StoredConsent | null>(() => getStoredConsent());
+ 
+   useEffect(() => {
+-    setConsent(getStoredConsent());
+-
+     function handleUpdate(event: Event) {
+       setConsent((event as CustomEvent<StoredConsent>).detail);
+     }
+diff --git a/src/components/consent/cookie-consent-banner.tsx b/src/components/consent/cookie-consent-banner.tsx
+index 513a864..0b1b4b8 100644
+--- a/src/components/consent/cookie-consent-banner.tsx
++++ b/src/components/consent/cookie-consent-banner.tsx
+@@ -17,18 +17,14 @@ import {
+  * (wired to the "Cookie Preferences" link in the footer).
+  */
+ export function CookieConsentBanner() {
+-  const [visible, setVisible] = useState(false);
++  const [visible, setVisible] = useState(() => !getStoredConsent());
+   const [managing, setManaging] = useState(false);
+-  const [prefs, setPrefs] = useState<ConsentPreferences>(ALL_CONSENT_DENIED);
+-
+-  useEffect(() => {
++  const [prefs, setPrefs] = useState<ConsentPreferences>(() => {
+     const stored = getStoredConsent();
+-    if (!stored) {
+-      setVisible(true);
+-    } else {
+-      setPrefs({ analytics: stored.analytics, marketing: stored.marketing });
+-    }
++    return stored ? { analytics: stored.analytics, marketing: stored.marketing } : ALL_CONSENT_DENIED;
++  });
+ 
++  useEffect(() => {
+     function handleOpenPreferences() {
+       const current = getStoredConsent();
+       if (current) setPrefs({ analytics: current.analytics, marketing: current.marketing });

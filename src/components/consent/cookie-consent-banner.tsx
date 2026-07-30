@@ -17,18 +17,14 @@ import {
  * (wired to the "Cookie Preferences" link in the footer).
  */
 export function CookieConsentBanner() {
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(() => !getStoredConsent());
   const [managing, setManaging] = useState(false);
-  const [prefs, setPrefs] = useState<ConsentPreferences>(ALL_CONSENT_DENIED);
+  const [prefs, setPrefs] = useState<ConsentPreferences>(() => {
+    const stored = getStoredConsent();
+    return stored ? { analytics: stored.analytics, marketing: stored.marketing } : ALL_CONSENT_DENIED;
+  });
 
   useEffect(() => {
-    const stored = getStoredConsent();
-    if (!stored) {
-      setVisible(true);
-    } else {
-      setPrefs({ analytics: stored.analytics, marketing: stored.marketing });
-    }
-
     function handleOpenPreferences() {
       const current = getStoredConsent();
       if (current) setPrefs({ analytics: current.analytics, marketing: current.marketing });
