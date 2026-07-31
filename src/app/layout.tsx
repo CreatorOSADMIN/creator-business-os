@@ -23,18 +23,18 @@ const SOCIAL_PROFILES = [
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "CreatorOS — Build smarter. Grow with data.",
+    default: "CreatorOS — The Business Operating System for Creators",
     template: "%s | CreatorOS",
   },
   description:
-    "CreatorOS is building a unified analytics and growth platform for digital creators. Join the Early Access program.",
+    "CreatorOS unifies YouTube, TikTok, and Instagram data into one creator business dashboard, so you can grow on evidence, not guesswork. Join Early Access today.",
   alternates: {
     canonical: siteUrl,
   },
   openGraph: {
-    title: "CreatorOS — Build smarter. Grow with data.",
+    title: "CreatorOS — The Business Operating System for Creators",
     description:
-      "A unified analytics and growth platform for digital creators, currently in early access.",
+      "One dashboard for your creator business: unified analytics, clear insight, and growth tools built with early creators. Currently in early access.",
     url: siteUrl,
     siteName: "CreatorOS",
     type: "website",
@@ -42,9 +42,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary",
-    title: "CreatorOS — Build smarter. Grow with data.",
+    title: "CreatorOS — The Business Operating System for Creators",
     description:
-      "A unified analytics and growth platform for digital creators, currently in early access.",
+      "One dashboard for your creator business: unified analytics, clear insight, and growth tools built with early creators. Currently in early access.",
   },
   icons: {
     icon: "/favicon.ico",

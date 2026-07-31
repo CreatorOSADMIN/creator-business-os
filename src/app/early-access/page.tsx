@@ -9,7 +9,7 @@ import { prisma } from "@/lib/prisma";
 export const metadata: Metadata = {
   title: "Join Early Access",
   description:
-    "Become an early creator on CreatorOS. Join a limited early access program and help shape the platform.",
+    "Become an early creator on CreatorOS, the business operating system for creators. Join a limited early access program and help shape the platform.",
   alternates: { canonical: "/early-access" },
 };
 

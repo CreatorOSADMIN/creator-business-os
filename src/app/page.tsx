@@ -41,13 +41,14 @@ function Hero() {
         <div>
           <span className="badge badge-accent eyebrow">Now building — early access open</span>
           <h1 className="mt-6 font-display text-5xl leading-[1.05] tracking-tight sm:text-6xl">
-            The operating system for creators who grow on data,
+            The business operating system for creators who grow on data,
             <span className="text-[var(--ink-muted)]"> not guesswork.</span>
           </h1>
           <p className="mt-6 max-w-lg text-lg leading-relaxed text-[var(--ink-muted)]">
             CreatorOS brings every platform&apos;s numbers — YouTube, TikTok, Instagram, and
-            more — into one clear system, built for full-time creators who are done stitching
-            together five dashboards to understand what&apos;s actually working.
+            more — into one clear system for your creator business, built for full-time
+            creators who are done stitching together five dashboards to understand
+            what&apos;s actually working.
           </p>
           <div className="mt-9 flex flex-wrap items-center gap-4">
             <TrackedLink
@@ -146,7 +147,7 @@ function Problem() {
       <div className="mx-auto max-w-6xl px-6 py-24">
         <p className="font-mono-label text-xs uppercase text-[var(--accent)]">The problem</p>
         <h2 className="mt-3 max-w-xl font-display text-3xl tracking-tight sm:text-4xl">
-          Creating today means managing chaos, not just content.
+          Running a creator business today means managing chaos, not just content.
         </h2>
         <div className="mt-14 grid gap-10 sm:grid-cols-3">
           {points.map((point) => (
@@ -176,12 +177,12 @@ function Solution() {
       <div className="mx-auto max-w-6xl px-6 py-24">
         <p className="font-mono-label text-xs uppercase text-[var(--accent)]">What we&apos;re building</p>
         <h2 className="mt-3 max-w-xl font-display text-3xl tracking-tight sm:text-4xl">
-          One system, built with creators from day one.
+          One system for your creator business, built with creators from day one.
         </h2>
         <p className="mt-4 max-w-2xl leading-relaxed text-[var(--ink-muted)]">
           CreatorOS is early — we&apos;re transparent about that. Today, we&apos;re assembling the
           foundation: bringing together data, analysis, insight, and growth tools into a single
-          product, shaped directly by the first creators who join us.
+          creator management platform, shaped directly by the first creators who join us.
         </p>
         <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {items.map((item, i) => (
@@ -217,7 +218,7 @@ function Audience() {
       <div className="mx-auto max-w-6xl px-6 py-24">
         <p className="font-mono-label text-xs uppercase text-[var(--accent)]">Who it&apos;s for</p>
         <h2 className="mt-3 max-w-xl font-display text-3xl tracking-tight sm:text-4xl">
-          Built for creators who treat this like a business.
+          Built for creators who run their content like a business.
         </h2>
         <div className="mt-14 grid gap-6 sm:grid-cols-3">
           {personas.map((persona) => (
@@ -280,6 +281,10 @@ function DevelopmentStatus() {
 function Faq() {
   const faqs = [
     {
+      q: "What is CreatorOS?",
+      a: "CreatorOS is a business operating system for content creators: it unifies your YouTube, TikTok, and Instagram data in one dashboard so you can see what's driving growth, instead of piecing it together across separate apps.",
+    },
+    {
       q: "Is CreatorOS live today?",
       a: "CreatorOS is currently in development. Early access members get access to the platform as it's built, plus a direct line to shape the roadmap.",
     },
@@ -336,8 +341,8 @@ function EarlyAccessBand({ progress, goal }: { progress: number; goal: number })
           <div>
             <p className="font-mono-label text-xs uppercase text-white/50">Early access</p>
             <h2 className="mt-3 max-w-xl font-display text-3xl tracking-tight sm:text-4xl">
-              CreatorOS is currently inviting a limited number of creators to join its early
-              access program.
+              CreatorOS is currently inviting a limited number of creator businesses to join
+              its early access program.
             </h2>
             <ul className="mt-7 space-y-2.5 text-sm text-white/70">
               <li className="flex gap-2.5">

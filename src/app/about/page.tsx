@@ -4,7 +4,8 @@ import { SiteFooter } from "@/components/site-footer";
 
 export const metadata: Metadata = {
   title: "About",
-  description: "CreatorOS is building a unified analytics and growth platform for creators.",
+  description:
+    "Learn what CreatorOS is building: a unified analytics and growth platform that helps creators run their content like a business.",
   alternates: { canonical: "/about" },
 };
 
@@ -20,7 +21,7 @@ export default function AboutPage() {
           </h1>
           <div className="mt-8 space-y-5 text-[15px] leading-relaxed text-[var(--ink-muted)]">
             <p>
-              CreatorOS started from a simple observation: creators today manage their business
+              CreatorOS started from a simple observation: creators today run their business
               across half a dozen platforms, each with its own analytics, and none of them talk
               to each other. Understanding what&apos;s actually working — and why — takes more
               guesswork than it should.
