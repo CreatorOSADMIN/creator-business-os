@@ -3,13 +3,19 @@ import { CookiePreferencesLink } from "@/components/consent/cookie-preferences-l
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-[var(--border-subtle)] bg-[var(--background)]">
-      <div className="mx-auto max-w-6xl px-6 py-12">
-        <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <span className="font-display text-lg font-medium">CreatorOS</span>
-            <p className="mt-2 max-w-xs text-sm text-[var(--ink-muted)]">
-              Building the operating system for independent creators. Currently in early access.
+    <footer className="border-t border-[var(--border-subtle)] bg-[var(--surface-dark)]">
+      <div className="mx-auto max-w-6xl px-6 py-16">
+        <div className="flex flex-col gap-10 sm:flex-row sm:items-start sm:justify-between">
+          <div className="max-w-xs">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[var(--foreground)] font-mono-label text-[11px] font-semibold text-[var(--surface-dark)]">
+                OS
+              </span>
+              <span className="font-display text-lg font-medium">CreatorOS</span>
+            </div>
+            <p className="mt-3 text-sm leading-relaxed text-[var(--ink-muted)]">
+              The operating system for independent creators — one place for data, analysis, and
+              growth. Currently in early access.
             </p>
           </div>
           <nav aria-label="Footer" className="grid grid-cols-2 gap-8 text-sm sm:grid-cols-4">
@@ -38,7 +44,7 @@ export function SiteFooter() {
             />
           </nav>
         </div>
-        <div className="mt-10 flex flex-col gap-2 border-t border-[var(--border-subtle)] pt-6 text-xs text-[var(--ink-muted)] sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-12 flex flex-col gap-2 border-t border-[var(--border-subtle)] pt-6 text-xs text-[var(--ink-muted)] sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} CreatorOS. All rights reserved.</p>
           <p>Made for creators, everywhere.</p>
         </div>
