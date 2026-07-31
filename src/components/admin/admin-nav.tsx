@@ -95,7 +95,7 @@ export function AdminNav({ email }: { email: string }) {
           onClick={() => setOpen((v) => !v)}
           aria-label={open ? "Chiudi menu" : "Apri menu"}
           aria-expanded={open}
-          className="flex h-9 w-9 items-center justify-center rounded-md text-[var(--ink-muted)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--foreground)]"
+          className="flex h-11 w-11 items-center justify-center rounded-md text-[var(--ink-muted)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--foreground)]"
         >
           {open ? <CloseIcon /> : <MenuIcon />}
         </button>

@@ -42,7 +42,7 @@ export function SiteHeader() {
             aria-controls="mobile-nav"
             aria-label={open ? "Close menu" : "Open menu"}
             onClick={() => setOpen((v) => !v)}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border-subtle)] text-[var(--foreground)] sm:hidden"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border-subtle)] text-[var(--foreground)] sm:hidden"
           >
             {open ? (
               <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">

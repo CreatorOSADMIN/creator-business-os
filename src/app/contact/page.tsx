@@ -43,7 +43,7 @@ export default function ContactPage() {
               </span>
               <a
                 href="mailto:ferrettiwilliam68@gmail.com"
-                className="text-[var(--accent)] hover:underline"
+                className="break-all text-[var(--accent)] hover:underline"
               >
                 ferrettiwilliam68@gmail.com
               </a>
