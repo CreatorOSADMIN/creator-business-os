@@ -4,6 +4,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { getEarlyAccessProgress } from "@/lib/early-access-progress";
 import { TrackEventOnMount } from "@/components/analytics/track-event-on-mount";
 import { TrackedLink } from "@/components/analytics/tracked-link";
+import { RevealOnScroll } from "@/components/reveal-on-scroll";
 
 // Keeps the Early Access progress bar fresh without a client-side fetch or
 // polling: the homepage revalidates on this cadence and re-reads the real
@@ -39,25 +40,25 @@ function Hero() {
         className="glow-orb pointer-events-none absolute -right-40 -top-40 h-[40rem] w-[40rem] rounded-full"
       />
       <div className="relative mx-auto flex max-w-4xl flex-col items-center px-6 py-28 text-center sm:py-36">
-        <span className="badge badge-accent eyebrow animate-fade-up">
+        <span className="badge badge-accent eyebrow animate-fade-up stagger-1">
           Now building — early access open
         </span>
-        <h1 className="animate-fade-up mt-8 text-balance font-display text-5xl leading-[1.03] tracking-tight sm:text-7xl">
+        <h1 className="animate-fade-up stagger-2 mt-8 text-balance font-display text-5xl leading-[1.03] tracking-tight sm:text-7xl">
           Your creator business.
           <br />
           <span className="text-[var(--ink-muted)]">Finally operating as a company.</span>
         </h1>
-        <p className="animate-fade-up-delay mt-7 max-w-xl text-lg leading-relaxed text-[var(--ink-muted)]">
+        <p className="animate-fade-up stagger-3 mt-7 max-w-xl text-lg leading-relaxed text-[var(--ink-muted)]">
           CreatorOS is the operating system behind the numbers — one system of record for
           every platform, every metric, every decision. Built for creators who&apos;ve
           outgrown spreadsheets and gut feel.
         </p>
-        <div className="animate-fade-up-delay mt-10 flex flex-wrap items-center justify-center gap-4">
+        <div className="animate-fade-up stagger-4 mt-10 flex flex-wrap items-center justify-center gap-4">
           <TrackedLink
             href="/early-access"
             event="early_access_click"
             eventProps={{ location: "hero" }}
-            className="btn btn-primary rounded-full px-7 py-3.5 text-sm"
+            className="btn btn-primary cta-premium rounded-full px-7 py-3.5 text-sm"
           >
             Request Early Access
           </TrackedLink>
@@ -88,7 +89,7 @@ function HeroPreview() {
     { label: "Instagram", value: 41, note: "needs a closer look" },
   ];
   return (
-    <div className="card-glass animate-fade-up-delay mt-16 w-full max-w-3xl rounded-2xl p-2 text-left">
+    <div className="card-glass animate-hero-float mt-16 w-full max-w-3xl rounded-2xl p-2 text-left">
       <div className="flex items-center gap-1.5 border-b border-[var(--border-subtle)] px-4 py-3">
         <span className="h-2.5 w-2.5 rounded-full bg-[var(--border-strong)]" />
         <span className="h-2.5 w-2.5 rounded-full bg-[var(--border-strong)]" />
@@ -149,7 +150,7 @@ function Problem() {
   ];
   return (
     <section id="problem" className="border-b border-[var(--border-subtle)] bg-[var(--surface)]">
-      <div className="mx-auto max-w-6xl px-6 py-28">
+      <RevealOnScroll className="mx-auto max-w-6xl px-6 py-28">
         <p className="font-mono-label text-xs uppercase text-[var(--accent)]">The problem</p>
         <h2 className="mt-4 max-w-2xl text-balance font-display text-4xl tracking-tight sm:text-5xl">
           You&apos;re not an influencer. You&apos;re a founder without an operating system.
@@ -167,7 +168,7 @@ function Problem() {
             </div>
           ))}
         </div>
-      </div>
+      </RevealOnScroll>
     </section>
   );
 }
@@ -181,7 +182,7 @@ function Solution() {
   ];
   return (
     <section className="border-b border-[var(--border-subtle)]">
-      <div className="mx-auto max-w-6xl px-6 py-28">
+      <RevealOnScroll className="mx-auto max-w-6xl px-6 py-28">
         <p className="font-mono-label text-xs uppercase text-[var(--accent)]">The solution</p>
         <h2 className="mt-4 max-w-2xl text-balance font-display text-4xl tracking-tight sm:text-5xl">
           From content creation to business operations.
@@ -200,7 +201,7 @@ function Solution() {
             </div>
           ))}
         </div>
-      </div>
+      </RevealOnScroll>
     </section>
   );
 }
@@ -225,7 +226,7 @@ function HowItWorks() {
   ];
   return (
     <section className="border-b border-[var(--border-subtle)] bg-[var(--surface)]">
-      <div className="mx-auto max-w-6xl px-6 py-28">
+      <RevealOnScroll className="mx-auto max-w-6xl px-6 py-28">
         <p className="font-mono-label text-xs uppercase text-[var(--accent)]">How it works</p>
         <h2 className="mt-4 max-w-xl text-balance font-display text-4xl tracking-tight sm:text-5xl">
           Set up once. Operate with clarity every day after.
@@ -239,7 +240,7 @@ function HowItWorks() {
             </div>
           ))}
         </div>
-      </div>
+      </RevealOnScroll>
     </section>
   );
 }
@@ -252,7 +253,7 @@ function ProductPreview() {
   ];
   return (
     <section className="border-b border-[var(--border-subtle)]">
-      <div className="mx-auto max-w-6xl px-6 py-28">
+      <RevealOnScroll className="mx-auto max-w-6xl px-6 py-28">
         <div className="grid gap-14 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
           <div>
             <p className="font-mono-label text-xs uppercase text-[var(--accent)]">The dashboard</p>
@@ -296,7 +297,7 @@ function ProductPreview() {
             </div>
           </div>
         </div>
-      </div>
+      </RevealOnScroll>
     </section>
   );
 }
@@ -318,20 +319,20 @@ function Audience() {
   ];
   return (
     <section className="border-b border-[var(--border-subtle)] bg-[var(--surface)]">
-      <div className="mx-auto max-w-6xl px-6 py-28">
+      <RevealOnScroll className="mx-auto max-w-6xl px-6 py-28">
         <p className="font-mono-label text-xs uppercase text-[var(--accent)]">Who it&apos;s for</p>
         <h2 className="mt-4 max-w-xl text-balance font-display text-4xl tracking-tight sm:text-5xl">
           Built for creators who run content like a company.
         </h2>
         <div className="mt-16 grid gap-6 sm:grid-cols-3">
           {personas.map((persona) => (
-            <div key={persona.title} className="card rounded-xl p-7">
+            <div key={persona.title} className="card card-interactive rounded-xl p-7">
               <h3 className="font-medium">{persona.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-[var(--ink-muted)]">{persona.body}</p>
             </div>
           ))}
         </div>
-      </div>
+      </RevealOnScroll>
     </section>
   );
 }
@@ -361,7 +362,7 @@ function Faq() {
   ];
   return (
     <section className="border-b border-[var(--border-subtle)]">
-      <div className="mx-auto max-w-3xl px-6 py-28">
+      <RevealOnScroll className="mx-auto max-w-3xl px-6 py-28">
         <p className="font-mono-label text-xs uppercase text-[var(--accent)]">FAQ</p>
         <h2 className="mt-4 font-display text-4xl tracking-tight sm:text-5xl">
           Questions, answered.
@@ -385,7 +386,7 @@ function Faq() {
             </details>
           ))}
         </div>
-      </div>
+      </RevealOnScroll>
     </section>
   );
 }
@@ -394,7 +395,7 @@ function EarlyAccessBand({ progress, goal }: { progress: number; goal: number })
   return (
     <section className="relative overflow-hidden bg-[var(--surface-dark)] text-white">
       <div aria-hidden className="glow-orb pointer-events-none absolute -left-32 -bottom-32 h-96 w-96 rounded-full opacity-60" />
-      <div className="relative mx-auto max-w-6xl px-6 py-28">
+      <RevealOnScroll className="relative mx-auto max-w-6xl px-6 py-28">
         <div className="grid gap-12 lg:grid-cols-[1fr_auto] lg:items-center">
           <div>
             <p className="font-mono-label text-xs uppercase text-white/50">Early access</p>
@@ -422,12 +423,12 @@ function EarlyAccessBand({ progress, goal }: { progress: number; goal: number })
             href="/early-access"
             event="early_access_click"
             eventProps={{ location: "band" }}
-            className="inline-flex items-center justify-center rounded-full bg-white px-7 py-3.5 text-sm font-medium text-[var(--surface-dark)] transition hover:bg-white/90"
+            className="cta-premium inline-flex items-center justify-center rounded-full bg-white px-7 py-3.5 text-sm font-medium text-[var(--surface-dark)] transition hover:bg-white/90"
           >
             Request Early Access
           </TrackedLink>
         </div>
-      </div>
+      </RevealOnScroll>
     </section>
   );
 }
