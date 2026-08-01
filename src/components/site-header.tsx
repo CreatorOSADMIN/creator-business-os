@@ -14,7 +14,7 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[var(--border-subtle)] bg-[var(--background)]/80 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-[var(--border-subtle)] bg-[var(--background)]/70 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
         <Link href="/" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[var(--foreground)] font-mono-label text-[11px] font-semibold text-[var(--surface-dark)]">
@@ -34,7 +34,7 @@ export function SiteHeader() {
             href="/early-access"
             className="hidden items-center gap-1.5 rounded-full bg-[var(--accent)] px-4 py-2 text-[13px] font-medium text-white transition hover:bg-[var(--accent-strong)] sm:inline-flex"
           >
-            Join Early Access
+            Request Early Access
           </Link>
           <button
             type="button"
@@ -80,7 +80,7 @@ export function SiteHeader() {
             onClick={() => setOpen(false)}
             className="mt-3 block rounded-full bg-[var(--accent)] px-4 py-2.5 text-center text-sm font-medium text-white transition hover:bg-[var(--accent-strong)]"
           >
-            Join Early Access
+            Request Early Access
           </Link>
         </nav>
       )}

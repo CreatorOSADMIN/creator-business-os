@@ -1,19 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  /* Core surfaces — matte black / charcoal / graphite scale */
-  --background: #0a0a0b;
-  --surface: #131315;
-  --surface-2: #18181b;
+  /* Core surfaces — near-black / charcoal / graphite scale, tuned for a
+     premium "keynote" backdrop rather than a flat dark theme. */
+  --background: #060607;
+  --surface: #101012;
+  --surface-2: #16161a;
   --surface-dark: #000000;
-  --foreground: #f2f2f0;
-  --ink-muted: #96969c;
+  --foreground: #f7f7f5;
+  --ink-muted: #9a9aa1;
 
   /* Borders */
-  --border-subtle: #232326;
-  --border-strong: #2f2f33;
+  --border-subtle: #201f23;
+  --border-strong: #2c2b30;
 
-  /* Accent — muted, desaturated, premium (no neon) */
+  /* Accent — single premium accent, desaturated, no neon */
   --accent: #3ea589;
   --accent-soft: #12211d;
   --accent-strong: #2c7d67;
@@ -23,13 +24,13 @@
 
   /* Radius scale */
   --radius-sm: 0.375rem;
-  --radius-md: 0.625rem;
-  --radius-lg: 1rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1.25rem;
 
   /* Elevation — soft, low-opacity, no heavy drop shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
-  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.55);
 
   --font-display: ui-serif, Georgia, "Times New Roman", serif;
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
@@ -77,8 +78,8 @@ body {
 
 h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
-  line-height: 1.2;
-  letter-spacing: -0.015em;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
 }
 
 .font-display {
@@ -195,12 +196,13 @@ select.input {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .card-interactive:hover {
   border-color: var(--border-strong);
   box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
 .card-flush {
@@ -208,6 +210,16 @@ select.input {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   overflow: hidden;
+}
+
+/* Glass — subtle translucent surface for premium panels over dark bands. */
+.card-glass {
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
+  border: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-lg);
 }
 
 /* Badges — neutral pill shape, differentiated by a status dot + text color
@@ -295,19 +307,40 @@ select.input {
 /* Marketing-only decorative utilities (no effect on app/dashboard views) */
 .bg-grid-fade {
   background-image:
-    radial-gradient(circle at 18% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 42%),
+    radial-gradient(circle at 18% 0%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 42%),
     linear-gradient(to bottom, transparent, var(--background) 92%),
     linear-gradient(to right, var(--border-subtle) 1px, transparent 1px),
     linear-gradient(to bottom, var(--border-subtle) 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 64px 64px, 64px 64px;
+  background-size: 100% 100%, 100% 100%, 72px 72px, 72px 72px;
   background-position: 0 0, 0 0, -1px -1px, -1px -1px;
   -webkit-mask-image: linear-gradient(to bottom, black, transparent);
   mask-image: linear-gradient(to bottom, black, transparent);
 }
 
 .glow-orb {
-  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 30%, transparent) 0%, transparent 70%);
-  filter: blur(60px);
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 26%, transparent) 0%, transparent 70%);
+  filter: blur(70px);
+}
+
+/* Gentle entrance animation for hero/section content. Disabled entirely
+   under prefers-reduced-motion via the existing rule below. */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-fade-up-delay {
+  animation: fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both;
 }
 
 .faq-item {

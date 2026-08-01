@@ -14,7 +14,7 @@ export function SiteFooter() {
               <span className="font-display text-lg font-medium">CreatorOS</span>
             </div>
             <p className="mt-3 text-sm leading-relaxed text-[var(--ink-muted)]">
-              The business operating system for independent creators — one place for data,
+              The operating system for creator businesses — one system of record for data,
               analysis, and growth. Currently in early access.
             </p>
           </div>
