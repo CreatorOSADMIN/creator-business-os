@@ -5,6 +5,7 @@ import { ConsentBootstrapScript } from "@/components/consent/consent-bootstrap-s
 import { CookieConsentBanner } from "@/components/consent/cookie-consent-banner";
 import { getPublicEnv } from "@/lib/env";
 import { getSiteUrl } from "@/lib/site-url";
+import { Analytics } from "@vercel/analytics/next"
 
 const siteUrl = getSiteUrl();
 // Canonical brand domain per organization records — used for structured
