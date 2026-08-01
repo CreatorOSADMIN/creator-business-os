@@ -1,0 +1,470 @@
+diff --git a/src/app/globals.css b/src/app/globals.css
+index 72e5cdd..abf0cb9 100644
+--- a/src/app/globals.css
++++ b/src/app/globals.css
+@@ -292,6 +292,60 @@ select.input {
+   font-variant-numeric: tabular-nums;
+ }
+ 
++/* Marketing-only decorative utilities (no effect on app/dashboard views) */
++.bg-grid-fade {
++  background-image:
++    radial-gradient(circle at 18% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 42%),
++    linear-gradient(to bottom, transparent, var(--background) 92%),
++    linear-gradient(to right, var(--border-subtle) 1px, transparent 1px),
++    linear-gradient(to bottom, var(--border-subtle) 1px, transparent 1px);
++  background-size: 100% 100%, 100% 100%, 64px 64px, 64px 64px;
++  background-position: 0 0, 0 0, -1px -1px, -1px -1px;
++  -webkit-mask-image: linear-gradient(to bottom, black, transparent);
++  mask-image: linear-gradient(to bottom, black, transparent);
++}
++
++.glow-orb {
++  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 30%, transparent) 0%, transparent 70%);
++  filter: blur(60px);
++}
++
++.faq-item {
++  border-bottom: 1px solid var(--border-subtle);
++}
++
++.faq-item summary {
++  list-style: none;
++  cursor: pointer;
++}
++
++.faq-item summary::-webkit-details-marker {
++  display: none;
++}
++
++.faq-item .faq-chevron {
++  transition: transform 0.2s ease;
++}
++
++.faq-item[open] .faq-chevron {
++  transform: rotate(45deg);
++}
++
++.eyebrow {
++  display: inline-flex;
++  align-items: center;
++  gap: 0.5rem;
++}
++
++.eyebrow::before {
++  content: "";
++  width: 6px;
++  height: 6px;
++  border-radius: 999px;
++  background: var(--accent);
++  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
++}
++
+ ::selection {
+   background: var(--accent);
+   color: #08100e;
+diff --git a/src/app/page.tsx b/src/app/page.tsx
+index 6da5961..106dd74 100644
+--- a/src/app/page.tsx
++++ b/src/app/page.tsx
+@@ -20,7 +20,9 @@ export default async function HomePage() {
+         <Hero />
+         <Problem />
+         <Solution />
++        <Audience />
+         <DevelopmentStatus />
++        <Faq />
+         <EarlyAccessBand progress={progress} goal={goal} />
+       </main>
+       <SiteFooter />
+@@ -30,37 +32,45 @@ export default async function HomePage() {
+ 
+ function Hero() {
+   return (
+-    <section className="border-b border-[var(--border-subtle)]">
+-      <div className="mx-auto grid max-w-6xl gap-12 px-6 py-24 sm:py-32 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
++    <section className="relative overflow-hidden border-b border-[var(--border-subtle)] bg-grid-fade">
++      <div
++        aria-hidden
++        className="glow-orb pointer-events-none absolute -right-40 -top-40 h-[36rem] w-[36rem] rounded-full"
++      />
++      <div className="relative mx-auto grid max-w-6xl gap-14 px-6 py-24 sm:py-32 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+         <div>
+-          <p className="font-mono-label text-xs uppercase text-[var(--accent)]">
+-            Now building — early access open
+-          </p>
+-          <h1 className="mt-5 font-display text-5xl leading-[1.05] tracking-tight sm:text-6xl">
+-            Build smarter.
+-            <br />
+-            Grow with data.
++          <span className="badge badge-accent eyebrow">Now building — early access open</span>
++          <h1 className="mt-6 font-display text-5xl leading-[1.05] tracking-tight sm:text-6xl">
++            The operating system for creators who grow on data,
++            <span className="text-[var(--ink-muted)]"> not guesswork.</span>
+           </h1>
+-          <p className="mt-6 max-w-lg text-lg text-[var(--ink-muted)]">
+-            CreatorOS is a platform in development that will help creators understand their
+-            audience, their content, and their growth — across every platform they publish on.
++          <p className="mt-6 max-w-lg text-lg leading-relaxed text-[var(--ink-muted)]">
++            CreatorOS brings every platform&apos;s numbers — YouTube, TikTok, Instagram, and
++            more — into one clear system, built for full-time creators who are done stitching
++            together five dashboards to understand what&apos;s actually working.
+           </p>
+-          <div className="mt-8 flex flex-wrap items-center gap-4">
++          <div className="mt-9 flex flex-wrap items-center gap-4">
+             <TrackedLink
+               href="/early-access"
+               event="early_access_click"
+               eventProps={{ location: "hero" }}
+-              className="rounded-full bg-[var(--accent)] px-6 py-3 text-sm font-medium text-white transition hover:bg-[var(--accent-strong)]"
++              className="btn btn-primary rounded-full px-6 py-3 text-sm"
+             >
+               Join Early Access
+             </TrackedLink>
+             <Link
+               href="#problem"
+-              className="text-sm font-medium text-[var(--foreground)] underline decoration-[var(--border-subtle)] underline-offset-4 hover:decoration-[var(--accent)]"
++              className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--foreground)] transition hover:text-[var(--accent)]"
+             >
+-              Learn more
++              See how it works
++              <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.75">
++                <path d="M3 8h10M9 4l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
++              </svg>
+             </Link>
+           </div>
++          <p className="mt-8 text-xs text-[var(--ink-muted)]">
++            No credit card required · Shaped directly by the first creators who join
++          </p>
+         </div>
+         <SignalCard />
+       </div>
+@@ -75,11 +85,14 @@ function SignalCard() {
+     { label: "Instagram", value: 41, note: "needs a closer look" },
+   ];
+   return (
+-    <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface)] p-6 shadow-[0_1px_0_0_rgba(0,0,0,0.03)]">
+-      <p className="font-mono-label text-[11px] uppercase text-[var(--ink-muted)]">
+-        A preview of what we&apos;re building
+-      </p>
+-      <div className="mt-4 space-y-4">
++    <div className="card rounded-2xl p-6">
++      <div className="flex items-center justify-between">
++        <p className="font-mono-label text-[11px] uppercase text-[var(--ink-muted)]">
++          A preview of what we&apos;re building
++        </p>
++        <span className="badge badge-neutral">Concept</span>
++      </div>
++      <div className="mt-5 space-y-4">
+         {rows.map((row) => (
+           <div key={row.label}>
+             <div className="flex items-center justify-between text-sm">
+@@ -107,27 +120,41 @@ function Problem() {
+     {
+       title: "Fragmented data",
+       body: "Creators publish across YouTube, TikTok, Instagram and more — each with its own dashboard, metrics, and blind spots.",
++      icon: (
++        <path d="M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm10 3h6" strokeLinecap="round" strokeLinejoin="round" />
++      ),
+     },
+     {
+       title: "No clear signal",
+       body: "It's hard to tell why one video takes off and another doesn't, when the data lives in five different places.",
++      icon: <path d="M4 18V9m6 9V4m6 14v-7m6 7V6" strokeLinecap="round" strokeLinejoin="round" />,
+     },
+     {
+       title: "Growth by guesswork",
+       body: "Without a unified view, improving as a creator often comes down to trial and error rather than evidence.",
++      icon: (
++        <path
++          d="M12 3a9 9 0 1 0 9 9M12 3v9l6.5-4.5"
++          strokeLinecap="round"
++          strokeLinejoin="round"
++        />
++      ),
+     },
+   ];
+   return (
+     <section id="problem" className="border-b border-[var(--border-subtle)] bg-[var(--surface)]">
+-      <div className="mx-auto max-w-6xl px-6 py-20">
++      <div className="mx-auto max-w-6xl px-6 py-24">
+         <p className="font-mono-label text-xs uppercase text-[var(--accent)]">The problem</p>
+         <h2 className="mt-3 max-w-xl font-display text-3xl tracking-tight sm:text-4xl">
+           Creating today means managing chaos, not just content.
+         </h2>
+-        <div className="mt-12 grid gap-8 sm:grid-cols-3">
++        <div className="mt-14 grid gap-10 sm:grid-cols-3">
+           {points.map((point) => (
+             <div key={point.title}>
+-              <h3 className="font-medium">{point.title}</h3>
++              <svg viewBox="0 0 24 24" className="h-6 w-6 text-[var(--accent)]" fill="none" stroke="currentColor" strokeWidth="1.5">
++                {point.icon}
++              </svg>
++              <h3 className="mt-4 font-medium">{point.title}</h3>
+               <p className="mt-2 text-sm leading-relaxed text-[var(--ink-muted)]">{point.body}</p>
+             </div>
+           ))}
+@@ -146,19 +173,19 @@ function Solution() {
+   ];
+   return (
+     <section className="border-b border-[var(--border-subtle)]">
+-      <div className="mx-auto max-w-6xl px-6 py-20">
++      <div className="mx-auto max-w-6xl px-6 py-24">
+         <p className="font-mono-label text-xs uppercase text-[var(--accent)]">What we&apos;re building</p>
+         <h2 className="mt-3 max-w-xl font-display text-3xl tracking-tight sm:text-4xl">
+           One system, built with creators from day one.
+         </h2>
+-        <p className="mt-4 max-w-2xl text-[var(--ink-muted)]">
++        <p className="mt-4 max-w-2xl leading-relaxed text-[var(--ink-muted)]">
+           CreatorOS is early — we&apos;re transparent about that. Today, we&apos;re assembling the
+           foundation: bringing together data, analysis, insight, and growth tools into a single
+           product, shaped directly by the first creators who join us.
+         </p>
+-        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
++        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+           {items.map((item, i) => (
+-            <div key={item.title} className="rounded-xl border border-[var(--border-subtle)] p-5">
++            <div key={item.title} className="card card-interactive rounded-xl p-6">
+               <span className="font-mono-label text-xs text-[var(--ink-muted)]">0{i + 1}</span>
+               <h3 className="mt-3 font-medium">{item.title}</h3>
+               <p className="mt-2 text-sm leading-relaxed text-[var(--ink-muted)]">{item.body}</p>
+@@ -170,6 +197,41 @@ function Solution() {
+   );
+ }
+ 
++function Audience() {
++  const personas = [
++    {
++      title: "Full-time creators",
++      body: "You've turned content into a career and need decisions backed by data, not vibes — across every channel you run.",
++    },
++    {
++      title: "Multi-platform publishers",
++      body: "You post to YouTube, TikTok, and Instagram in the same week and need one place to see what's actually moving the needle.",
++    },
++    {
++      title: "Growing creators",
++      body: "You're scaling past a few thousand followers and outgrowing spreadsheets, gut feel, and platform-native analytics tabs.",
++    },
++  ];
++  return (
++    <section className="border-b border-[var(--border-subtle)] bg-[var(--surface)]">
++      <div className="mx-auto max-w-6xl px-6 py-24">
++        <p className="font-mono-label text-xs uppercase text-[var(--accent)]">Who it&apos;s for</p>
++        <h2 className="mt-3 max-w-xl font-display text-3xl tracking-tight sm:text-4xl">
++          Built for creators who treat this like a business.
++        </h2>
++        <div className="mt-14 grid gap-6 sm:grid-cols-3">
++          {personas.map((persona) => (
++            <div key={persona.title} className="rounded-xl border border-[var(--border-subtle)] p-6">
++              <h3 className="font-medium">{persona.title}</h3>
++              <p className="mt-2 text-sm leading-relaxed text-[var(--ink-muted)]">{persona.body}</p>
++            </div>
++          ))}
++        </div>
++      </div>
++    </section>
++  );
++}
++
+ function DevelopmentStatus() {
+   const stages = [
+     { label: "Foundation & early access", state: "In progress" },
+@@ -177,13 +239,13 @@ function DevelopmentStatus() {
+     { label: "Insight & recommendations", state: "Planned" },
+   ];
+   return (
+-    <section className="border-b border-[var(--border-subtle)] bg-[var(--surface)]">
+-      <div className="mx-auto max-w-6xl px-6 py-20">
++    <section className="border-b border-[var(--border-subtle)]">
++      <div className="mx-auto max-w-6xl px-6 py-24">
+         <p className="font-mono-label text-xs uppercase text-[var(--accent)]">Project status</p>
+         <h2 className="mt-3 max-w-xl font-display text-3xl tracking-tight sm:text-4xl">
+           CreatorOS is currently in development.
+         </h2>
+-        <p className="mt-4 max-w-2xl text-[var(--ink-muted)]">
++        <p className="mt-4 max-w-2xl leading-relaxed text-[var(--ink-muted)]">
+           We&apos;re building the first version, not maintaining a finished product. Early
+           adopters help define what CreatorOS becomes — the project is alive and changes as we
+           learn from the creators who join us.
+@@ -203,32 +265,93 @@ function DevelopmentStatus() {
+         </div>
+         <Link
+           href="/updates"
+-          className="mt-6 inline-block text-sm font-medium text-[var(--foreground)] underline decoration-[var(--border-subtle)] underline-offset-4 hover:decoration-[var(--accent)]"
++          className="mt-7 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--foreground)] transition hover:text-[var(--accent)]"
+         >
+-          See the full roadmap →
++          See the full roadmap
++          <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.75">
++            <path d="M3 8h10M9 4l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
++          </svg>
+         </Link>
+       </div>
+     </section>
+   );
+ }
+ 
++function Faq() {
++  const faqs = [
++    {
++      q: "Is CreatorOS live today?",
++      a: "CreatorOS is currently in development. Early access members get access to the platform as it's built, plus a direct line to shape the roadmap.",
++    },
++    {
++      q: "Which platforms will it support?",
++      a: "YouTube, TikTok, and Instagram are the initial focus, based on early creator feedback. Support broadens from there as the product matures.",
++    },
++    {
++      q: "What does early access include?",
++      a: "Access to the platform as new capabilities ship, direct input into what gets built next, and 50% off your first three months once paid plans launch — subject to final program terms.",
++    },
++    {
++      q: "Do I need a credit card to join?",
++      a: "No. Joining the early access list is free and takes about a minute — no payment details required.",
++    },
++  ];
++  return (
++    <section className="border-b border-[var(--border-subtle)] bg-[var(--surface)]">
++      <div className="mx-auto max-w-3xl px-6 py-24">
++        <p className="font-mono-label text-xs uppercase text-[var(--accent)]">FAQ</p>
++        <h2 className="mt-3 font-display text-3xl tracking-tight sm:text-4xl">
++          Questions, answered.
++        </h2>
++        <div className="mt-10">
++          {faqs.map((faq) => (
++            <details key={faq.q} className="faq-item group py-5">
++              <summary className="flex items-center justify-between gap-4">
++                <span className="font-medium">{faq.q}</span>
++                <svg
++                  viewBox="0 0 24 24"
++                  className="faq-chevron h-4 w-4 shrink-0 text-[var(--ink-muted)]"
++                  fill="none"
++                  stroke="currentColor"
++                  strokeWidth="1.75"
++                >
++                  <path d="M12 5v14M5 12h14" strokeLinecap="round" />
++                </svg>
++              </summary>
++              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[var(--ink-muted)]">{faq.a}</p>
++            </details>
++          ))}
++        </div>
++      </div>
++    </section>
++  );
++}
++
+ function EarlyAccessBand({ progress, goal }: { progress: number; goal: number }) {
+   return (
+-    <section className="bg-[var(--surface-dark)] text-white">
+-      <div className="mx-auto max-w-6xl px-6 py-20">
+-        <div className="grid gap-10 lg:grid-cols-[1fr_auto] lg:items-center">
++    <section className="relative overflow-hidden bg-[var(--surface-dark)] text-white">
++      <div aria-hidden className="glow-orb pointer-events-none absolute -left-32 -bottom-32 h-96 w-96 rounded-full opacity-60" />
++      <div className="relative mx-auto max-w-6xl px-6 py-24">
++        <div className="grid gap-12 lg:grid-cols-[1fr_auto] lg:items-center">
+           <div>
+             <p className="font-mono-label text-xs uppercase text-white/50">Early access</p>
+             <h2 className="mt-3 max-w-xl font-display text-3xl tracking-tight sm:text-4xl">
+               CreatorOS is currently inviting a limited number of creators to join its early
+               access program.
+             </h2>
+-            <ul className="mt-6 space-y-2 text-sm text-white/70">
+-              <li>— Early access to the platform as it&apos;s built</li>
+-              <li>— A direct line to influence what we build next</li>
+-              <li>
+-                — 50% off your first three months once paid plans launch, subject to final
+-                program terms
++            <ul className="mt-7 space-y-2.5 text-sm text-white/70">
++              <li className="flex gap-2.5">
++                <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-white/40" />
++                Early access to the platform as it&apos;s built
++              </li>
++              <li className="flex gap-2.5">
++                <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-white/40" />
++                A direct line to influence what we build next
++              </li>
++              <li className="flex gap-2.5">
++                <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-white/40" />
++                50% off your first three months once paid plans launch, subject to final program
++                terms
+               </li>
+             </ul>
+             <EarlyAccessProgress progress={progress} goal={goal} />
+diff --git a/src/components/site-footer.tsx b/src/components/site-footer.tsx
+index 7230519..0b6f987 100644
+--- a/src/components/site-footer.tsx
++++ b/src/components/site-footer.tsx
+@@ -3,13 +3,19 @@ import { CookiePreferencesLink } from "@/components/consent/cookie-preferences-l
+ 
+ export function SiteFooter() {
+   return (
+-    <footer className="border-t border-[var(--border-subtle)] bg-[var(--background)]">
+-      <div className="mx-auto max-w-6xl px-6 py-12">
+-        <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
+-          <div>
+-            <span className="font-display text-lg font-medium">CreatorOS</span>
+-            <p className="mt-2 max-w-xs text-sm text-[var(--ink-muted)]">
+-              Building the operating system for independent creators. Currently in early access.
++    <footer className="border-t border-[var(--border-subtle)] bg-[var(--surface-dark)]">
++      <div className="mx-auto max-w-6xl px-6 py-16">
++        <div className="flex flex-col gap-10 sm:flex-row sm:items-start sm:justify-between">
++          <div className="max-w-xs">
++            <div className="flex items-center gap-2.5">
++              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[var(--foreground)] font-mono-label text-[11px] font-semibold text-[var(--surface-dark)]">
++                OS
++              </span>
++              <span className="font-display text-lg font-medium">CreatorOS</span>
++            </div>
++            <p className="mt-3 text-sm leading-relaxed text-[var(--ink-muted)]">
++              The operating system for independent creators — one place for data, analysis, and
++              growth. Currently in early access.
+             </p>
+           </div>
+           <nav aria-label="Footer" className="grid grid-cols-2 gap-8 text-sm sm:grid-cols-4">
+@@ -38,7 +44,7 @@ export function SiteFooter() {
+             />
+           </nav>
+         </div>
+-        <div className="mt-10 flex flex-col gap-2 border-t border-[var(--border-subtle)] pt-6 text-xs text-[var(--ink-muted)] sm:flex-row sm:items-center sm:justify-between">
++        <div className="mt-12 flex flex-col gap-2 border-t border-[var(--border-subtle)] pt-6 text-xs text-[var(--ink-muted)] sm:flex-row sm:items-center sm:justify-between">
+           <p>© {new Date().getFullYear()} CreatorOS. All rights reserved.</p>
+           <p>Made for creators, everywhere.</p>
+         </div>
+diff --git a/src/components/site-header.tsx b/src/components/site-header.tsx
+index 30c701d..059637e 100644
+--- a/src/components/site-header.tsx
++++ b/src/components/site-header.tsx
+@@ -14,17 +14,17 @@ export function SiteHeader() {
+   const [open, setOpen] = useState(false);
+ 
+   return (
+-    <header className="sticky top-0 z-40 border-b border-[var(--border-subtle)] bg-[var(--background)]/90 backdrop-blur">
++    <header className="sticky top-0 z-40 border-b border-[var(--border-subtle)] bg-[var(--background)]/80 backdrop-blur-md">
+       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
+-        <Link href="/" className="flex items-center gap-2" onClick={() => setOpen(false)}>
+-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-[var(--foreground)] font-mono-label text-[11px] font-semibold text-white">
++        <Link href="/" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
++          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[var(--foreground)] font-mono-label text-[11px] font-semibold text-[var(--surface-dark)]">
+             OS
+           </span>
+           <span className="font-display text-lg font-medium tracking-tight">CreatorOS</span>
+         </Link>
+-        <nav className="hidden items-center gap-8 text-sm text-[var(--ink-muted)] sm:flex">
++        <nav className="hidden items-center gap-9 text-[13px] font-medium text-[var(--ink-muted)] sm:flex">
+           {NAV_LINKS.map((link) => (
+-            <Link key={link.href} href={link.href} className="hover:text-[var(--foreground)]">
++            <Link key={link.href} href={link.href} className="transition-colors hover:text-[var(--foreground)]">
+               {link.label}
+             </Link>
+           ))}
+@@ -32,7 +32,7 @@ export function SiteHeader() {
+         <div className="flex items-center gap-2 sm:gap-3">
+           <Link
+             href="/early-access"
+-            className="hidden rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--accent-strong)] sm:inline-flex"
++            className="hidden items-center gap-1.5 rounded-full bg-[var(--accent)] px-4 py-2 text-[13px] font-medium text-white transition hover:bg-[var(--accent-strong)] sm:inline-flex"
+           >
+             Join Early Access
+           </Link>

@@ -1,0 +1,232 @@
+[1mdiff --git a/src/app/admin/(dashboard)/layout.tsx b/src/app/admin/(dashboard)/layout.tsx[m
+[1mindex 3eee5bc..9c3f23f 100644[m
+[1m--- a/src/app/admin/(dashboard)/layout.tsx[m
+[1m+++ b/src/app/admin/(dashboard)/layout.tsx[m
+[36m@@ -1,7 +1,6 @@[m
+ import { redirect } from "next/navigation";[m
+[31m-import Link from "next/link";[m
+ import { getAdminSession } from "@/lib/session";[m
+[31m-import { LogoutButton } from "@/components/admin/logout-button";[m
+[32m+[m[32mimport { AdminNav } from "@/components/admin/admin-nav";[m
+ [m
+ export default async function AdminDashboardLayout({[m
+   children,[m
+[36m@@ -14,85 +13,10 @@[m [mexport default async function AdminDashboardLayout({[m
+   }[m
+ [m
+   return ([m
+[31m-    <div className="flex min-h-screen flex-col bg-[var(--surface)] sm:flex-row">[m
+[31m-      {/* Mobile top bar */}[m
+[31m-      <div className="flex items-center justify-between border-b border-[var(--border-subtle)] bg-white px-4 py-3 sm:hidden">[m
+[31m-        <div className="flex items-center gap-2">[m
+[31m-          <span className="flex h-7 w-7 items-center justify-center rounded-sm bg-[var(--foreground)] font-mono-label text-[11px] font-semibold text-white">[m
+[31m-            OS[m
+[31m-          </span>[m
+[31m-          <span className="font-display text-base font-medium">CreatorOS</span>[m
+[31m-        </div>[m
+[31m-        <LogoutButton />[m
+[31m-      </div>[m
+[31m-      <nav className="flex gap-1 overflow-x-auto border-b border-[var(--border-subtle)] bg-white px-3 py-2 text-sm sm:hidden">[m
+[31m-        <Link[m
+[31m-          href="/admin"[m
+[31m-          className="whitespace-nowrap rounded-lg px-3 py-2 font-medium text-[var(--foreground)] hover:bg-[var(--accent-soft)]"[m
+[31m-        >[m
+[31m-          Dashboard[m
+[31m-        </Link>[m
+[31m-        <Link[m
+[31m-          href="/admin/creators"[m
+[31m-          className="whitespace-nowrap rounded-lg px-3 py-2 font-medium text-[var(--foreground)] hover:bg-[var(--accent-soft)]"[m
+[31m-        >[m
+[31m-          Creators[m
+[31m-        </Link>[m
+[31m-        <Link[m
+[31m-          href="/admin/analytics"[m
+[31m-          className="whitespace-nowrap rounded-lg px-3 py-2 font-medium text-[var(--foreground)] hover:bg-[var(--accent-soft)]"[m
+[31m-        >[m
+[31m-          Analytics[m
+[31m-        </Link>[m
+[31m-        <Link[m
+[31m-          href="/admin/announcements"[m
+[31m-          className="whitespace-nowrap rounded-lg px-3 py-2 font-medium text-[var(--foreground)] hover:bg-[var(--accent-soft)]"[m
+[31m-        >[m
+[31m-          Annunci[m
+[31m-        </Link>[m
+[31m-      </nav>[m
+[31m-[m
+[31m-      {/* Desktop sidebar */}[m
+[31m-      <aside className="relative hidden w-60 shrink-0 border-r border-[var(--border-subtle)] bg-white sm:block">[m
+[31m-        <div className="flex h-16 items-center gap-2 border-b border-[var(--border-subtle)] px-6">[m
+[31m-          <span className="flex h-7 w-7 items-center justify-center rounded-sm bg-[var(--foreground)] font-mono-label text-[11px] font-semibold text-white">[m
+[31m-            OS[m
+[31m-          </span>[m
+[31m-          <span className="font-display text-base font-medium">CreatorOS</span>[m
+[31m-        </div>[m
+[31m-        <nav className="space-y-1 px-3 py-4 text-sm">[m
+[31m-          <Link[m
+[31m-            href="/admin"[m
+[31m-            className="block rounded-lg px-3 py-2 font-medium text-[var(--foreground)] hover:bg-[var(--accent-soft)]"[m
+[31m-          >[m
+[31m-            Dashboard[m
+[31m-          </Link>[m
+[31m-          <Link[m
+[31m-            href="/admin/creators"[m
+[31m-            className="block rounded-lg px-3 py-2 font-medium text-[var(--foreground)] hover:bg-[var(--accent-soft)]"[m
+[31m-          >[m
+[31m-            Creators[m
+[31m-          </Link>[m
+[31m-          <Link[m
+[31m-            href="/admin/analytics"[m
+[31m-            className="block rounded-lg px-3 py-2 font-medium text-[var(--foreground)] hover:bg-[var(--accent-soft)]"[m
+[31m-          >[m
+[31m-            Analytics[m
+[31m-          </Link>[m
+[31m-          <Link[m
+[31m-            href="/admin/announcements"[m
+[31m-            className="block rounded-lg px-3 py-2 font-medium text-[var(--foreground)] hover:bg-[var(--accent-soft)]"[m
+[31m-          >[m
+[31m-            Annunci[m
+[31m-          </Link>[m
+[31m-        </nav>[m
+[31m-        <div className="absolute bottom-0 w-60 border-t border-[var(--border-subtle)] p-4">[m
+[31m-          <p className="truncate text-xs text-[var(--ink-muted)]">{session.email}</p>[m
+[31m-          <LogoutButton />[m
+[31m-        </div>[m
+[31m-      </aside>[m
+[31m-      <div className="min-w-0 flex-1">[m
+[31m-        <main className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-8">{children}</main>[m
+[32m+[m[32m    <div className="min-h-screen bg-[var(--background)]">[m
+[32m+[m[32m      <AdminNav email={session.email} />[m
+[32m+[m[32m      <div className="md:pl-64">[m
+[32m+[m[32m        <main className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-8 lg:py-10">{children}</main>[m
+       </div>[m
+     </div>[m
+   );[m
+[1mdiff --git a/src/components/admin/logout-button.tsx b/src/components/admin/logout-button.tsx[m
+[1mindex 1055a73..f13be91 100644[m
+[1m--- a/src/components/admin/logout-button.tsx[m
+[1m+++ b/src/components/admin/logout-button.tsx[m
+[36m@@ -18,7 +18,7 @@[m [mexport function LogoutButton() {[m
+     <button[m
+       onClick={handleLogout}[m
+       disabled={loading}[m
+[31m-      className="mt-2 text-xs font-medium text-[var(--accent)] hover:underline disabled:opacity-60"[m
+[32m+[m[32m      className="mt-3 flex w-full items-center justify-center rounded-lg border border-[var(--border-subtle)] px-3 py-2 text-xs font-medium text-[var(--ink-muted)] transition-colors hover:border-[var(--border-strong)] hover:bg-[var(--surface-2)] hover:text-[var(--foreground)] disabled:opacity-60"[m
+     >[m
+       {loading ? "Signing out…" : "Sign out"}[m
+     </button>[m
+[1mdiff --git a/src/app/admin/(dashboard)/layout.tsx b/src/app/admin/(dashboard)/layout.tsx[m
+[1mindex 3eee5bc..9c3f23f 100644[m
+[1m--- a/src/app/admin/(dashboard)/layout.tsx[m
+[1m+++ b/src/app/admin/(dashboard)/layout.tsx[m
+[36m@@ -1,7 +1,6 @@[m
+ import { redirect } from "next/navigation";[m
+[31m-import Link from "next/link";[m
+ import { getAdminSession } from "@/lib/session";[m
+[31m-import { LogoutButton } from "@/components/admin/logout-button";[m
+[32m+[m[32mimport { AdminNav } from "@/components/admin/admin-nav";[m
+ [m
+ export default async function AdminDashboardLayout({[m
+   children,[m
+[36m@@ -14,85 +13,10 @@[m [mexport default async function AdminDashboardLayout({[m
+   }[m
+ [m
+   return ([m
+[31m-    <div className="flex min-h-screen flex-col bg-[var(--surface)] sm:flex-row">[m
+[31m-      {/* Mobile top bar */}[m
+[31m-      <div className="flex items-center justify-between border-b border-[var(--border-subtle)] bg-white px-4 py-3 sm:hidden">[m
+[31m-        <div className="flex items-center gap-2">[m
+[31m-          <span className="flex h-7 w-7 items-center justify-center rounded-sm bg-[var(--foreground)] font-mono-label text-[11px] font-semibold text-white">[m
+[31m-            OS[m
+[31m-          </span>[m
+[31m-          <span className="font-display text-base font-medium">CreatorOS</span>[m
+[31m-        </div>[m
+[31m-        <LogoutButton />[m
+[31m-      </div>[m
+[31m-      <nav className="flex gap-1 overflow-x-auto border-b border-[var(--border-subtle)] bg-white px-3 py-2 text-sm sm:hidden">[m
+[31m-        <Link[m
+[31m-          href="/admin"[m
+[31m-          className="whitespace-nowrap rounded-lg px-3 py-2 font-medium text-[var(--foreground)] hover:bg-[var(--accent-soft)]"[m
+[31m-        >[m
+[31m-          Dashboard[m
+[31m-        </Link>[m
+[31m-        <Link[m
+[31m-          href="/admin/creators"[m
+[31m-          className="whitespace-nowrap rounded-lg px-3 py-2 font-medium text-[var(--foreground)] hover:bg-[var(--accent-soft)]"[m
+[31m-        >[m
+[31m-          Creators[m
+[31m-        </Link>[m
+[31m-        <Link[m
+[31m-          href="/admin/analytics"[m
+[31m-          className="whitespace-nowrap rounded-lg px-3 py-2 font-medium text-[var(--foreground)] hover:bg-[var(--accent-soft)]"[m
+[31m-        >[m
+[31m-          Analytics[m
+[31m-        </Link>[m
+[31m-        <Link[m
+[31m-          href="/admin/announcements"[m
+[31m-          className="whitespace-nowrap rounded-lg px-3 py-2 font-medium text-[var(--foreground)] hover:bg-[var(--accent-soft)]"[m
+[31m-        >[m
+[31m-          Annunci[m
+[31m-        </Link>[m
+[31m-      </nav>[m
+[31m-[m
+[31m-      {/* Desktop sidebar */}[m
+[31m-      <aside className="relative hidden w-60 shrink-0 border-r border-[var(--border-subtle)] bg-white sm:block">[m
+[31m-        <div className="flex h-16 items-center gap-2 border-b border-[var(--border-subtle)] px-6">[m
+[31m-          <span className="flex h-7 w-7 items-center justify-center rounded-sm bg-[var(--foreground)] font-mono-label text-[11px] font-semibold text-white">[m
+[31m-            OS[m
+[31m-          </span>[m
+[31m-          <span className="font-display text-base font-medium">CreatorOS</span>[m
+[31m-        </div>[m
+[31m-        <nav className="space-y-1 px-3 py-4 text-sm">[m
+[31m-          <Link[m
+[31m-            href="/admin"[m
+[31m-            className="block rounded-lg px-3 py-2 font-medium text-[var(--foreground)] hover:bg-[var(--accent-soft)]"[m
+[31m-          >[m
+[31m-            Dashboard[m
+[31m-          </Link>[m
+[31m-          <Link[m
+[31m-            href="/admin/creators"[m
+[31m-            className="block rounded-lg px-3 py-2 font-medium text-[var(--foreground)] hover:bg-[var(--accent-soft)]"[m
+[31m-          >[m
+[31m-            Creators[m
+[31m-          </Link>[m
+[31m-          <Link[m
+[31m-            href="/admin/analytics"[m
+[31m-            className="block rounded-lg px-3 py-2 font-medium text-[var(--foreground)] hover:bg-[var(--accent-soft)]"[m
+[31m-          >[m
+[31m-            Analytics[m
+[31m-          </Link>[m
+[31m-          <Link[m
+[31m-            href="/admin/announcements"[m
+[31m-            className="block rounded-lg px-3 py-2 font-medium text-[var(--foreground)] hover:bg-[var(--accent-soft)]"[m
+[31m-          >[m
+[31m-            Annunci[m
+[31m-          </Link>[m
+[31m-        </nav>[m
+[31m-        <div className="absolute bottom-0 w-60 border-t border-[var(--border-subtle)] p-4">[m
+[31m-          <p className="truncate text-xs text-[var(--ink-muted)]">{session.email}</p>[m
+[31m-          <LogoutButton />[m
+[31m-        </div>[m
+[31m-      </aside>[m
+[31m-      <div className="min-w-0 flex-1">[m
+[31m-        <main className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-8">{children}</main>[m
+[32m+[m[32m    <div className="min-h-screen bg-[var(--background)]">[m
+[32m+[m[32m      <AdminNav email={session.email} />[m
+[32m+[m[32m      <div className="md:pl-64">[m
+[32m+[m[32m        <main className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-8 lg:py-10">{children}</main>[m
+       </div>[m
+     </div>[m
+   );[m
+[1mdiff --git a/src/components/admin/logout-button.tsx b/src/components/admin/logout-button.tsx[m
+[1mindex 1055a73..f13be91 100644[m
+[1m--- a/src/components/admin/logout-button.tsx[m
+[1m+++ b/src/components/admin/logout-button.tsx[m
+[36m@@ -18,7 +18,7 @@[m [mexport function LogoutButton() {[m
+     <button[m
+       onClick={handleLogout}[m
+       disabled={loading}[m
+[31m-      className="mt-2 text-xs font-medium text-[var(--accent)] hover:underline disabled:opacity-60"[m
+[32m+[m[32m      className="mt-3 flex w-full items-center justify-center rounded-lg border border-[var(--border-subtle)] px-3 py-2 text-xs font-medium text-[var(--ink-muted)] transition-colors hover:border-[var(--border-strong)] hover:bg-[var(--surface-2)] hover:text-[var(--foreground)] disabled:opacity-60"[m
+     >[m
+       {loading ? "Signing out…" : "Sign out"}[m
+     </button>[m

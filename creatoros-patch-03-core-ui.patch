@@ -1,0 +1,590 @@
+diff --git a/src/app/admin/(dashboard)/analytics/page.tsx b/src/app/admin/(dashboard)/analytics/page.tsx
+index 74d3a8e..011243f 100644
+--- a/src/app/admin/(dashboard)/analytics/page.tsx
++++ b/src/app/admin/(dashboard)/analytics/page.tsx
+@@ -27,11 +27,11 @@ export default async function AdminAnalyticsPage() {
+   return (
+     <div>
+       <h1 className="font-display text-2xl tracking-tight">Analytics</h1>
+-      <p className="mt-1 text-sm text-[var(--ink-muted)]">
++      <p className="mt-1.5 text-sm text-[var(--ink-muted)]">
+         Investor-ready snapshot of Early Access growth.
+       </p>
+ 
+-      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
++      <div className="mt-7 grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-5">
+         <KpiCard label="Total signups" value={total} highlight />
+         <KpiCard label="Verified emails" value={verified} />
+         <KpiCard label="Conversion rate" value={`${conversionRate(verified, total)}%`} />
+@@ -39,9 +39,9 @@ export default async function AdminAnalyticsPage() {
+         <KpiCard label="Last 30 days" value={last30Days} />
+       </div>
+ 
+-      <div className="mt-8 rounded-xl border border-[var(--border-subtle)] bg-white p-5">
+-        <h2 className="font-medium">Signups over the last {GROWTH_WINDOW_DAYS} days</h2>
+-        <div className="mt-4">
++      <div className="card mt-8 p-5 sm:p-6">
++        <h2 className="text-sm font-semibold tracking-tight">Signups over the last {GROWTH_WINDOW_DAYS} days</h2>
++        <div className="mt-5">
+           <GrowthChart data={series} />
+         </div>
+       </div>
+@@ -52,14 +52,14 @@ export default async function AdminAnalyticsPage() {
+ function KpiCard({ label, value, highlight }: { label: string; value: string | number; highlight?: boolean }) {
+   return (
+     <div
+-      className={`rounded-xl border border-[var(--border-subtle)] p-4 ${
+-        highlight ? "bg-[var(--surface-dark)] text-white" : "bg-white"
++      className={`card card-interactive p-4 ${
++        highlight ? "bg-[var(--surface-dark)]" : "bg-[var(--surface)]"
+       }`}
+     >
+-      <p className={`font-mono-label text-[11px] uppercase ${highlight ? "text-white/60" : "text-[var(--ink-muted)]"}`}>
++      <p className={`font-mono-label text-[11px] uppercase ${highlight ? "text-[var(--accent)]" : "text-[var(--ink-muted)]"}`}>
+         {label}
+       </p>
+-      <p className="mt-1.5 font-display text-2xl">{value}</p>
++      <p className="stat-value mt-1.5">{value}</p>
+     </div>
+   );
+ }
+diff --git a/src/app/admin/(dashboard)/announcements/page.tsx b/src/app/admin/(dashboard)/announcements/page.tsx
+index 4afd34b..6f106d3 100644
+--- a/src/app/admin/(dashboard)/announcements/page.tsx
++++ b/src/app/admin/(dashboard)/announcements/page.tsx
+@@ -49,13 +49,15 @@ export default function AdminAnnouncementsPage() {
+   return (
+     <div>
+       <h1 className="font-display text-2xl tracking-tight">Annunci</h1>
+-      <p className="mt-1 text-sm text-[var(--ink-muted)]">
++      <p className="mt-1.5 text-sm text-[var(--ink-muted)]">
+         Invia un&apos;email a tutti i creator iscritti alla lista Early Access.
+       </p>
+ 
+-      <div className="mt-6 max-w-2xl space-y-4 rounded-xl border border-[var(--border-subtle)] bg-white p-5">
++      <div className="card mt-6 max-w-2xl space-y-5 p-5 sm:p-6">
+         <div>
+-          <label className="mb-1 block text-xs font-medium uppercase text-[var(--ink-muted)]">Oggetto</label>
++          <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[var(--ink-muted)]">
++            Oggetto
++          </label>
+           <input
+             className="input"
+             value={subject}
+@@ -65,7 +67,9 @@ export default function AdminAnnouncementsPage() {
+           />
+         </div>
+         <div>
+-          <label className="mb-1 block text-xs font-medium uppercase text-[var(--ink-muted)]">Corpo</label>
++          <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[var(--ink-muted)]">
++            Corpo
++          </label>
+           <textarea
+             className="input min-h-64"
+             value={body}
+@@ -76,11 +80,7 @@ export default function AdminAnnouncementsPage() {
+         </div>
+ 
+         <div className="flex items-center gap-3">
+-          <button
+-            onClick={handleSend}
+-            disabled={!canSend}
+-            className="rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+-          >
++          <button onClick={handleSend} disabled={!canSend} className="btn btn-primary">
+             {sending ? "Invio in corso…" : "Invia annuncio"}
+           </button>
+         </div>
+@@ -88,8 +88,8 @@ export default function AdminAnnouncementsPage() {
+         {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
+ 
+         {result && (
+-          <div className="rounded-lg bg-[var(--accent-soft)]/40 p-4 text-sm">
+-            <p className="font-medium">Annuncio inviato.</p>
++          <div className="badge-accent rounded-lg border p-4 text-sm">
++            <p className="font-medium text-[var(--foreground)]">Annuncio inviato.</p>
+             <p className="mt-1 text-[var(--ink-muted)]">
+               Inviate: {result.sent} · Fallite: {result.failed} · Totale: {result.total}
+             </p>
+diff --git a/src/app/admin/(dashboard)/creators/[id]/page.tsx b/src/app/admin/(dashboard)/creators/[id]/page.tsx
+index 2ca8622..6506904 100644
+--- a/src/app/admin/(dashboard)/creators/[id]/page.tsx
++++ b/src/app/admin/(dashboard)/creators/[id]/page.tsx
+@@ -312,9 +312,9 @@ export default function AdminCreatorDetailPage() {
+ 
+ function Card({ title, children }: { title: string; children: React.ReactNode }) {
+   return (
+-    <div className="rounded-xl border border-[var(--border-subtle)] bg-white p-5">
+-      <h2 className="font-medium">{title}</h2>
+-      <div className="mt-3 space-y-2.5">{children}</div>
++    <div className="card p-5 sm:p-6">
++      <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
++      <div className="mt-4 space-y-3">{children}</div>
+     </div>
+   );
+ }
+@@ -322,7 +322,7 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
+ function Row({ label, value }: { label: string; value: React.ReactNode }) {
+   return (
+     <div className="text-sm">
+-      <p className="text-xs uppercase text-[var(--ink-muted)]">{label}</p>
++      <p className="text-xs uppercase tracking-wide text-[var(--ink-muted)]">{label}</p>
+       <div className="mt-0.5">{value}</div>
+     </div>
+   );
+diff --git a/src/app/admin/(dashboard)/creators/page.tsx b/src/app/admin/(dashboard)/creators/page.tsx
+index 7c760d6..9ccaed0 100644
+--- a/src/app/admin/(dashboard)/creators/page.tsx
++++ b/src/app/admin/(dashboard)/creators/page.tsx
+@@ -124,7 +124,7 @@ export default function AdminCreatorsPage() {
+           <p className="text-sm text-[var(--ink-muted)]">{total} total</p>
+           <a
+             href="/api/admin/creators/export"
+-            className="input w-auto text-sm"
++            className="btn btn-secondary text-sm"
+             download
+           >
+             Export CSV
+@@ -132,16 +132,27 @@ export default function AdminCreatorsPage() {
+         </div>
+       </div>
+ 
+-      <div className="mt-5 flex flex-wrap gap-3">
+-        <input
+-          className="input max-w-xs"
+-          placeholder="Search name, handle, email…"
+-          value={search}
+-          onChange={(e) => {
+-            setPage(1);
+-            setSearch(e.target.value);
+-          }}
+-        />
++      <div className="card mt-5 flex flex-wrap gap-3 p-4">
++        <div className="relative max-w-xs flex-1">
++          <svg
++            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ink-muted)]"
++            viewBox="0 0 20 20"
++            fill="none"
++            aria-hidden="true"
++          >
++            <circle cx="9" cy="9" r="6.5" stroke="currentColor" strokeWidth="1.5" />
++            <path d="M14 14L18 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
++          </svg>
++          <input
++            className="input pl-9"
++            placeholder="Search name, handle, email…"
++            value={search}
++            onChange={(e) => {
++              setPage(1);
++              setSearch(e.target.value);
++            }}
++          />
++        </div>
+         <select
+           className="input w-auto"
+           value={status}
+@@ -229,7 +240,7 @@ export default function AdminCreatorsPage() {
+           ))}
+         </select>
+         <button
+-          className="input w-auto text-sm"
++          className="btn btn-secondary text-sm"
+           onClick={() => setSort((s) => (s === "desc" ? "asc" : "desc"))}
+         >
+           {sort === "desc" ? "↓ Descending" : "↑ Ascending"}
+@@ -246,9 +257,9 @@ export default function AdminCreatorsPage() {
+         </p>
+       )}
+ 
+-      <div className="mt-5 overflow-x-auto rounded-xl border border-[var(--border-subtle)] bg-white">
++      <div className="card-flush mt-5 overflow-x-auto">
+         <table className="w-full min-w-[1000px] text-left text-sm">
+-          <thead className="border-b border-[var(--border-subtle)] text-xs uppercase text-[var(--ink-muted)]">
++          <thead className="table-head text-xs uppercase tracking-wide text-[var(--ink-muted)]">
+             <tr>
+               <th className="px-4 py-3 font-medium">Creator</th>
+               <th className="px-4 py-3 font-medium">Country</th>
+@@ -265,21 +276,23 @@ export default function AdminCreatorsPage() {
+           <tbody className="divide-y divide-[var(--border-subtle)]">
+             {loading && (
+               <tr>
+-                <td colSpan={10} className="px-4 py-8 text-center text-[var(--ink-muted)]">
++                <td colSpan={10} className="px-4 py-10 text-center text-[var(--ink-muted)]">
+                   Loading…
+                 </td>
+               </tr>
+             )}
+             {!loading && creators.length === 0 && (
+               <tr>
+-                <td colSpan={10} className="px-4 py-8 text-center text-[var(--ink-muted)]">
+-                  No creators match these filters.
++                <td colSpan={10} className="p-0">
++                  <div className="empty-state">
++                    <p className="text-sm">No creators match these filters.</p>
++                  </div>
+                 </td>
+               </tr>
+             )}
+             {!loading &&
+               creators.map((creator) => (
+-                <tr key={creator.id} className="hover:bg-[var(--accent-soft)]/40">
++                <tr key={creator.id} className="table-row">
+                   <td className="px-4 py-3">
+                     <Link href={`/admin/creators/${creator.id}`} className="block">
+                       <p className="font-medium text-[var(--foreground)]">{creator.fullName}</p>
+@@ -290,34 +303,22 @@ export default function AdminCreatorsPage() {
+                   <td className="px-4 py-3">{creator.platforms.join(", ")}</td>
+                   <td className="px-4 py-3">{audienceLabel(creator.audienceSize)}</td>
+                   <td className="px-4 py-3">
+-                    <span
+-                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+-                        STATUS_COLORS[creator.status as CreatorStatusValue] ?? "bg-neutral-100"
+-                      }`}
+-                    >
++                    <span className={`badge ${STATUS_COLORS[creator.status as CreatorStatusValue] ?? "badge-neutral"}`}>
+                       {STATUS_LABELS[creator.status as CreatorStatusValue] ?? creator.status}
+                     </span>
+                   </td>
+                   <td className="px-4 py-3">
+                     {creator.emailVerifiedAt ? (
+-                      <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-800">
+-                        Verified
+-                      </span>
++                      <span className="badge badge-accent">Verified</span>
+                     ) : (
+-                      <span className="rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-medium text-neutral-600">
+-                        Not verified
+-                      </span>
++                      <span className="badge badge-neutral">Not verified</span>
+                     )}
+                   </td>
+                   <td className="px-4 py-3">
+                     {creator.privacyAccepted ? (
+-                      <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-800">
+-                        Consent given
+-                      </span>
++                      <span className="badge badge-accent">Consent given</span>
+                     ) : (
+-                      <span className="rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-800">
+-                        No consent
+-                      </span>
++                      <span className="badge badge-danger">No consent</span>
+                     )}
+                   </td>
+                   <td className="px-4 py-3 text-[var(--ink-muted)]">{creator.utmSource || "—"}</td>
+@@ -350,9 +351,9 @@ export default function AdminCreatorsPage() {
+       </div>
+ 
+       {totalPages > 1 && (
+-        <div className="mt-4 flex items-center justify-center gap-3 text-sm">
++        <div className="mt-5 flex items-center justify-center gap-3 text-sm">
+           <button
+-            className="disabled:opacity-40"
++            className="btn btn-ghost disabled:opacity-40"
+             disabled={page <= 1}
+             onClick={() => setPage((p) => p - 1)}
+           >
+@@ -362,7 +363,7 @@ export default function AdminCreatorsPage() {
+             Page {page} of {totalPages}
+           </span>
+           <button
+-            className="disabled:opacity-40"
++            className="btn btn-ghost disabled:opacity-40"
+             disabled={page >= totalPages}
+             onClick={() => setPage((p) => p + 1)}
+           >
+diff --git a/src/app/admin/(dashboard)/page.tsx b/src/app/admin/(dashboard)/page.tsx
+index f52c009..7be1937 100644
+--- a/src/app/admin/(dashboard)/page.tsx
++++ b/src/app/admin/(dashboard)/page.tsx
+@@ -37,9 +37,9 @@ export default async function AdminDashboardPage() {
+   return (
+     <div>
+       <h1 className="font-display text-2xl tracking-tight">Dashboard</h1>
+-      <p className="mt-1 text-sm text-[var(--ink-muted)]">Overview of Early Access registrations.</p>
++      <p className="mt-1.5 text-sm text-[var(--ink-muted)]">Overview of Early Access registrations.</p>
+ 
+-      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
++      <div className="mt-7 grid grid-cols-2 gap-3.5 sm:grid-cols-4">
+         <KpiCard label="Total Creators" value={total} highlight />
+         {CREATOR_STATUSES.map((status) => (
+           <KpiCard key={status} label={STATUS_LABELS[status as CreatorStatusValue]} value={byStatus[status]} />
+@@ -50,21 +50,21 @@ export default async function AdminDashboardPage() {
+         <Panel title="Recent registrations">
+           <div className="divide-y divide-[var(--border-subtle)]">
+             {recent.length === 0 && (
+-              <p className="py-6 text-sm text-[var(--ink-muted)]">No creators yet.</p>
++              <div className="empty-state">
++                <p className="text-sm">No creators yet.</p>
++              </div>
+             )}
+             {recent.map((creator) => (
+               <Link
+                 key={creator.id}
+                 href={`/admin/creators/${creator.id}`}
+-                className="flex items-center justify-between py-3 text-sm hover:text-[var(--accent)]"
++                className="flex items-center justify-between gap-4 py-3.5 text-sm transition-colors hover:text-[var(--accent)]"
+               >
+-                <div>
+-                  <p className="font-medium">{creator.fullName}</p>
+-                  <p className="text-xs text-[var(--ink-muted)]">{creator.email}</p>
++                <div className="min-w-0">
++                  <p className="truncate font-medium">{creator.fullName}</p>
++                  <p className="truncate text-xs text-[var(--ink-muted)]">{creator.email}</p>
+                 </div>
+-                <span
+-                  className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_COLORS[creator.status as CreatorStatusValue] ?? "bg-neutral-100"}`}
+-                >
++                <span className={`badge ${STATUS_COLORS[creator.status as CreatorStatusValue] ?? "badge-neutral"}`}>
+                   {STATUS_LABELS[creator.status as CreatorStatusValue] ?? creator.status}
+                 </span>
+               </Link>
+@@ -100,23 +100,23 @@ export default async function AdminDashboardPage() {
+ function KpiCard({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
+   return (
+     <div
+-      className={`rounded-xl border border-[var(--border-subtle)] p-4 ${
+-        highlight ? "bg-[var(--surface-dark)] text-white" : "bg-white"
++      className={`card card-interactive p-4 ${
++        highlight ? "bg-[var(--surface-dark)]" : "bg-[var(--surface)]"
+       }`}
+     >
+-      <p className={`font-mono-label text-[11px] uppercase ${highlight ? "text-white/60" : "text-[var(--ink-muted)]"}`}>
++      <p className={`font-mono-label text-[11px] uppercase ${highlight ? "text-[var(--accent)]" : "text-[var(--ink-muted)]"}`}>
+         {label}
+       </p>
+-      <p className="mt-1.5 font-display text-2xl">{value}</p>
++      <p className="stat-value mt-1.5">{value}</p>
+     </div>
+   );
+ }
+ 
+ function Panel({ title, children }: { title: string; children: React.ReactNode }) {
+   return (
+-    <div className="rounded-xl border border-[var(--border-subtle)] bg-white p-5">
+-      <h2 className="font-medium">{title}</h2>
+-      <div className="mt-3">{children}</div>
++    <div className="card p-5 sm:p-6">
++      <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
++      <div className="mt-4">{children}</div>
+     </div>
+   );
+ }
+@@ -133,8 +133,11 @@ function DistributionList({ data, total }: { data: { label: string; value: numbe
+               {d.value} {total > 0 && <span className="text-[var(--ink-muted)]">({Math.round((d.value / total) * 100)}%)</span>}
+             </span>
+           </div>
+-          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-[var(--accent-soft)]">
+-            <div className="h-full rounded-full bg-[var(--accent)]" style={{ width: `${(d.value / max) * 100}%` }} />
++          <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[var(--surface-2)]">
++            <div
++              className="h-full rounded-full bg-[var(--accent)] transition-[width] duration-300"
++              style={{ width: `${(d.value / max) * 100}%` }}
++            />
+           </div>
+         </div>
+       ))}
+diff --git a/src/app/admin/login/page.tsx b/src/app/admin/login/page.tsx
+index 6c6fd9e..023ff3d 100644
+--- a/src/app/admin/login/page.tsx
++++ b/src/app/admin/login/page.tsx
+@@ -51,14 +51,14 @@ function LoginForm() {
+ 
+   return (
+     <div className="flex min-h-screen items-center justify-center bg-[var(--surface-dark)] px-6">
+-      <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-xl">
+-        <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-[var(--foreground)] font-mono-label text-xs font-semibold text-white">
++      <div className="card w-full max-w-sm p-8 shadow-[var(--shadow-lg)]">
++        <span className="flex h-9 w-9 items-center justify-center rounded-md bg-[var(--accent)] font-mono-label text-xs font-semibold text-[#08100e]">
+           OS
+         </span>
+-        <h1 className="mt-5 font-display text-2xl tracking-tight">Admin sign in</h1>
++        <h1 className="mt-6 font-display text-2xl tracking-tight">Admin sign in</h1>
+         <p className="mt-1 text-sm text-[var(--ink-muted)]">CreatorOS administration panel</p>
+ 
+-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
++        <form onSubmit={handleSubmit} className="mt-7 space-y-4">
+           <div>
+             <label className="mb-1.5 block text-sm font-medium">Email</label>
+             <input
+@@ -81,11 +81,7 @@ function LoginForm() {
+             />
+           </div>
+           {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
+-          <button
+-            type="submit"
+-            disabled={submitting}
+-            className="w-full rounded-full bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-white transition hover:bg-[var(--accent-strong)] disabled:opacity-60"
+-          >
++          <button type="submit" disabled={submitting} className="btn btn-primary w-full">
+             {submitting ? "Signing in…" : "Sign in"}
+           </button>
+         </form>
+diff --git a/src/app/globals.css b/src/app/globals.css
+index f78f03c..72e5cdd 100644
+--- a/src/app/globals.css
++++ b/src/app/globals.css
+@@ -122,6 +122,20 @@ h1, h2, h3, h4, h5, h6 {
+   border-color: var(--accent);
+ }
+ 
++.input:disabled {
++  opacity: 0.5;
++  cursor: not-allowed;
++  background: var(--surface-2);
++}
++
++select.input {
++  appearance: none;
++  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%2396969c' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
++  background-repeat: no-repeat;
++  background-position: right 0.75rem center;
++  padding-right: 2rem;
++}
++
+ /* Buttons — shared foundation for future component work */
+ .btn {
+   display: inline-flex;
+@@ -151,6 +165,11 @@ h1, h2, h3, h4, h5, h6 {
+   background: var(--accent-strong);
+ }
+ 
++.btn-primary:active:not(:disabled) {
++  background: var(--accent-strong);
++  transform: translateY(0.5px);
++}
++
+ .btn-secondary {
+   background: var(--surface-2);
+   color: var(--foreground);
+@@ -176,6 +195,101 @@ h1, h2, h3, h4, h5, h6 {
+   border: 1px solid var(--border-subtle);
+   border-radius: var(--radius-lg);
+   box-shadow: var(--shadow-sm);
++  transition: border-color 0.15s ease, box-shadow 0.15s ease;
++}
++
++.card-interactive:hover {
++  border-color: var(--border-strong);
++  box-shadow: var(--shadow-md);
++}
++
++.card-flush {
++  background: var(--surface);
++  border: 1px solid var(--border-subtle);
++  border-radius: var(--radius-lg);
++  overflow: hidden;
++}
++
++/* Badges — neutral pill shape, differentiated by a status dot + text color
++   rather than saturated fills, to stay premium/matte instead of pastel. */
++.badge {
++  display: inline-flex;
++  align-items: center;
++  gap: 0.375rem;
++  border-radius: 999px;
++  padding: 0.3125rem 0.6875rem;
++  font-size: 0.75rem;
++  font-weight: 500;
++  line-height: 1;
++  white-space: nowrap;
++  background: var(--surface-2);
++  border: 1px solid var(--border-subtle);
++  color: var(--foreground);
++}
++
++.badge::before {
++  content: "";
++  width: 5px;
++  height: 5px;
++  border-radius: 999px;
++  background: currentColor;
++  flex-shrink: 0;
++}
++
++.badge-neutral {
++  color: var(--ink-muted);
++}
++
++.badge-accent {
++  color: var(--accent);
++  background: var(--accent-soft);
++  border-color: color-mix(in srgb, var(--accent) 30%, var(--border-subtle));
++}
++
++.badge-highlight {
++  color: var(--highlight);
++  background: color-mix(in srgb, var(--highlight) 12%, var(--surface-2));
++  border-color: color-mix(in srgb, var(--highlight) 30%, var(--border-subtle));
++}
++
++.badge-danger {
++  color: var(--danger);
++  background: color-mix(in srgb, var(--danger) 12%, var(--surface-2));
++  border-color: color-mix(in srgb, var(--danger) 30%, var(--border-subtle));
++}
++
++/* Tables */
++.table-head {
++  background: var(--surface-2);
++  border-bottom: 1px solid var(--border-subtle);
++}
++
++.table-row {
++  transition: background-color 0.12s ease;
++}
++
++.table-row:hover {
++  background: var(--surface-2);
++}
++
++/* Empty states */
++.empty-state {
++  display: flex;
++  flex-direction: column;
++  align-items: center;
++  justify-content: center;
++  gap: 0.375rem;
++  padding: 3rem 1.5rem;
++  color: var(--ink-muted);
++  text-align: center;
++}
++
++/* KPI figures */
++.stat-value {
++  font-family: var(--font-display);
++  font-size: 1.75rem;
++  letter-spacing: -0.02em;
++  font-variant-numeric: tabular-nums;
+ }
+ 
+ ::selection {
+diff --git a/src/lib/constants.ts b/src/lib/constants.ts
+index 9cee44b..77829aa 100644
+--- a/src/lib/constants.ts
++++ b/src/lib/constants.ts
+@@ -85,15 +85,15 @@ export const STATUS_LABELS: Record<CreatorStatusValue, string> = {
+ };
+ 
+ export const STATUS_COLORS: Record<CreatorStatusValue, string> = {
+-  NEW: "bg-neutral-200 text-neutral-800",
+-  VERIFIED: "bg-sky-100 text-sky-800",
+-  CONTACTED: "bg-blue-100 text-blue-800",
+-  INTERVIEW_SCHEDULED: "bg-purple-100 text-purple-800",
+-  INTERESTED: "bg-amber-100 text-amber-800",
+-  BETA: "bg-teal-100 text-teal-800",
+-  CONVERTED: "bg-emerald-100 text-emerald-800",
+-  PAID: "bg-emerald-100 text-emerald-800",
+-  REJECTED: "bg-red-100 text-red-800",
++  NEW: "badge-neutral",
++  VERIFIED: "badge-accent",
++  CONTACTED: "badge-accent",
++  INTERVIEW_SCHEDULED: "badge-highlight",
++  INTERESTED: "badge-highlight",
++  BETA: "badge-accent",
++  CONVERTED: "badge-accent",
++  PAID: "badge-accent",
++  REJECTED: "badge-danger",
+ };
+ 
+ // Bumped whenever the Privacy Policy content changes materially. Stored on
