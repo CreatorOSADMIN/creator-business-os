@@ -1,0 +1,277 @@
+diff --git a/src/app/globals.css b/src/app/globals.css
+index abf0cb9..8f395cd 100644
+--- a/src/app/globals.css
++++ b/src/app/globals.css
+@@ -148,7 +148,8 @@ select.input {
+   font-weight: 500;
+   line-height: 1;
+   border: 1px solid transparent;
+-  transition: background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
++  transition: background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease,
++    transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+ }
+ 
+ .btn:disabled {
+@@ -163,11 +164,13 @@ select.input {
+ 
+ .btn-primary:hover:not(:disabled) {
+   background: var(--accent-strong);
++  transform: translateY(-1px) scale(1.015);
++  box-shadow: var(--shadow-sm);
+ }
+ 
+ .btn-primary:active:not(:disabled) {
+   background: var(--accent-strong);
+-  transform: translateY(0.5px);
++  transform: translateY(0.5px) scale(0.98);
+ }
+ 
+ .btn-secondary {
+@@ -195,12 +198,14 @@ select.input {
+   border: 1px solid var(--border-subtle);
+   border-radius: var(--radius-lg);
+   box-shadow: var(--shadow-sm);
+-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
++  transition: border-color 0.25s ease, box-shadow 0.25s ease,
++    transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+ }
+ 
+ .card-interactive:hover {
+   border-color: var(--border-strong);
+   box-shadow: var(--shadow-md);
++  transform: translateY(-4px);
+ }
+ 
+ .card-flush {
+@@ -310,6 +315,69 @@ select.input {
+   filter: blur(60px);
+ }
+ 
++/* Motion design — scroll reveal + hero stagger + product mockup float.
++   Kept intentionally slow/minimal (Apple-launch feel, not a template with
++   many effects). Fully neutralized by the existing prefers-reduced-motion
++   block below via the global `*` transition/animation override. */
++.reveal {
++  opacity: 0;
++  transform: translateY(24px);
++  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
++    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
++  will-change: opacity, transform;
++}
++
++.reveal.is-visible {
++  opacity: 1;
++  transform: translateY(0);
++}
++
++@keyframes fade-in-up {
++  from {
++    opacity: 0;
++    transform: translateY(16px);
++  }
++  to {
++    opacity: 1;
++    transform: translateY(0);
++  }
++}
++
++.animate-fade-in-up {
++  opacity: 0;
++  animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
++}
++
++.delay-1 {
++  animation-delay: 0.1s;
++}
++
++.delay-2 {
++  animation-delay: 0.2s;
++}
++
++.delay-3 {
++  animation-delay: 0.35s;
++}
++
++.delay-4 {
++  animation-delay: 0.5s;
++}
++
++@keyframes float-y {
++  0%,
++  100% {
++    transform: translateY(0);
++  }
++  50% {
++    transform: translateY(-10px);
++  }
++}
++
++.mockup-float {
++  animation: float-y 6s ease-in-out infinite;
++}
++
+ .faq-item {
+   border-bottom: 1px solid var(--border-subtle);
+ }
+diff --git a/src/app/page.tsx b/src/app/page.tsx
+index 6bc3577..2cea89a 100644
+--- a/src/app/page.tsx
++++ b/src/app/page.tsx
+@@ -2,6 +2,7 @@ import Link from "next/link";
+ import { SiteHeader } from "@/components/site-header";
+ import { SiteFooter } from "@/components/site-footer";
+ import { getEarlyAccessProgress } from "@/lib/early-access-progress";
++import { ScrollAnimations } from "@/components/scroll-animations";
+ import { TrackEventOnMount } from "@/components/analytics/track-event-on-mount";
+ import { TrackedLink } from "@/components/analytics/tracked-link";
+ 
+@@ -16,6 +17,7 @@ export default async function HomePage() {
+     <>
+       <SiteHeader />
+       <TrackEventOnMount event="homepage_view" />
++      <ScrollAnimations />
+       <main className="flex-1">
+         <Hero />
+         <Problem />
+@@ -39,18 +41,18 @@ function Hero() {
+       />
+       <div className="relative mx-auto grid max-w-6xl gap-14 px-6 py-24 sm:py-32 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+         <div>
+-          <span className="badge badge-accent eyebrow">Now building — early access open</span>
+-          <h1 className="mt-6 font-display text-5xl leading-[1.05] tracking-tight sm:text-6xl">
++          <span className="badge badge-accent eyebrow animate-fade-in-up">Now building — early access open</span>
++          <h1 className="mt-6 font-display text-5xl leading-[1.05] tracking-tight sm:text-6xl animate-fade-in-up delay-1">
+             The business operating system for creators who grow on data,
+             <span className="text-[var(--ink-muted)]"> not guesswork.</span>
+           </h1>
+-          <p className="mt-6 max-w-lg text-lg leading-relaxed text-[var(--ink-muted)]">
++          <p className="mt-6 max-w-lg text-lg leading-relaxed text-[var(--ink-muted)] animate-fade-in-up delay-2">
+             CreatorOS brings every platform&apos;s numbers — YouTube, TikTok, Instagram, and
+             more — into one clear system for your creator business, built for full-time
+             creators who are done stitching together five dashboards to understand
+             what&apos;s actually working.
+           </p>
+-          <div className="mt-9 flex flex-wrap items-center gap-4">
++          <div className="mt-9 flex flex-wrap items-center gap-4 animate-fade-in-up delay-3">
+             <TrackedLink
+               href="/early-access"
+               event="early_access_click"
+@@ -69,11 +71,13 @@ function Hero() {
+               </svg>
+             </Link>
+           </div>
+-          <p className="mt-8 text-xs text-[var(--ink-muted)]">
++          <p className="mt-8 text-xs text-[var(--ink-muted)] animate-fade-in-up delay-4">
+             No credit card required · Shaped directly by the first creators who join
+           </p>
+         </div>
+-        <SignalCard />
++        <div className="animate-fade-in-up delay-2">
++          <SignalCard />
++        </div>
+       </div>
+     </section>
+   );
+@@ -86,7 +90,7 @@ function SignalCard() {
+     { label: "Instagram", value: 41, note: "needs a closer look" },
+   ];
+   return (
+-    <div className="card rounded-2xl p-6">
++    <div className="card rounded-2xl p-6 mockup-float">
+       <div className="flex items-center justify-between">
+         <p className="font-mono-label text-[11px] uppercase text-[var(--ink-muted)]">
+           A preview of what we&apos;re building
+@@ -144,7 +148,7 @@ function Problem() {
+   ];
+   return (
+     <section id="problem" className="border-b border-[var(--border-subtle)] bg-[var(--surface)]">
+-      <div className="mx-auto max-w-6xl px-6 py-24">
++      <div className="reveal mx-auto max-w-6xl px-6 py-24">
+         <p className="font-mono-label text-xs uppercase text-[var(--accent)]">The problem</p>
+         <h2 className="mt-3 max-w-xl font-display text-3xl tracking-tight sm:text-4xl">
+           Running a creator business today means managing chaos, not just content.
+@@ -174,7 +178,7 @@ function Solution() {
+   ];
+   return (
+     <section className="border-b border-[var(--border-subtle)]">
+-      <div className="mx-auto max-w-6xl px-6 py-24">
++      <div className="reveal mx-auto max-w-6xl px-6 py-24">
+         <p className="font-mono-label text-xs uppercase text-[var(--accent)]">What we&apos;re building</p>
+         <h2 className="mt-3 max-w-xl font-display text-3xl tracking-tight sm:text-4xl">
+           One system for your creator business, built with creators from day one.
+@@ -215,7 +219,7 @@ function Audience() {
+   ];
+   return (
+     <section className="border-b border-[var(--border-subtle)] bg-[var(--surface)]">
+-      <div className="mx-auto max-w-6xl px-6 py-24">
++      <div className="reveal mx-auto max-w-6xl px-6 py-24">
+         <p className="font-mono-label text-xs uppercase text-[var(--accent)]">Who it&apos;s for</p>
+         <h2 className="mt-3 max-w-xl font-display text-3xl tracking-tight sm:text-4xl">
+           Built for creators who run their content like a business.
+@@ -241,7 +245,7 @@ function DevelopmentStatus() {
+   ];
+   return (
+     <section className="border-b border-[var(--border-subtle)]">
+-      <div className="mx-auto max-w-6xl px-6 py-24">
++      <div className="reveal mx-auto max-w-6xl px-6 py-24">
+         <p className="font-mono-label text-xs uppercase text-[var(--accent)]">Project status</p>
+         <h2 className="mt-3 max-w-xl font-display text-3xl tracking-tight sm:text-4xl">
+           CreatorOS is currently in development.
+@@ -303,7 +307,7 @@ function Faq() {
+   ];
+   return (
+     <section className="border-b border-[var(--border-subtle)] bg-[var(--surface)]">
+-      <div className="mx-auto max-w-3xl px-6 py-24">
++      <div className="reveal mx-auto max-w-3xl px-6 py-24">
+         <p className="font-mono-label text-xs uppercase text-[var(--accent)]">FAQ</p>
+         <h2 className="mt-3 font-display text-3xl tracking-tight sm:text-4xl">
+           Questions, answered.
+@@ -336,7 +340,7 @@ function EarlyAccessBand({ progress, goal }: { progress: number; goal: number })
+   return (
+     <section className="relative overflow-hidden bg-[var(--surface-dark)] text-white">
+       <div aria-hidden className="glow-orb pointer-events-none absolute -left-32 -bottom-32 h-96 w-96 rounded-full opacity-60" />
+-      <div className="relative mx-auto max-w-6xl px-6 py-24">
++      <div className="reveal relative mx-auto max-w-6xl px-6 py-24">
+         <div className="grid gap-12 lg:grid-cols-[1fr_auto] lg:items-center">
+           <div>
+             <p className="font-mono-label text-xs uppercase text-white/50">Early access</p>
+diff --git a/src/components/scroll-animations.tsx b/src/components/scroll-animations.tsx
+new file mode 100644
+index 0000000..48785c6
+--- /dev/null
++++ b/src/components/scroll-animations.tsx
+@@ -0,0 +1,34 @@
++"use client";
++
++import { useEffect } from "react";
++
++/**
++ * Mounts once on the homepage and observes every element carrying the
++ * `.reveal` class, adding `.is-visible` the first time it scrolls into
++ * view. Dependency-free (native IntersectionObserver) — the actual
++ * fade/slide transition lives entirely in globals.css, this component only
++ * toggles the class.
++ */
++export function ScrollAnimations() {
++  useEffect(() => {
++    const elements = document.querySelectorAll<HTMLElement>(".reveal:not(.is-visible)");
++    if (elements.length === 0) return;
++
++    const observer = new IntersectionObserver(
++      (entries) => {
++        for (const entry of entries) {
++          if (entry.isIntersecting) {
++            entry.target.classList.add("is-visible");
++            observer.unobserve(entry.target);
++          }
++        }
++      },
++      { threshold: 0.15, rootMargin: "0px 0px -10% 0px" }
++    );
++
++    elements.forEach((el) => observer.observe(el));
++    return () => observer.disconnect();
++  }, []);
++
++  return null;
++}
