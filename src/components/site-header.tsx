@@ -17,14 +17,18 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-[var(--border-subtle)] bg-[var(--background)]/70 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
         <Link href="/" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[var(--foreground)] font-mono-label text-[11px] font-semibold text-[var(--surface-dark)]">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[var(--foreground)] font-mono-label text-[11px] font-semibold tracking-normal text-[var(--surface-dark)]">
             OS
           </span>
-          <span className="font-display text-lg font-medium tracking-tight">CreatorOS</span>
+          <span className="font-display text-lg tracking-tight">CreatorOS</span>
         </Link>
-        <nav className="hidden items-center gap-9 text-[13px] font-medium text-[var(--ink-muted)] sm:flex">
+        <nav className="hidden items-center gap-9 font-mono-label text-[11px] uppercase text-[var(--ink-muted)] sm:flex">
           {NAV_LINKS.map((link) => (
-            <Link key={link.href} href={link.href} className="transition-colors hover:text-[var(--foreground)]">
+            <Link
+              key={link.href}
+              href={link.href}
+              className="relative py-1 transition-colors hover:text-[var(--foreground)] after:absolute after:-bottom-1 after:left-0 after:h-px after:w-0 after:bg-[var(--accent)] after:transition-all after:duration-200 hover:after:w-full"
+            >
               {link.label}
             </Link>
           ))}
@@ -32,7 +36,7 @@ export function SiteHeader() {
         <div className="flex items-center gap-2 sm:gap-3">
           <Link
             href="/early-access"
-            className="hidden items-center gap-1.5 rounded-full bg-[var(--accent)] px-4 py-2 text-[13px] font-medium text-white transition hover:bg-[var(--accent-strong)] sm:inline-flex"
+            className="cta-premium hidden items-center gap-1.5 rounded-full bg-[var(--accent)] px-4 py-2 text-[13px] font-medium text-white transition hover:bg-[var(--accent-strong)] sm:inline-flex"
           >
             Request Early Access
           </Link>

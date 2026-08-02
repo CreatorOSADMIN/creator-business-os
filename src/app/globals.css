@@ -32,9 +32,13 @@
   --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.45);
   --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.55);
 
-  --font-display: ui-serif, Georgia, "Times New Roman", serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Section rhythm — shared vertical cadence for marketing bands */
+  --section-y: 8rem;
+  --section-y-sm: 5.5rem;
 }
 
 @theme inline {
@@ -77,18 +81,41 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-weight: 600;
-  line-height: 1.1;
-  letter-spacing: -0.025em;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
 }
 
 .font-display {
   font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.045em;
 }
 
 .font-mono-label {
   font-family: var(--font-mono);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.14em;
+  font-weight: 500;
+}
+
+/* Accent word — used to punch up a phrase inside an otherwise muted
+   heading, mirroring the single-color emphasis pattern of premium
+   agency sites. */
+.text-accent-ink {
+  color: var(--accent);
+}
+
+.section-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.section-eyebrow::before {
+  content: "";
+  width: 22px;
+  height: 1px;
+  background: var(--accent);
 }
 
 /* Inputs */
@@ -410,6 +437,33 @@ select.input {
   transform: rotate(45deg);
 }
 
+/* Marquee ticker — continuous horizontal scroll for the platform strip
+   under the hero. Duplicated content + translate loop, paused on hover
+   and disabled under reduced motion (see the media query below). */
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 26s linear infinite;
+}
+
+.marquee-viewport:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* Oversized KPI figures for "by the numbers" style bands. */
+.figure-xl {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
 .eyebrow {
   display: inline-flex;
   align-items: center;
@@ -446,4 +500,11 @@ select:focus-visible,
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
+}
+
+/* Slightly deeper card lift + longer shadow throw for the redesigned
+   marketing sections, layered on top of the existing .card-interactive
+   hover defined above. */
+.card-interactive:hover {
+  transform: translateY(-3px);
 }
