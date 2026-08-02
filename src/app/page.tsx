@@ -4,7 +4,6 @@ import { SiteFooter } from "@/components/site-footer";
 import { getEarlyAccessProgress } from "@/lib/early-access-progress";
 import { TrackEventOnMount } from "@/components/analytics/track-event-on-mount";
 import { TrackedLink } from "@/components/analytics/tracked-link";
-import { RevealOnScroll } from "@/components/reveal-on-scroll";
 
 // Keeps the Early Access progress bar fresh without a client-side fetch or
 // polling: the homepage revalidates on this cadence and re-reads the real
@@ -34,31 +33,25 @@ export default async function HomePage() {
 
 function Hero() {
   return (
-    <section className="relative overflow-hidden border-b border-[var(--border-subtle)] bg-grid-fade">
-      <div
-        aria-hidden
-        className="glow-orb pointer-events-none absolute -right-40 -top-40 h-[40rem] w-[40rem] rounded-full"
-      />
-      <div className="relative mx-auto flex max-w-4xl flex-col items-center px-6 py-24 text-center sm:py-32">
-        <span className="badge badge-accent eyebrow animate-fade-up stagger-1">
-          Now building — early access open
-        </span>
-        <h1 className="animate-fade-up stagger-2 mt-9 text-balance font-display text-6xl leading-[0.98] tracking-tight sm:text-8xl">
+    <section className="border-b border-[var(--border-subtle)]">
+      <div className="mx-auto flex max-w-4xl flex-col items-center px-6 py-24 text-center sm:py-32">
+        <span className="badge badge-accent">Now building — early access open</span>
+        <h1 className="mt-9 text-balance font-display text-6xl leading-[0.98] tracking-tight sm:text-8xl">
           Your creator business.
           <br />
           <span className="text-[var(--ink-muted)]">Finally run like a company.</span>
         </h1>
-        <p className="animate-fade-up stagger-3 mt-8 max-w-xl text-lg leading-relaxed text-[var(--ink-muted)]">
+        <p className="mt-8 max-w-xl text-lg leading-relaxed text-[var(--ink-muted)]">
           CreatorOS is the operating system behind the numbers — one system of record for
           every platform, every metric, every decision. Built for creators who&apos;ve
           outgrown spreadsheets and gut feel.
         </p>
-        <div className="animate-fade-up stagger-4 mt-10 flex flex-wrap items-center justify-center gap-4">
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
           <TrackedLink
             href="/early-access"
             event="early_access_click"
             eventProps={{ location: "hero" }}
-            className="btn btn-primary cta-premium rounded-full px-8 py-3.5 text-sm"
+            className="btn btn-primary rounded-full px-8 py-3.5 text-sm"
           >
             Request Early Access
           </TrackedLink>
@@ -85,24 +78,12 @@ function Hero() {
 
 function PlatformMarquee() {
   const platforms = ["YouTube", "TikTok", "Instagram", "Twitch", "X"];
-  const loop = [...platforms, ...platforms];
   return (
-    <div className="marquee-viewport relative overflow-hidden border-t border-[var(--border-subtle)] bg-[var(--surface)] py-6">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-[var(--surface)] to-transparent"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-[var(--surface)] to-transparent"
-      />
+    <div className="border-t border-[var(--border-subtle)] bg-[var(--surface)] py-6">
       <p className="sr-only">Built for creators publishing on YouTube, TikTok, Instagram, Twitch, and X.</p>
-      <div className="marquee-track" aria-hidden>
-        {loop.map((name, i) => (
-          <span
-            key={`${name}-${i}`}
-            className="mx-8 shrink-0 font-mono-label text-sm uppercase text-[var(--ink-muted)]"
-          >
+      <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-2" aria-hidden>
+        {platforms.map((name) => (
+          <span key={name} className="font-mono-label text-sm uppercase text-[var(--ink-muted)]">
             {name}
           </span>
         ))}
@@ -118,7 +99,7 @@ function HeroPreview() {
     { label: "Instagram", value: 41, note: "needs a closer look" },
   ];
   return (
-    <div className="card-glass animate-hero-float mt-16 w-full max-w-3xl rounded-2xl p-2 text-left">
+    <div className="card-flush mt-16 w-full max-w-3xl p-2 text-left">
       <div className="flex items-center gap-1.5 border-b border-[var(--border-subtle)] px-4 py-3">
         <span className="h-2.5 w-2.5 rounded-full bg-[var(--border-strong)]" />
         <span className="h-2.5 w-2.5 rounded-full bg-[var(--border-strong)]" />
@@ -179,7 +160,7 @@ function Problem() {
   ];
   return (
     <section id="problem" className="border-b border-[var(--border-subtle)] bg-[var(--surface)]">
-      <RevealOnScroll className="mx-auto max-w-6xl px-6 py-32">
+      <div className="mx-auto max-w-6xl px-6 py-32">
         <p className="section-eyebrow font-mono-label text-xs uppercase text-[var(--accent)]">The problem</p>
         <h2 className="mt-5 max-w-2xl text-balance font-display text-4xl tracking-tight sm:text-6xl">
           You&apos;re not an influencer. You&apos;re a founder without an operating system.
@@ -200,7 +181,7 @@ function Problem() {
             </div>
           ))}
         </div>
-      </RevealOnScroll>
+      </div>
     </section>
   );
 }
@@ -214,7 +195,7 @@ function Solution() {
   ];
   return (
     <section className="border-b border-[var(--border-subtle)]">
-      <RevealOnScroll className="mx-auto max-w-6xl px-6 py-32">
+      <div className="mx-auto max-w-6xl px-6 py-32">
         <p className="section-eyebrow font-mono-label text-xs uppercase text-[var(--accent)]">The solution</p>
         <h2 className="mt-5 max-w-2xl text-balance font-display text-4xl tracking-tight sm:text-6xl">
           From content creation to business operations.
@@ -233,7 +214,7 @@ function Solution() {
             </div>
           ))}
         </div>
-      </RevealOnScroll>
+      </div>
     </section>
   );
 }
@@ -258,7 +239,7 @@ function HowItWorks() {
   ];
   return (
     <section className="border-b border-[var(--border-subtle)] bg-[var(--surface)]">
-      <RevealOnScroll className="mx-auto max-w-6xl px-6 py-32">
+      <div className="mx-auto max-w-6xl px-6 py-32">
         <p className="section-eyebrow font-mono-label text-xs uppercase text-[var(--accent)]">How it works</p>
         <h2 className="mt-5 max-w-xl text-balance font-display text-4xl tracking-tight sm:text-6xl">
           Set up once. Operate with clarity every day after.
@@ -272,7 +253,7 @@ function HowItWorks() {
             </div>
           ))}
         </div>
-      </RevealOnScroll>
+      </div>
     </section>
   );
 }
@@ -285,7 +266,7 @@ function ProductPreview() {
   ];
   return (
     <section className="border-b border-[var(--border-subtle)]">
-      <RevealOnScroll className="mx-auto max-w-6xl px-6 py-32">
+      <div className="mx-auto max-w-6xl px-6 py-32">
         <div className="grid gap-14 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
           <div>
             <p className="section-eyebrow font-mono-label text-xs uppercase text-[var(--accent)]">The dashboard</p>
@@ -298,7 +279,7 @@ function ProductPreview() {
               company on.
             </p>
           </div>
-          <div className="card-glass rounded-2xl p-2">
+          <div className="card-flush p-2">
             <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-5 py-3.5">
               <span className="font-mono-label text-[10px] uppercase text-[var(--ink-muted)]">
                 Business overview
@@ -329,7 +310,7 @@ function ProductPreview() {
             </div>
           </div>
         </div>
-      </RevealOnScroll>
+      </div>
     </section>
   );
 }
@@ -351,7 +332,7 @@ function Audience() {
   ];
   return (
     <section className="border-b border-[var(--border-subtle)] bg-[var(--surface)]">
-      <RevealOnScroll className="mx-auto max-w-6xl px-6 py-32">
+      <div className="mx-auto max-w-6xl px-6 py-32">
         <p className="section-eyebrow font-mono-label text-xs uppercase text-[var(--accent)]">Who it&apos;s for</p>
         <h2 className="mt-5 max-w-xl text-balance font-display text-4xl tracking-tight sm:text-6xl">
           Built for creators who run content like a company.
@@ -365,7 +346,7 @@ function Audience() {
             </div>
           ))}
         </div>
-      </RevealOnScroll>
+      </div>
     </section>
   );
 }
@@ -395,7 +376,7 @@ function Faq() {
   ];
   return (
     <section className="border-b border-[var(--border-subtle)]">
-      <RevealOnScroll className="mx-auto max-w-3xl px-6 py-32">
+      <div className="mx-auto max-w-3xl px-6 py-32">
         <p className="section-eyebrow font-mono-label text-xs uppercase text-[var(--accent)]">FAQ</p>
         <h2 className="mt-5 font-display text-4xl tracking-tight sm:text-6xl">
           Questions, answered.
@@ -419,16 +400,15 @@ function Faq() {
             </details>
           ))}
         </div>
-      </RevealOnScroll>
+      </div>
     </section>
   );
 }
 
 function EarlyAccessBand({ progress, goal }: { progress: number; goal: number }) {
   return (
-    <section className="relative overflow-hidden bg-[var(--surface-dark)] text-white">
-      <div aria-hidden className="glow-orb pointer-events-none absolute -left-32 -bottom-32 h-96 w-96 rounded-full opacity-60" />
-      <RevealOnScroll className="relative mx-auto max-w-6xl px-6 py-32">
+    <section className="bg-[var(--surface-dark)] text-white">
+      <div className="mx-auto max-w-6xl px-6 py-32">
         <div className="grid gap-12 lg:grid-cols-[1fr_auto] lg:items-center">
           <div>
             <p className="section-eyebrow font-mono-label text-xs uppercase text-white/50">Early access</p>
@@ -456,12 +436,12 @@ function EarlyAccessBand({ progress, goal }: { progress: number; goal: number })
             href="/early-access"
             event="early_access_click"
             eventProps={{ location: "band" }}
-            className="cta-premium inline-flex items-center justify-center rounded-full bg-white px-7 py-3.5 text-sm font-medium text-[var(--surface-dark)] transition hover:bg-white/90"
+            className="inline-flex items-center justify-center rounded-full bg-white px-7 py-3.5 text-sm font-medium text-[var(--surface-dark)] transition hover:bg-white/90"
           >
             Request Early Access
           </TrackedLink>
         </div>
-      </RevealOnScroll>
+      </div>
     </section>
   );
 }
