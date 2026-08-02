@@ -21,10 +21,10 @@ export function RevealOnScroll({
     const node = ref.current;
     if (!node) return;
 
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setVisible(true);
-      return;
-    }
+ if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  requestAnimationFrame(() => setVisible(true));
+  return;
+}
 
     const observer = new IntersectionObserver(
       (entries) => {
