@@ -23,7 +23,11 @@ export function EarlyAccessRestartButton() {
   }
 
   return (
-    <button onClick={handleRestart} disabled={loading}>
+    <button
+      onClick={handleRestart}
+      disabled={loading}
+      className="rounded-full border border-border-strong px-7 py-3 font-mono-ui text-xs uppercase tracking-[0.15em] text-text transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
+    >
       {loading ? "Resetting…" : "Use a different email"}
     </button>
   );

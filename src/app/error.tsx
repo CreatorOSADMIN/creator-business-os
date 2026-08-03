@@ -21,7 +21,7 @@ export default function GlobalError({
   return (
     <>
       <SiteHeader />
-      <main className="flex-1">
+      <main className="flex-1 bg-bg">
         <ErrorState
           title="Something went wrong."
           message="We hit an unexpected error loading this page. Please try again."

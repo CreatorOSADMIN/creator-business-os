@@ -4,16 +4,17 @@
 /* Design tokens — CreatorOS landing surface                              */
 /* ---------------------------------------------------------------------- */
 @theme inline {
-  --color-bg: #0a0a0b;
-  --color-bg-elevated: #131316;
-  --color-bg-elevated-2: #1a1a1e;
-  --color-border: #232327;
-  --color-border-strong: #313136;
-  --color-text: #f5f4f0;
-  --color-text-muted: #93939c;
-  --color-text-faint: #5c5c63;
-  --color-accent: #f2b705;
-  --color-accent-dim: #b98c04;
+  --color-bg: #0b0b0b;
+  --color-bg-elevated: #111111;
+  --color-bg-elevated-2: #181818;
+  --color-border: #2a2a2a;
+  --color-border-strong: #3a3a3a;
+  --color-text: #f8f8f6;
+  --color-text-muted: #b8b8b3;
+  --color-text-faint: #7a7a75;
+  --color-accent: #d4af37;
+  --color-accent-hover: #e6c76a;
+  --color-accent-dim: #b8912b;
 
   --font-display: var(--font-display-family), ui-sans-serif, system-ui, sans-serif;
   --font-mono-ui: var(--font-mono-ui-family), ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -63,4 +64,31 @@ h1, h2, h3, h4 {
   .animate-marquee {
     animation: none !important;
   }
+}
+
+/* Editorial prose used by legal pages (Privacy, Terms). */
+.legal-prose > p {
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  color: var(--color-text-muted);
+}
+
+.legal-prose > section {
+  border-top: 1px solid var(--color-border);
+  padding-top: 2.5rem;
+}
+
+.legal-prose > section > h2 {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+}
+
+.legal-prose > section > p {
+  margin-top: 0.75rem;
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  color: var(--color-text-muted);
 }

@@ -19,7 +19,7 @@ export default function EarlyAccessError({
   return (
     <>
       <SiteHeader />
-      <main className="flex-1">
+      <main className="flex-1 bg-bg">
         <ErrorState
           title="We couldn't load Early Access."
           message="Something went wrong while checking your registration. Please try again."

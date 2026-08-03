@@ -19,7 +19,7 @@ export default function EarlyAccessSuccessError({
   return (
     <>
       <SiteHeader />
-      <main className="flex-1">
+      <main className="flex-1 bg-bg">
         <ErrorState
           title="We couldn't load this page."
           message="Something went wrong while loading your confirmation details. Please try again."

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { Reveal } from "@/components/landing/reveal";
+import { Eyebrow } from "@/components/landing/eyebrow";
 import { EarlyAccessForm } from "@/components/early-access-form";
 import { getRegisteredCreatorIdFromCookie } from "@/lib/creator-session";
 import { prisma } from "@/lib/prisma";
@@ -43,14 +45,29 @@ export default async function EarlyAccessPage({
   return (
     <>
       <SiteHeader />
-      <main className="flex-1">
-        <h1>Join Free Early Access</h1>
-        <EarlyAccessForm
-          initialReferralCode={first(params.ref)}
-          initialUtmSource={first(params.utm_source)}
-          initialUtmMedium={first(params.utm_medium)}
-          initialUtmCampaign={first(params.utm_campaign)}
-        />
+      <main className="flex-1 bg-bg">
+        <section className="px-6 pb-16 pt-20 sm:px-10 sm:pt-28">
+          <div className="mx-auto max-w-3xl">
+            <Reveal>
+              <Eyebrow>Free early access</Eyebrow>
+              <h1 className="mt-6 text-balance font-display text-[clamp(2.25rem,6vw,4rem)] font-bold leading-[0.98] tracking-[-0.03em] text-text">
+                Join Free Early Access
+              </h1>
+              <p className="mt-6 max-w-xl text-balance border-t border-border pt-6 text-lg leading-relaxed text-text-muted">
+                Tell us a bit about your creator business. Takes about two minutes.
+              </p>
+            </Reveal>
+
+            <Reveal delay={80} className="mt-14">
+              <EarlyAccessForm
+                initialReferralCode={first(params.ref)}
+                initialUtmSource={first(params.utm_source)}
+                initialUtmMedium={first(params.utm_medium)}
+                initialUtmCampaign={first(params.utm_campaign)}
+              />
+            </Reveal>
+          </div>
+        </section>
       </main>
       <SiteFooter />
     </>

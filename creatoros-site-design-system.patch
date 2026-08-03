@@ -1,0 +1,1171 @@
+diff --git a/src/app/about/page.tsx b/src/app/about/page.tsx
+index 1acf877..65569d6 100644
+--- a/src/app/about/page.tsx
++++ b/src/app/about/page.tsx
+@@ -1,6 +1,9 @@
+ import type { Metadata } from "next";
+ import { SiteHeader } from "@/components/site-header";
+ import { SiteFooter } from "@/components/site-footer";
++import { Reveal } from "@/components/landing/reveal";
++import { Eyebrow } from "@/components/landing/eyebrow";
++import { TrackedLink } from "@/components/analytics/tracked-link";
+ 
+ export const metadata: Metadata = {
+   title: "About",
+@@ -9,12 +12,93 @@ export const metadata: Metadata = {
+   alternates: { canonical: "/about" },
+ };
+ 
++const VALUES = [
++  {
++    n: "01",
++    title: "Evidence over guesswork",
++    body: "Creators deserve the same clarity a real business gets — what's working, what isn't, and why.",
++  },
++  {
++    n: "02",
++    title: "Every platform, one view",
++    body: "YouTube, Instagram, TikTok, Twitch, X, and beyond — unified instead of scattered across a dozen tabs.",
++  },
++  {
++    n: "03",
++    title: "Built with creators, not just for them",
++    body: "Early access members help shape the roadmap before CreatorOS ever opens to the public.",
++  },
++];
++
+ export default function AboutPage() {
+   return (
+     <>
+       <SiteHeader />
+-      <main className="flex-1">
+-        <h1>About</h1>
++      <main className="flex-1 bg-bg">
++        <section className="px-6 pb-16 pt-20 sm:px-10 sm:pt-28">
++          <div className="mx-auto max-w-6xl">
++            <Reveal>
++              <Eyebrow>About CreatorOS</Eyebrow>
++              <h1 className="mt-6 max-w-3xl text-balance font-display text-[clamp(2.25rem,6vw,4.5rem)] font-bold leading-[0.98] tracking-[-0.03em] text-text">
++                Built for creators who treat their audience like a business.
++              </h1>
++            </Reveal>
++
++            <Reveal delay={120}>
++              <p className="mt-8 max-w-2xl text-balance border-t border-border pt-8 text-lg leading-relaxed text-text-muted">
++                CreatorOS is an upcoming creator business dashboard that brings analytics, brand
++                deals, and revenue into one place — so growth decisions come from evidence, not
++                guesswork.
++              </p>
++            </Reveal>
++          </div>
++        </section>
++
++        <section className="border-t border-border px-6 py-24 sm:px-10 sm:py-32">
++          <div className="mx-auto max-w-6xl">
++            <Reveal>
++              <Eyebrow>What we believe</Eyebrow>
++            </Reveal>
++
++            <div className="mt-16 border-t border-border">
++              {VALUES.map((item, i) => (
++                <Reveal key={item.n} delay={i * 90}>
++                  <div className="grid grid-cols-1 gap-4 border-b border-border py-8 sm:grid-cols-12 sm:gap-8 sm:py-10">
++                    <span className="font-mono-ui text-sm text-text-faint sm:col-span-2">
++                      {item.n}
++                    </span>
++                    <h3 className="font-display text-xl font-bold text-text sm:col-span-4">
++                      {item.title}
++                    </h3>
++                    <p className="text-sm leading-relaxed text-text-muted sm:col-span-6">
++                      {item.body}
++                    </p>
++                  </div>
++                </Reveal>
++              ))}
++            </div>
++          </div>
++        </section>
++
++        <section className="border-t border-border px-6 py-24 sm:px-10 sm:py-32">
++          <div className="mx-auto max-w-4xl text-center">
++            <Reveal>
++              <h2 className="text-balance font-display text-3xl font-bold tracking-[-0.03em] text-text sm:text-5xl">
++                Help shape CreatorOS from day one.
++              </h2>
++              <div className="mt-10">
++                <TrackedLink
++                  href="/early-access"
++                  event="early_access_click"
++                  eventProps={{ location: "about_cta" }}
++                  className="inline-block rounded-full bg-accent px-8 py-3.5 font-mono-ui text-xs font-medium uppercase tracking-[0.15em] text-bg transition-transform hover:scale-[1.03]"
++                >
++                  Join Free Early Access
++                </TrackedLink>
++              </div>
++            </Reveal>
++          </div>
++        </section>
+       </main>
+       <SiteFooter />
+     </>
+diff --git a/src/app/contact/page.tsx b/src/app/contact/page.tsx
+index ecaeb9f..45d346a 100644
+--- a/src/app/contact/page.tsx
++++ b/src/app/contact/page.tsx
+@@ -1,6 +1,8 @@
+ import type { Metadata } from "next";
+ import { SiteHeader } from "@/components/site-header";
+ import { SiteFooter } from "@/components/site-footer";
++import { Reveal } from "@/components/landing/reveal";
++import { Eyebrow } from "@/components/landing/eyebrow";
+ 
+ export const metadata: Metadata = {
+   title: "Contact",
+@@ -13,11 +15,35 @@ export default function ContactPage() {
+   return (
+     <>
+       <SiteHeader />
+-      <main className="flex-1">
+-        <h1>Contact</h1>
+-        <p>
+-          <a href="mailto:ferrettiwilliam68@gmail.com">ferrettiwilliam68@gmail.com</a>
+-        </p>
++      <main className="flex-1 bg-bg">
++        <section className="px-6 pb-16 pt-20 sm:px-10 sm:pt-28">
++          <div className="mx-auto max-w-4xl">
++            <Reveal>
++              <Eyebrow>Get in touch</Eyebrow>
++              <h1 className="mt-6 text-balance font-display text-[clamp(2.25rem,6vw,4.5rem)] font-bold leading-[0.98] tracking-[-0.03em] text-text">
++                Contact
++              </h1>
++              <p className="mt-8 max-w-xl text-balance border-t border-border pt-8 text-lg leading-relaxed text-text-muted">
++                Questions about Early Access, privacy requests, or press inquiries — we read every
++                message.
++              </p>
++            </Reveal>
++
++            <Reveal delay={120}>
++              <div className="mt-14 rounded-2xl border border-border bg-bg-elevated p-8 sm:p-10">
++                <p className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">
++                  Email
++                </p>
++                <a
++                  href="mailto:ferrettiwilliam68@gmail.com"
++                  className="mt-3 inline-block font-display text-xl font-bold text-text transition-colors hover:text-accent sm:text-2xl"
++                >
++                  ferrettiwilliam68@gmail.com
++                </a>
++              </div>
++            </Reveal>
++          </div>
++        </section>
+       </main>
+       <SiteFooter />
+     </>
+diff --git a/src/app/early-access/error.tsx b/src/app/early-access/error.tsx
+index 5b81d60..cd58558 100644
+--- a/src/app/early-access/error.tsx
++++ b/src/app/early-access/error.tsx
+@@ -19,7 +19,7 @@ export default function EarlyAccessError({
+   return (
+     <>
+       <SiteHeader />
+-      <main className="flex-1">
++      <main className="flex-1 bg-bg">
+         <ErrorState
+           title="We couldn't load Early Access."
+           message="Something went wrong while checking your registration. Please try again."
+diff --git a/src/app/early-access/loading.tsx b/src/app/early-access/loading.tsx
+index b3f6a6c..f44f31a 100644
+--- a/src/app/early-access/loading.tsx
++++ b/src/app/early-access/loading.tsx
+@@ -5,8 +5,14 @@ export default function EarlyAccessLoading() {
+   return (
+     <>
+       <SiteHeader />
+-      <main className="flex-1">
+-        <p>Loading…</p>
++      <main className="flex-1 bg-bg">
++        <section className="px-6 py-28 sm:px-10 sm:py-40">
++          <div className="mx-auto max-w-2xl text-center">
++            <p className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">
++              Loading…
++            </p>
++          </div>
++        </section>
+       </main>
+       <SiteFooter />
+     </>
+diff --git a/src/app/early-access/page.tsx b/src/app/early-access/page.tsx
+index 9d029d4..c607695 100644
+--- a/src/app/early-access/page.tsx
++++ b/src/app/early-access/page.tsx
+@@ -2,6 +2,8 @@ import type { Metadata } from "next";
+ import { redirect } from "next/navigation";
+ import { SiteHeader } from "@/components/site-header";
+ import { SiteFooter } from "@/components/site-footer";
++import { Reveal } from "@/components/landing/reveal";
++import { Eyebrow } from "@/components/landing/eyebrow";
+ import { EarlyAccessForm } from "@/components/early-access-form";
+ import { getRegisteredCreatorIdFromCookie } from "@/lib/creator-session";
+ import { prisma } from "@/lib/prisma";
+@@ -43,14 +45,29 @@ export default async function EarlyAccessPage({
+   return (
+     <>
+       <SiteHeader />
+-      <main className="flex-1">
+-        <h1>Join Free Early Access</h1>
+-        <EarlyAccessForm
+-          initialReferralCode={first(params.ref)}
+-          initialUtmSource={first(params.utm_source)}
+-          initialUtmMedium={first(params.utm_medium)}
+-          initialUtmCampaign={first(params.utm_campaign)}
+-        />
++      <main className="flex-1 bg-bg">
++        <section className="px-6 pb-16 pt-20 sm:px-10 sm:pt-28">
++          <div className="mx-auto max-w-3xl">
++            <Reveal>
++              <Eyebrow>Free early access</Eyebrow>
++              <h1 className="mt-6 text-balance font-display text-[clamp(2.25rem,6vw,4rem)] font-bold leading-[0.98] tracking-[-0.03em] text-text">
++                Join Free Early Access
++              </h1>
++              <p className="mt-6 max-w-xl text-balance border-t border-border pt-6 text-lg leading-relaxed text-text-muted">
++                Tell us a bit about your creator business. Takes about two minutes.
++              </p>
++            </Reveal>
++
++            <Reveal delay={80} className="mt-14">
++              <EarlyAccessForm
++                initialReferralCode={first(params.ref)}
++                initialUtmSource={first(params.utm_source)}
++                initialUtmMedium={first(params.utm_medium)}
++                initialUtmCampaign={first(params.utm_campaign)}
++              />
++            </Reveal>
++          </div>
++        </section>
+       </main>
+       <SiteFooter />
+     </>
+diff --git a/src/app/early-access/pending/error.tsx b/src/app/early-access/pending/error.tsx
+index 28c26dd..415e731 100644
+--- a/src/app/early-access/pending/error.tsx
++++ b/src/app/early-access/pending/error.tsx
+@@ -19,7 +19,7 @@ export default function EarlyAccessPendingError({
+   return (
+     <>
+       <SiteHeader />
+-      <main className="flex-1">
++      <main className="flex-1 bg-bg">
+         <ErrorState
+           title="We couldn't load this page."
+           message="Something went wrong while checking your confirmation status. Please try again."
+diff --git a/src/app/early-access/pending/page.tsx b/src/app/early-access/pending/page.tsx
+index 7fb557e..c0d04b1 100644
+--- a/src/app/early-access/pending/page.tsx
++++ b/src/app/early-access/pending/page.tsx
+@@ -2,6 +2,7 @@ import type { Metadata } from "next";
+ import Link from "next/link";
+ import { SiteHeader } from "@/components/site-header";
+ import { SiteFooter } from "@/components/site-footer";
++import { Eyebrow } from "@/components/landing/eyebrow";
+ import { EarlyAccessRestartButton } from "@/components/early-access-restart-button";
+ import { EarlyAccessPendingStatus } from "@/components/early-access-pending-status";
+ import { getRegisteredCreatorIdFromCookie } from "@/lib/creator-session";
+@@ -26,31 +27,44 @@ export default async function EarlyAccessPendingPage({
+     <>
+       <SiteHeader />
+       <EarlyAccessPendingStatus enabled={hasSession} />
+-      <main className="flex-1">
+-        {emailSent ? (
+-          <>
+-            <h1>Check your email to confirm your registration.</h1>
+-            <p>
+-              We&apos;ve sent a confirmation link{email ? <> to {email}</> : null}. The link
+-              expires in 24 hours.
+-            </p>
+-          </>
+-        ) : (
+-          <>
+-            <h1>Your registration was saved, but we couldn&apos;t send the confirmation email.</h1>
+-            <p>
+-              We weren&apos;t able to deliver a confirmation link{email ? <> to {email}</> : null}{" "}
+-              right now. Please submit the form again with the same email, or try a different
+-              email below.
+-            </p>
+-          </>
+-        )}
++      <main className="flex-1 bg-bg">
++        <section className="px-6 py-28 sm:px-10 sm:py-40">
++          <div className="mx-auto max-w-2xl text-center">
++            <Eyebrow>{emailSent ? "Almost there" : "Registration saved"}</Eyebrow>
++            {emailSent ? (
++              <>
++                <h1 className="mt-6 text-balance font-display text-3xl font-bold tracking-[-0.03em] text-text sm:text-5xl">
++                  Check your email to confirm your registration.
++                </h1>
++                <p className="mx-auto mt-5 max-w-md text-text-muted">
++                  We&apos;ve sent a confirmation link{email ? <> to {email}</> : null}. The link
++                  expires in 24 hours.
++                </p>
++              </>
++            ) : (
++              <>
++                <h1 className="mt-6 text-balance font-display text-3xl font-bold tracking-[-0.03em] text-text sm:text-5xl">
++                  Your registration was saved, but we couldn&apos;t send the confirmation email.
++                </h1>
++                <p className="mx-auto mt-5 max-w-md text-text-muted">
++                  We weren&apos;t able to deliver a confirmation link
++                  {email ? <> to {email}</> : null} right now. Please submit the form again with
++                  the same email, or try a different email below.
++                </p>
++              </>
++            )}
+ 
+-        <div>
+-          <EarlyAccessRestartButton />
+-        </div>
+-
+-        <Link href="/">Back to homepage</Link>
++            <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
++              <EarlyAccessRestartButton />
++              <Link
++                href="/"
++                className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text-muted transition-colors hover:text-text"
++              >
++                Back to homepage
++              </Link>
++            </div>
++          </div>
++        </section>
+       </main>
+       <SiteFooter />
+     </>
+diff --git a/src/app/early-access/success/error.tsx b/src/app/early-access/success/error.tsx
+index 067c2bf..e542adb 100644
+--- a/src/app/early-access/success/error.tsx
++++ b/src/app/early-access/success/error.tsx
+@@ -19,7 +19,7 @@ export default function EarlyAccessSuccessError({
+   return (
+     <>
+       <SiteHeader />
+-      <main className="flex-1">
++      <main className="flex-1 bg-bg">
+         <ErrorState
+           title="We couldn't load this page."
+           message="Something went wrong while loading your confirmation details. Please try again."
+diff --git a/src/app/early-access/success/page.tsx b/src/app/early-access/success/page.tsx
+index c510adc..c71d895 100644
+--- a/src/app/early-access/success/page.tsx
++++ b/src/app/early-access/success/page.tsx
+@@ -2,6 +2,7 @@ import type { Metadata } from "next";
+ import Link from "next/link";
+ import { SiteHeader } from "@/components/site-header";
+ import { SiteFooter } from "@/components/site-footer";
++import { Eyebrow } from "@/components/landing/eyebrow";
+ import { TrackEventOnMount } from "@/components/analytics/track-event-on-mount";
+ import { getSiteUrl } from "@/lib/site-url";
+ 
+@@ -26,20 +27,47 @@ export default async function EarlyAccessSuccessPage({
+       {/* Primary GA4 conversion event — mark "early_access_signup" as a
+           conversion in the GA4 property's Admin > Events settings. */}
+       {id && <TrackEventOnMount event="early_access_signup" props={{ creatorId: id }} />}
+-      <main className="flex-1">
+-        <h1>You&apos;re on the list.</h1>
++      <main className="flex-1 bg-bg">
++        <section className="px-6 py-28 sm:px-10 sm:py-40">
++          <div className="mx-auto max-w-2xl text-center">
++            <Eyebrow>Confirmed</Eyebrow>
++            <h1 className="mt-6 text-balance font-display text-4xl font-bold tracking-[-0.03em] text-text sm:text-6xl">
++              You&apos;re on the list.
++            </h1>
+ 
+-        {id && (
+-          <div>
+-            <p>Reference: {id}</p>
+-            {referralLink && <p>Referral link: {referralLink}</p>}
+-          </div>
+-        )}
++            {id && (
++              <div className="mx-auto mt-8 flex max-w-md flex-col gap-2 rounded-2xl border border-border bg-bg-elevated p-6 text-left">
++                <p className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">
++                  Reference
++                </p>
++                <p className="break-all text-sm text-text">{id}</p>
++                {referralLink && (
++                  <>
++                    <p className="mt-3 font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">
++                      Referral link
++                    </p>
++                    <p className="break-all text-sm text-text">{referralLink}</p>
++                  </>
++                )}
++              </div>
++            )}
+ 
+-        <div>
+-          <Link href="/">Back to homepage</Link>
+-          <Link href="/updates">See what&apos;s next</Link>
+-        </div>
++            <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
++              <Link
++                href="/"
++                className="rounded-full bg-accent px-7 py-3 font-mono-ui text-xs font-medium uppercase tracking-[0.15em] text-bg transition-transform hover:scale-[1.03]"
++              >
++                Back to homepage
++              </Link>
++              <Link
++                href="/updates"
++                className="rounded-full border border-border-strong px-7 py-3 font-mono-ui text-xs uppercase tracking-[0.15em] text-text transition-colors hover:border-accent hover:text-accent"
++              >
++                See what&apos;s next
++              </Link>
++            </div>
++          </div>
++        </section>
+       </main>
+       <SiteFooter />
+     </>
+diff --git a/src/app/early-access/verify/page.tsx b/src/app/early-access/verify/page.tsx
+index b6630c1..0a66ec4 100644
+--- a/src/app/early-access/verify/page.tsx
++++ b/src/app/early-access/verify/page.tsx
+@@ -3,6 +3,7 @@ import Link from "next/link";
+ import { redirect } from "next/navigation";
+ import { SiteHeader } from "@/components/site-header";
+ import { SiteFooter } from "@/components/site-footer";
++import { Eyebrow } from "@/components/landing/eyebrow";
+ import { verifyCreatorEmailToken } from "@/lib/email-verification";
+ 
+ export const metadata: Metadata = {
+@@ -31,10 +32,24 @@ export default async function EarlyAccessVerifyPage({
+   return (
+     <>
+       <SiteHeader />
+-      <main className="flex-1">
+-        <h1>Link not valid</h1>
+-        <p>{message}</p>
+-        <Link href="/early-access">Back to Early Access</Link>
++      <main className="flex-1 bg-bg">
++        <section className="px-6 py-28 sm:px-10 sm:py-40">
++          <div className="mx-auto max-w-2xl text-center">
++            <Eyebrow>Link not valid</Eyebrow>
++            <h1 className="mt-6 text-balance font-display text-3xl font-bold tracking-[-0.03em] text-text sm:text-5xl">
++              Link not valid
++            </h1>
++            <p className="mx-auto mt-5 max-w-md text-text-muted">{message}</p>
++            <div className="mt-10">
++              <Link
++                href="/early-access"
++                className="rounded-full bg-accent px-7 py-3 font-mono-ui text-xs font-medium uppercase tracking-[0.15em] text-bg transition-transform hover:scale-[1.03]"
++              >
++                Back to Early Access
++              </Link>
++            </div>
++          </div>
++        </section>
+       </main>
+       <SiteFooter />
+     </>
+diff --git a/src/app/error.tsx b/src/app/error.tsx
+index 4a71514..623e366 100644
+--- a/src/app/error.tsx
++++ b/src/app/error.tsx
+@@ -21,7 +21,7 @@ export default function GlobalError({
+   return (
+     <>
+       <SiteHeader />
+-      <main className="flex-1">
++      <main className="flex-1 bg-bg">
+         <ErrorState
+           title="Something went wrong."
+           message="We hit an unexpected error loading this page. Please try again."
+diff --git a/src/app/globals.css b/src/app/globals.css
+index 950e69f..ba04d6c 100644
+--- a/src/app/globals.css
++++ b/src/app/globals.css
+@@ -4,16 +4,17 @@
+ /* Design tokens — CreatorOS landing surface                              */
+ /* ---------------------------------------------------------------------- */
+ @theme inline {
+-  --color-bg: #0a0a0b;
+-  --color-bg-elevated: #131316;
+-  --color-bg-elevated-2: #1a1a1e;
+-  --color-border: #232327;
+-  --color-border-strong: #313136;
+-  --color-text: #f5f4f0;
+-  --color-text-muted: #93939c;
+-  --color-text-faint: #5c5c63;
+-  --color-accent: #f2b705;
+-  --color-accent-dim: #b98c04;
++  --color-bg: #0b0b0b;
++  --color-bg-elevated: #111111;
++  --color-bg-elevated-2: #181818;
++  --color-border: #2a2a2a;
++  --color-border-strong: #3a3a3a;
++  --color-text: #f8f8f6;
++  --color-text-muted: #b8b8b3;
++  --color-text-faint: #7a7a75;
++  --color-accent: #d4af37;
++  --color-accent-hover: #e6c76a;
++  --color-accent-dim: #b8912b;
+ 
+   --font-display: var(--font-display-family), ui-sans-serif, system-ui, sans-serif;
+   --font-mono-ui: var(--font-mono-ui-family), ui-monospace, SFMono-Regular, Menlo, monospace;
+@@ -64,3 +65,30 @@ h1, h2, h3, h4 {
+     animation: none !important;
+   }
+ }
++
++/* Editorial prose used by legal pages (Privacy, Terms). */
++.legal-prose > p {
++  font-size: 0.9375rem;
++  line-height: 1.75;
++  color: var(--color-text-muted);
++}
++
++.legal-prose > section {
++  border-top: 1px solid var(--color-border);
++  padding-top: 2.5rem;
++}
++
++.legal-prose > section > h2 {
++  font-family: var(--font-display);
++  font-size: 1.25rem;
++  font-weight: 700;
++  letter-spacing: -0.02em;
++  color: var(--color-text);
++}
++
++.legal-prose > section > p {
++  margin-top: 0.75rem;
++  font-size: 0.9375rem;
++  line-height: 1.75;
++  color: var(--color-text-muted);
++}
+diff --git a/src/app/not-found.tsx b/src/app/not-found.tsx
+index 86a17bc..50ecdb0 100644
+--- a/src/app/not-found.tsx
++++ b/src/app/not-found.tsx
+@@ -1,17 +1,41 @@
+ import Link from "next/link";
+ import { SiteHeader } from "@/components/site-header";
+ import { SiteFooter } from "@/components/site-footer";
++import { Eyebrow } from "@/components/landing/eyebrow";
++import { TrackedLink } from "@/components/analytics/tracked-link";
+ 
+ export default function NotFound() {
+   return (
+     <>
+       <SiteHeader />
+-      <main className="flex-1">
+-        <h1>Page not found.</h1>
+-        <div>
+-          <Link href="/">Back to homepage</Link>
+-          <Link href="/early-access">Join Early Access</Link>
+-        </div>
++      <main className="flex-1 bg-bg">
++        <section className="px-6 py-28 sm:px-10 sm:py-40">
++          <div className="mx-auto max-w-3xl text-center">
++            <Eyebrow>404</Eyebrow>
++            <h1 className="mt-6 text-balance font-display text-4xl font-bold tracking-[-0.03em] text-text sm:text-6xl">
++              Page not found.
++            </h1>
++            <p className="mx-auto mt-5 max-w-md text-text-muted">
++              The page you&apos;re looking for doesn&apos;t exist or may have moved.
++            </p>
++            <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
++              <Link
++                href="/"
++                className="rounded-full bg-accent px-7 py-3 font-mono-ui text-xs font-medium uppercase tracking-[0.15em] text-bg transition-transform hover:scale-[1.03]"
++              >
++                Back to homepage
++              </Link>
++              <TrackedLink
++                href="/early-access"
++                event="early_access_click"
++                eventProps={{ location: "not_found" }}
++                className="rounded-full border border-border-strong px-7 py-3 font-mono-ui text-xs uppercase tracking-[0.15em] text-text transition-colors hover:border-accent hover:text-accent"
++              >
++                Join Early Access
++              </TrackedLink>
++            </div>
++          </div>
++        </section>
+       </main>
+       <SiteFooter />
+     </>
+diff --git a/src/app/updates/page.tsx b/src/app/updates/page.tsx
+index d816e22..30651dc 100644
+--- a/src/app/updates/page.tsx
++++ b/src/app/updates/page.tsx
+@@ -2,6 +2,9 @@ import type { Metadata } from "next";
+ import Link from "next/link";
+ import { SiteHeader } from "@/components/site-header";
+ import { SiteFooter } from "@/components/site-footer";
++import { Reveal } from "@/components/landing/reveal";
++import { Eyebrow } from "@/components/landing/eyebrow";
++import { TrackedLink } from "@/components/analytics/tracked-link";
+ import { GOFUNDME_URL } from "@/lib/constants";
+ 
+ export const metadata: Metadata = {
+@@ -22,25 +25,79 @@ export default function UpdatesPage() {
+   return (
+     <>
+       <SiteHeader />
+-      <main className="flex-1">
+-        <h1>Updates</h1>
+-        <ul>
+-          {ROADMAP.map((item) => (
+-            <li key={item.phase}>
+-              {item.phase} — {item.status} — {item.title}
+-            </li>
+-          ))}
+-        </ul>
+-        {GOFUNDME_URL ? (
+-          <a href={GOFUNDME_URL} target="_blank" rel="noopener noreferrer">
+-            Support on GoFundMe
+-          </a>
+-        ) : (
+-          <Link href="/contact">Get in touch to support us</Link>
+-        )}
+-        <p>
+-          <Link href="/early-access">Join Early Access</Link>
+-        </p>
++      <main className="flex-1 bg-bg">
++        <section className="px-6 pb-16 pt-20 sm:px-10 sm:pt-28">
++          <div className="mx-auto max-w-6xl">
++            <Reveal>
++              <Eyebrow>Roadmap</Eyebrow>
++              <h1 className="mt-6 max-w-2xl text-balance font-display text-[clamp(2.25rem,6vw,4.5rem)] font-bold leading-[0.98] tracking-[-0.03em] text-text">
++                What&apos;s coming to CreatorOS.
++              </h1>
++              <p className="mt-8 max-w-xl text-balance border-t border-border pt-8 text-lg leading-relaxed text-text-muted">
++                Built in the open. Here&apos;s where things stand today, and what&apos;s next.
++              </p>
++            </Reveal>
++          </div>
++        </section>
++
++        <section className="border-t border-border px-6 py-24 sm:px-10 sm:py-32">
++          <div className="mx-auto max-w-6xl">
++            <div className="border-t border-border">
++              {ROADMAP.map((item, i) => (
++                <Reveal key={item.phase} delay={i * 90}>
++                  <div className="grid grid-cols-1 gap-4 border-b border-border py-8 sm:grid-cols-12 sm:gap-8 sm:py-10">
++                    <span className="font-mono-ui text-sm text-text-faint sm:col-span-2">
++                      {item.phase}
++                    </span>
++                    <h3 className="font-display text-xl font-bold text-text sm:col-span-6">
++                      {item.title}
++                    </h3>
++                    <span className="font-mono-ui text-xs uppercase tracking-[0.15em] text-accent sm:col-span-4 sm:text-right">
++                      {item.status}
++                    </span>
++                  </div>
++                </Reveal>
++              ))}
++            </div>
++          </div>
++        </section>
++
++        <section className="border-t border-border px-6 py-24 sm:px-10 sm:py-32">
++          <div className="mx-auto max-w-4xl text-center">
++            <Reveal>
++              <h2 className="text-balance font-display text-3xl font-bold tracking-[-0.03em] text-text sm:text-5xl">
++                Help CreatorOS keep building.
++              </h2>
++              <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
++                {GOFUNDME_URL ? (
++                  <a
++                    href={GOFUNDME_URL}
++                    target="_blank"
++                    rel="noopener noreferrer"
++                    className="rounded-full bg-accent px-7 py-3 font-mono-ui text-xs font-medium uppercase tracking-[0.15em] text-bg transition-transform hover:scale-[1.03]"
++                  >
++                    Support on GoFundMe
++                  </a>
++                ) : (
++                  <Link
++                    href="/contact"
++                    className="rounded-full bg-accent px-7 py-3 font-mono-ui text-xs font-medium uppercase tracking-[0.15em] text-bg transition-transform hover:scale-[1.03]"
++                  >
++                    Get in touch to support us
++                  </Link>
++                )}
++                <TrackedLink
++                  href="/early-access"
++                  event="early_access_click"
++                  eventProps={{ location: "updates_cta" }}
++                  className="rounded-full border border-border-strong px-7 py-3 font-mono-ui text-xs uppercase tracking-[0.15em] text-text transition-colors hover:border-accent hover:text-accent"
++                >
++                  Join Early Access
++                </TrackedLink>
++              </div>
++            </Reveal>
++          </div>
++        </section>
+       </main>
+       <SiteFooter />
+     </>
+diff --git a/src/components/early-access-form.tsx b/src/components/early-access-form.tsx
+index e6c88bb..c0aecd4 100644
+--- a/src/components/early-access-form.tsx
++++ b/src/components/early-access-form.tsx
+@@ -58,6 +58,11 @@ const initialState: FormState = {
+ const DRAFT_STORAGE_KEY = "creatoros:early-access-draft";
+ const DRAFT_MAX_AGE_MS = 2 * 60 * 60 * 1000; // 2 hours
+ 
++const inputClass =
++  "w-full rounded-lg border border-border bg-bg-elevated px-4 py-2.5 text-sm text-text placeholder:text-text-faint transition-colors focus:border-accent focus:outline-none focus-visible:outline-none";
++
++const checkboxClass = "mt-0.5 h-4 w-4 shrink-0 accent-accent";
++
+ export function EarlyAccessForm({
+   initialReferralCode,
+   initialUtmSource,
+@@ -189,7 +194,7 @@ export function EarlyAccessForm({
+   }
+ 
+   return (
+-    <form onSubmit={handleSubmit} noValidate>
++    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-14">
+       {/* Honeypot field — hidden from real users, catches simple bots */}
+       <input
+         type="text"
+@@ -203,23 +208,23 @@ export function EarlyAccessForm({
+       />
+ 
+       <Section number="01" title="Basic Information">
+-        <div>
++        <div className="grid gap-5 sm:grid-cols-2">
+           <Field id="fullName" label="Full Name" error={errors.fullName} required>
+-            <input
++            <input className={inputClass}
+               value={form.fullName}
+               onChange={(e) => setForm((p) => ({ ...p, fullName: e.target.value }))}
+               placeholder="Jane Doe"
+             />
+           </Field>
+           <Field id="creatorHandle" label="Creator Name / Handle" error={errors.creatorHandle} required>
+-            <input
++            <input className={inputClass}
+               value={form.creatorHandle}
+               onChange={(e) => setForm((p) => ({ ...p, creatorHandle: e.target.value }))}
+               placeholder="@janedoe"
+             />
+           </Field>
+           <Field id="email" label="Email Address" error={errors.email} required>
+-            <input
++            <input className={inputClass}
+               type="email"
+               value={form.email}
+               onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
+@@ -227,7 +232,7 @@ export function EarlyAccessForm({
+             />
+           </Field>
+           <Field id="country" label="Country" error={errors.country} required>
+-            <select
++            <select className={inputClass}
+               value={form.country}
+               onChange={(e) => setForm((p) => ({ ...p, country: e.target.value }))}
+             >
+@@ -244,18 +249,14 @@ export function EarlyAccessForm({
+ 
+       <Section number="02" title="Social Platforms" subtitle="Which platforms do you actively use?">
+         <div data-error={errors.platforms ? "true" : "false"}>
+-          <div>
++          <div className="flex flex-wrap gap-3">
+             {PLATFORMS.map((platform) => (
+-              <label
++              <CheckboxPill
+                 key={platform.value}
+-              >
+-                <input
+-                  type="checkbox"
+-                  checked={form.platforms.includes(platform.value)}
+-                  onChange={() => toggleArrayValue("platforms", platform.value)}
+-                />
+-                {platform.label}
+-              </label>
++                label={platform.label}
++                checked={form.platforms.includes(platform.value)}
++                onChange={() => toggleArrayValue("platforms", platform.value)}
++              />
+             ))}
+           </div>
+           {errors.platforms && <ErrorText>{errors.platforms}</ErrorText>}
+@@ -273,25 +274,31 @@ export function EarlyAccessForm({
+       </Section>
+ 
+       <Section number="04" title="Creator Activity">
+-        <p>How often do you publish?</p>
+-        <div>
+-          <RadioGroup
+-            name="publishingFrequency"
+-            options={PUBLISHING_FREQUENCIES}
+-            value={form.publishingFrequency}
+-            onChange={(value) => setForm((p) => ({ ...p, publishingFrequency: value }))}
+-            error={errors.publishingFrequency}
+-          />
+-        </div>
+-        <p>How long have you been creating content?</p>
+-        <div>
+-          <RadioGroup
+-            name="creatorExperience"
+-            options={CREATOR_EXPERIENCE}
+-            value={form.creatorExperience}
+-            onChange={(value) => setForm((p) => ({ ...p, creatorExperience: value }))}
+-            error={errors.creatorExperience}
+-          />
++        <div className="flex flex-col gap-8">
++          <div>
++            <p className="text-sm text-text-muted">How often do you publish?</p>
++            <div className="mt-4">
++              <RadioGroup
++                name="publishingFrequency"
++                options={PUBLISHING_FREQUENCIES}
++                value={form.publishingFrequency}
++                onChange={(value) => setForm((p) => ({ ...p, publishingFrequency: value }))}
++                error={errors.publishingFrequency}
++              />
++            </div>
++          </div>
++          <div>
++            <p className="text-sm text-text-muted">How long have you been creating content?</p>
++            <div className="mt-4">
++              <RadioGroup
++                name="creatorExperience"
++                options={CREATOR_EXPERIENCE}
++                value={form.creatorExperience}
++                onChange={(value) => setForm((p) => ({ ...p, creatorExperience: value }))}
++                error={errors.creatorExperience}
++              />
++            </div>
++          </div>
+         </div>
+       </Section>
+ 
+@@ -301,7 +308,7 @@ export function EarlyAccessForm({
+         subtitle="What is the biggest challenge you currently face as a creator?"
+       >
+         <Field id="biggestChallenge" label="" error={errors.biggestChallenge}>
+-          <textarea
++          <textarea className={`${inputClass} min-h-32 resize-y`}
+             aria-label="Biggest challenge you currently face as a creator"
+             value={form.biggestChallenge}
+             onChange={(e) => setForm((p) => ({ ...p, biggestChallenge: e.target.value }))}
+@@ -315,25 +322,21 @@ export function EarlyAccessForm({
+         title="Product Interest"
+         subtitle="Which part of CreatorOS would be most valuable to you?"
+       >
+-        <div>
++        <div className="flex flex-wrap gap-3">
+           {PRODUCT_INTERESTS.map((interest) => (
+-            <label
++            <CheckboxPill
+               key={interest.value}
+-            >
+-              <input
+-                type="checkbox"
+-                checked={form.productInterests.includes(interest.value)}
+-                onChange={() => toggleArrayValue("productInterests", interest.value)}
+-              />
+-              {interest.label}
+-            </label>
++              label={interest.label}
++              checked={form.productInterests.includes(interest.value)}
++              onChange={() => toggleArrayValue("productInterests", interest.value)}
++            />
+           ))}
+         </div>
+         {errors.productInterests && <ErrorText>{errors.productInterests}</ErrorText>}
+       </Section>
+ 
+       <Section number="07" title="Early Access Benefit">
+-        <p>
++        <p className="text-sm leading-relaxed text-text-muted">
+           By joining the CreatorOS Early Access Program, you will be eligible for a 50% discount
+           on the first three months of your paid subscription after launch, subject to the final
+           terms of the program.
+@@ -341,34 +344,36 @@ export function EarlyAccessForm({
+       </Section>
+ 
+       <Section number="08" title="Consent">
+-        <div>
+-          <label>
++        <div className="flex flex-col gap-4">
++          <label className="flex items-start gap-3">
+             <input
+               type="checkbox"
++              className={checkboxClass}
+               checked={form.privacyAccepted}
+               onChange={(e) => setForm((p) => ({ ...p, privacyAccepted: e.target.checked }))}
+             />
+-            <span>
++            <span className="text-sm leading-relaxed text-text-muted">
+               I have read and accept the{" "}
+-              <a href="/privacy" target="_blank">
++              <a href="/privacy" target="_blank" className="text-text underline underline-offset-2 hover:text-accent">
+                 Privacy Policy
+               </a>{" "}
+               and{" "}
+-              <a href="/terms" target="_blank">
++              <a href="/terms" target="_blank" className="text-text underline underline-offset-2 hover:text-accent">
+                 Terms of Service
+               </a>
+-              . <span>*</span>
++              . <span className="text-accent">*</span>
+             </span>
+           </label>
+           {errors.privacyAccepted && <ErrorText>{errors.privacyAccepted}</ErrorText>}
+ 
+-          <label>
++          <label className="flex items-start gap-3">
+             <input
+               type="checkbox"
++              className={checkboxClass}
+               checked={form.marketingConsent}
+               onChange={(e) => setForm((p) => ({ ...p, marketingConsent: e.target.checked }))}
+             />
+-            <span>
++            <span className="text-sm leading-relaxed text-text-muted">
+               I&apos;d like to receive updates and communications about CreatorOS. (optional)
+             </span>
+           </label>
+@@ -376,17 +381,19 @@ export function EarlyAccessForm({
+       </Section>
+ 
+       {serverError && (
+-        <div
++        <p
+           data-server-error="true"
++          className="rounded-lg border border-border-strong bg-bg-elevated px-4 py-3 text-sm text-text"
+         >
+           {serverError}
+-        </div>
++        </p>
+       )}
+ 
+-      <div>
++      <div className="border-t border-border pt-10">
+         <button
+           type="submit"
+           disabled={submitting}
++          className="w-full rounded-full bg-accent px-8 py-3.5 font-mono-ui text-xs font-medium uppercase tracking-[0.15em] text-bg transition-transform hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+         >
+           {submitting ? "Submitting…" : "Join the Early Access Program"}
+         </button>
+@@ -407,13 +414,13 @@ function Section({
+   children: React.ReactNode;
+ }) {
+   return (
+-    <div>
+-      <div>
+-        <span>{number}</span>
+-        <h2>{title}</h2>
++    <div className="border-t border-border pt-10">
++      <div className="flex items-baseline gap-3">
++        <span className="font-mono-ui text-xs text-text-faint">{number}</span>
++        <h2 className="font-display text-lg font-bold text-text">{title}</h2>
+       </div>
+-      {subtitle && <p>{subtitle}</p>}
+-      <div>{children}</div>
++      {subtitle && <p className="mt-2 text-sm text-text-muted">{subtitle}</p>}
++      <div className="mt-6">{children}</div>
+     </div>
+   );
+ }
+@@ -441,10 +448,10 @@ function Field({
+     : children;
+ 
+   return (
+-    <div data-error={error ? "true" : "false"}>
++    <div data-error={error ? "true" : "false"} className="flex flex-col gap-1.5">
+       {label && (
+-        <label htmlFor={id}>
+-          {label} {required && <span>*</span>}
++        <label htmlFor={id} className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">
++          {label} {required && <span className="text-accent">*</span>}
+         </label>
+       )}
+       {input}
+@@ -455,12 +462,35 @@ function Field({
+ 
+ function ErrorText({ children, id }: { children: React.ReactNode; id?: string }) {
+   return (
+-    <p id={id}>
++    <p id={id} className="mt-1 text-xs text-accent">
+       {children}
+     </p>
+   );
+ }
+ 
++function CheckboxPill({
++  label,
++  checked,
++  onChange,
++}: {
++  label: string;
++  checked: boolean;
++  onChange: () => void;
++}) {
++  return (
++    <label
++      className={`cursor-pointer rounded-full border px-4 py-2 font-mono-ui text-xs uppercase tracking-[0.1em] transition-colors ${
++        checked
++          ? "border-accent bg-accent/10 text-accent"
++          : "border-border-strong text-text-muted hover:border-accent hover:text-accent"
++      }`}
++    >
++      <input type="checkbox" checked={checked} onChange={onChange} className="sr-only" />
++      {label}
++    </label>
++  );
++}
++
+ function RadioGroup({
+   name,
+   options,
+@@ -476,16 +506,22 @@ function RadioGroup({
+ }) {
+   return (
+     <div data-error={error ? "true" : "false"}>
+-      <div role="radiogroup" aria-label={name}>
++      <div role="radiogroup" aria-label={name} className="flex flex-wrap gap-3">
+         {options.map((option) => (
+           <label
+             key={option.value}
++            className={`cursor-pointer rounded-full border px-4 py-2 font-mono-ui text-xs uppercase tracking-[0.1em] transition-colors ${
++              value === option.value
++                ? "border-accent bg-accent/10 text-accent"
++                : "border-border-strong text-text-muted hover:border-accent hover:text-accent"
++            }`}
+           >
+             <input
+               type="radio"
+               name={name}
+               checked={value === option.value}
+               onChange={() => onChange(option.value)}
++              className="sr-only"
+             />
+             {option.label}
+           </label>
+@@ -494,4 +530,4 @@ function RadioGroup({
+       {error && <ErrorText>{error}</ErrorText>}
+     </div>
+   );
+-}
+\ No newline at end of file
++}
+diff --git a/src/components/early-access-restart-button.tsx b/src/components/early-access-restart-button.tsx
+index b1e7529..f879933 100644
+--- a/src/components/early-access-restart-button.tsx
++++ b/src/components/early-access-restart-button.tsx
+@@ -23,7 +23,11 @@ export function EarlyAccessRestartButton() {
+   }
+ 
+   return (
+-    <button onClick={handleRestart} disabled={loading}>
++    <button
++      onClick={handleRestart}
++      disabled={loading}
++      className="rounded-full border border-border-strong px-7 py-3 font-mono-ui text-xs uppercase tracking-[0.15em] text-text transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
++    >
+       {loading ? "Resetting…" : "Use a different email"}
+     </button>
+   );
+diff --git a/src/components/error-state.tsx b/src/components/error-state.tsx
+index 6bd46e2..4f71b98 100644
+--- a/src/components/error-state.tsx
++++ b/src/components/error-state.tsx
+@@ -1,6 +1,7 @@
+ "use client";
+ 
+ import Link from "next/link";
++import { Eyebrow } from "@/components/landing/eyebrow";
+ 
+ export function ErrorState({
+   title = "Something went wrong.",
+@@ -14,13 +15,31 @@ export function ErrorState({
+   homeHref?: string;
+ }) {
+   return (
+-    <div>
+-      <h1>{title}</h1>
+-      <p>{message}</p>
+-      <div>
+-        {onRetry && <button onClick={onRetry}>Try again</button>}
+-        <Link href={homeHref}>Back to homepage</Link>
++    <section className="px-6 py-28 sm:px-10 sm:py-40">
++      <div className="mx-auto max-w-2xl text-center">
++        <Eyebrow>Error</Eyebrow>
++        <h1 className="mt-6 text-balance font-display text-3xl font-bold tracking-[-0.03em] text-text sm:text-5xl">
++          {title}
++        </h1>
++        <p className="mx-auto mt-5 max-w-md text-text-muted">{message}</p>
++        <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
++          {onRetry && (
++            <button
++              type="button"
++              onClick={onRetry}
++              className="rounded-full bg-accent px-7 py-3 font-mono-ui text-xs font-medium uppercase tracking-[0.15em] text-bg transition-transform hover:scale-[1.03]"
++            >
++              Try again
++            </button>
++          )}
++          <Link
++            href={homeHref}
++            className="rounded-full border border-border-strong px-7 py-3 font-mono-ui text-xs uppercase tracking-[0.15em] text-text transition-colors hover:border-accent hover:text-accent"
++          >
++            Back to homepage
++          </Link>
++        </div>
+       </div>
+-    </div>
++    </section>
+   );
+ }
+diff --git a/src/components/legal-page.tsx b/src/components/legal-page.tsx
+index 9462286..310983f 100644
+--- a/src/components/legal-page.tsx
++++ b/src/components/legal-page.tsx
+@@ -1,5 +1,7 @@
+ import { SiteHeader } from "@/components/site-header";
+ import { SiteFooter } from "@/components/site-footer";
++import { Reveal } from "@/components/landing/reveal";
++import { Eyebrow } from "@/components/landing/eyebrow";
+ 
+ export function LegalPage({
+   title,
+@@ -13,10 +15,26 @@ export function LegalPage({
+   return (
+     <>
+       <SiteHeader />
+-      <main className="flex-1">
+-        <h1>{title}</h1>
+-        {updated && <p>Last updated: {updated}</p>}
+-        <div>{children}</div>
++      <main className="flex-1 bg-bg">
++        <section className="px-6 pb-16 pt-20 sm:px-10 sm:pt-28">
++          <div className="mx-auto max-w-4xl">
++            <Reveal>
++              <Eyebrow>Legal</Eyebrow>
++              <h1 className="mt-6 text-balance font-display text-4xl font-bold leading-tight tracking-[-0.03em] text-text sm:text-6xl">
++                {title}
++              </h1>
++              {updated && (
++                <p className="mt-6 border-t border-border pt-6 font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">
++                  Last updated: {updated}
++                </p>
++              )}
++            </Reveal>
++
++            <Reveal delay={80}>
++              <div className="legal-prose mt-14 flex flex-col gap-10">{children}</div>
++            </Reveal>
++          </div>
++        </section>
+       </main>
+       <SiteFooter />
+     </>

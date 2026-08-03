@@ -58,6 +58,11 @@ const initialState: FormState = {
 const DRAFT_STORAGE_KEY = "creatoros:early-access-draft";
 const DRAFT_MAX_AGE_MS = 2 * 60 * 60 * 1000; // 2 hours
 
+const inputClass =
+  "w-full rounded-lg border border-border bg-bg-elevated px-4 py-2.5 text-sm text-text placeholder:text-text-faint transition-colors focus:border-accent focus:outline-none focus-visible:outline-none";
+
+const checkboxClass = "mt-0.5 h-4 w-4 shrink-0 accent-accent";
+
 export function EarlyAccessForm({
   initialReferralCode,
   initialUtmSource,
@@ -189,7 +194,7 @@ export function EarlyAccessForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate>
+    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-14">
       {/* Honeypot field — hidden from real users, catches simple bots */}
       <input
         type="text"
@@ -203,23 +208,23 @@ export function EarlyAccessForm({
       />
 
       <Section number="01" title="Basic Information">
-        <div>
+        <div className="grid gap-5 sm:grid-cols-2">
           <Field id="fullName" label="Full Name" error={errors.fullName} required>
-            <input
+            <input className={inputClass}
               value={form.fullName}
               onChange={(e) => setForm((p) => ({ ...p, fullName: e.target.value }))}
               placeholder="Jane Doe"
             />
           </Field>
           <Field id="creatorHandle" label="Creator Name / Handle" error={errors.creatorHandle} required>
-            <input
+            <input className={inputClass}
               value={form.creatorHandle}
               onChange={(e) => setForm((p) => ({ ...p, creatorHandle: e.target.value }))}
               placeholder="@janedoe"
             />
           </Field>
           <Field id="email" label="Email Address" error={errors.email} required>
-            <input
+            <input className={inputClass}
               type="email"
               value={form.email}
               onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
@@ -227,7 +232,7 @@ export function EarlyAccessForm({
             />
           </Field>
           <Field id="country" label="Country" error={errors.country} required>
-            <select
+            <select className={inputClass}
               value={form.country}
               onChange={(e) => setForm((p) => ({ ...p, country: e.target.value }))}
             >
@@ -244,18 +249,14 @@ export function EarlyAccessForm({
 
       <Section number="02" title="Social Platforms" subtitle="Which platforms do you actively use?">
         <div data-error={errors.platforms ? "true" : "false"}>
-          <div>
+          <div className="flex flex-wrap gap-3">
             {PLATFORMS.map((platform) => (
-              <label
+              <CheckboxPill
                 key={platform.value}
-              >
-                <input
-                  type="checkbox"
-                  checked={form.platforms.includes(platform.value)}
-                  onChange={() => toggleArrayValue("platforms", platform.value)}
-                />
-                {platform.label}
-              </label>
+                label={platform.label}
+                checked={form.platforms.includes(platform.value)}
+                onChange={() => toggleArrayValue("platforms", platform.value)}
+              />
             ))}
           </div>
           {errors.platforms && <ErrorText>{errors.platforms}</ErrorText>}
@@ -273,25 +274,31 @@ export function EarlyAccessForm({
       </Section>
 
       <Section number="04" title="Creator Activity">
-        <p>How often do you publish?</p>
-        <div>
-          <RadioGroup
-            name="publishingFrequency"
-            options={PUBLISHING_FREQUENCIES}
-            value={form.publishingFrequency}
-            onChange={(value) => setForm((p) => ({ ...p, publishingFrequency: value }))}
-            error={errors.publishingFrequency}
-          />
-        </div>
-        <p>How long have you been creating content?</p>
-        <div>
-          <RadioGroup
-            name="creatorExperience"
-            options={CREATOR_EXPERIENCE}
-            value={form.creatorExperience}
-            onChange={(value) => setForm((p) => ({ ...p, creatorExperience: value }))}
-            error={errors.creatorExperience}
-          />
+        <div className="flex flex-col gap-8">
+          <div>
+            <p className="text-sm text-text-muted">How often do you publish?</p>
+            <div className="mt-4">
+              <RadioGroup
+                name="publishingFrequency"
+                options={PUBLISHING_FREQUENCIES}
+                value={form.publishingFrequency}
+                onChange={(value) => setForm((p) => ({ ...p, publishingFrequency: value }))}
+                error={errors.publishingFrequency}
+              />
+            </div>
+          </div>
+          <div>
+            <p className="text-sm text-text-muted">How long have you been creating content?</p>
+            <div className="mt-4">
+              <RadioGroup
+                name="creatorExperience"
+                options={CREATOR_EXPERIENCE}
+                value={form.creatorExperience}
+                onChange={(value) => setForm((p) => ({ ...p, creatorExperience: value }))}
+                error={errors.creatorExperience}
+              />
+            </div>
+          </div>
         </div>
       </Section>
 
@@ -301,7 +308,7 @@ export function EarlyAccessForm({
         subtitle="What is the biggest challenge you currently face as a creator?"
       >
         <Field id="biggestChallenge" label="" error={errors.biggestChallenge}>
-          <textarea
+          <textarea className={`${inputClass} min-h-32 resize-y`}
             aria-label="Biggest challenge you currently face as a creator"
             value={form.biggestChallenge}
             onChange={(e) => setForm((p) => ({ ...p, biggestChallenge: e.target.value }))}
@@ -315,25 +322,21 @@ export function EarlyAccessForm({
         title="Product Interest"
         subtitle="Which part of CreatorOS would be most valuable to you?"
       >
-        <div>
+        <div className="flex flex-wrap gap-3">
           {PRODUCT_INTERESTS.map((interest) => (
-            <label
+            <CheckboxPill
               key={interest.value}
-            >
-              <input
-                type="checkbox"
-                checked={form.productInterests.includes(interest.value)}
-                onChange={() => toggleArrayValue("productInterests", interest.value)}
-              />
-              {interest.label}
-            </label>
+              label={interest.label}
+              checked={form.productInterests.includes(interest.value)}
+              onChange={() => toggleArrayValue("productInterests", interest.value)}
+            />
           ))}
         </div>
         {errors.productInterests && <ErrorText>{errors.productInterests}</ErrorText>}
       </Section>
 
       <Section number="07" title="Early Access Benefit">
-        <p>
+        <p className="text-sm leading-relaxed text-text-muted">
           By joining the CreatorOS Early Access Program, you will be eligible for a 50% discount
           on the first three months of your paid subscription after launch, subject to the final
           terms of the program.
@@ -341,34 +344,36 @@ export function EarlyAccessForm({
       </Section>
 
       <Section number="08" title="Consent">
-        <div>
-          <label>
+        <div className="flex flex-col gap-4">
+          <label className="flex items-start gap-3">
             <input
               type="checkbox"
+              className={checkboxClass}
               checked={form.privacyAccepted}
               onChange={(e) => setForm((p) => ({ ...p, privacyAccepted: e.target.checked }))}
             />
-            <span>
+            <span className="text-sm leading-relaxed text-text-muted">
               I have read and accept the{" "}
-              <a href="/privacy" target="_blank">
+              <a href="/privacy" target="_blank" className="text-text underline underline-offset-2 hover:text-accent">
                 Privacy Policy
               </a>{" "}
               and{" "}
-              <a href="/terms" target="_blank">
+              <a href="/terms" target="_blank" className="text-text underline underline-offset-2 hover:text-accent">
                 Terms of Service
               </a>
-              . <span>*</span>
+              . <span className="text-accent">*</span>
             </span>
           </label>
           {errors.privacyAccepted && <ErrorText>{errors.privacyAccepted}</ErrorText>}
 
-          <label>
+          <label className="flex items-start gap-3">
             <input
               type="checkbox"
+              className={checkboxClass}
               checked={form.marketingConsent}
               onChange={(e) => setForm((p) => ({ ...p, marketingConsent: e.target.checked }))}
             />
-            <span>
+            <span className="text-sm leading-relaxed text-text-muted">
               I&apos;d like to receive updates and communications about CreatorOS. (optional)
             </span>
           </label>
@@ -376,17 +381,19 @@ export function EarlyAccessForm({
       </Section>
 
       {serverError && (
-        <div
+        <p
           data-server-error="true"
+          className="rounded-lg border border-border-strong bg-bg-elevated px-4 py-3 text-sm text-text"
         >
           {serverError}
-        </div>
+        </p>
       )}
 
-      <div>
+      <div className="border-t border-border pt-10">
         <button
           type="submit"
           disabled={submitting}
+          className="w-full rounded-full bg-accent px-8 py-3.5 font-mono-ui text-xs font-medium uppercase tracking-[0.15em] text-bg transition-transform hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
         >
           {submitting ? "Submitting…" : "Join the Early Access Program"}
         </button>
@@ -407,13 +414,13 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div>
-      <div>
-        <span>{number}</span>
-        <h2>{title}</h2>
+    <div className="border-t border-border pt-10">
+      <div className="flex items-baseline gap-3">
+        <span className="font-mono-ui text-xs text-text-faint">{number}</span>
+        <h2 className="font-display text-lg font-bold text-text">{title}</h2>
       </div>
-      {subtitle && <p>{subtitle}</p>}
-      <div>{children}</div>
+      {subtitle && <p className="mt-2 text-sm text-text-muted">{subtitle}</p>}
+      <div className="mt-6">{children}</div>
     </div>
   );
 }
@@ -441,10 +448,10 @@ function Field({
     : children;
 
   return (
-    <div data-error={error ? "true" : "false"}>
+    <div data-error={error ? "true" : "false"} className="flex flex-col gap-1.5">
       {label && (
-        <label htmlFor={id}>
-          {label} {required && <span>*</span>}
+        <label htmlFor={id} className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">
+          {label} {required && <span className="text-accent">*</span>}
         </label>
       )}
       {input}
@@ -455,9 +462,32 @@ function Field({
 
 function ErrorText({ children, id }: { children: React.ReactNode; id?: string }) {
   return (
-    <p id={id}>
+    <p id={id} className="mt-1 text-xs text-accent">
       {children}
     </p>
+  );
+}
+
+function CheckboxPill({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: () => void;
+}) {
+  return (
+    <label
+      className={`cursor-pointer rounded-full border px-4 py-2 font-mono-ui text-xs uppercase tracking-[0.1em] transition-colors ${
+        checked
+          ? "border-accent bg-accent/10 text-accent"
+          : "border-border-strong text-text-muted hover:border-accent hover:text-accent"
+      }`}
+    >
+      <input type="checkbox" checked={checked} onChange={onChange} className="sr-only" />
+      {label}
+    </label>
   );
 }
 
@@ -476,16 +506,22 @@ function RadioGroup({
 }) {
   return (
     <div data-error={error ? "true" : "false"}>
-      <div role="radiogroup" aria-label={name}>
+      <div role="radiogroup" aria-label={name} className="flex flex-wrap gap-3">
         {options.map((option) => (
           <label
             key={option.value}
+            className={`cursor-pointer rounded-full border px-4 py-2 font-mono-ui text-xs uppercase tracking-[0.1em] transition-colors ${
+              value === option.value
+                ? "border-accent bg-accent/10 text-accent"
+                : "border-border-strong text-text-muted hover:border-accent hover:text-accent"
+            }`}
           >
             <input
               type="radio"
               name={name}
               checked={value === option.value}
               onChange={() => onChange(option.value)}
+              className="sr-only"
             />
             {option.label}
           </label>
