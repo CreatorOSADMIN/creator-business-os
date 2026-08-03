@@ -15,22 +15,22 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/80 bg-bg/85 backdrop-blur-md">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+    <header className="sticky top-0 z-50 border-b border-border bg-bg/90 backdrop-blur-md">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 sm:px-10">
         <Link
           href="/"
           onClick={() => setOpen(false)}
-          className="font-display text-lg font-bold tracking-tight text-text"
+          className="font-display text-xl font-bold tracking-tight text-text"
         >
           Creator<span className="text-accent">OS</span>
         </Link>
 
-        <nav className="hidden items-center gap-8 md:flex">
+        <nav className="hidden items-center gap-10 md:flex">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="font-mono-ui text-xs uppercase tracking-widest text-text-muted transition-colors hover:text-text"
+              className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text-muted transition-colors hover:text-text"
             >
               {link.label}
             </Link>
@@ -42,7 +42,7 @@ export function SiteHeader() {
             href="/early-access"
             event="early_access_click"
             eventProps={{ location: "header" }}
-            className="hidden rounded-full bg-accent px-5 py-2 font-mono-ui text-xs font-medium uppercase tracking-widest text-bg transition-transform hover:scale-[1.03] sm:inline-block"
+            className="hidden rounded-full border border-border-strong px-5 py-2 font-mono-ui text-xs uppercase tracking-[0.15em] text-text transition-colors hover:border-accent hover:text-accent sm:inline-block"
           >
             Request Early Access
           </TrackedLink>
@@ -76,7 +76,7 @@ export function SiteHeader() {
               <Link
                 href={link.href}
                 onClick={() => setOpen(false)}
-                className="block py-2 font-mono-ui text-xs uppercase tracking-widest text-text-muted"
+                className="block py-2 font-mono-ui text-xs uppercase tracking-[0.15em] text-text-muted"
               >
                 {link.label}
               </Link>
@@ -89,7 +89,7 @@ export function SiteHeader() {
             event="early_access_click"
             eventProps={{ location: "header_mobile" }}
             onClick={() => setOpen(false)}
-            className="block rounded-full bg-accent px-5 py-2.5 text-center font-mono-ui text-xs font-medium uppercase tracking-widest text-bg"
+            className="block rounded-full border border-border-strong px-5 py-2.5 text-center font-mono-ui text-xs uppercase tracking-[0.15em] text-text"
           >
             Request Early Access
           </TrackedLink>

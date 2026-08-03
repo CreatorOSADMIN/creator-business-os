@@ -49,11 +49,18 @@ h1, h2, h3, h4 {
   }
 }
 
-@keyframes glow-pulse {
-  0%, 100% { opacity: 0.55; }
-  50% { opacity: 1; }
+/* Continuous strip ticker used by <Marquee>. Respects reduced motion. */
+@keyframes marquee-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
 
-.animate-glow-pulse {
-  animation: glow-pulse 4s ease-in-out infinite;
+.animate-marquee {
+  animation: marquee-scroll 28s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation: none !important;
+  }
 }

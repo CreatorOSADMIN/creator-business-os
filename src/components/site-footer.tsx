@@ -4,13 +4,13 @@ import { CookiePreferencesLink } from "@/components/consent/cookie-preferences-l
 export function SiteFooter() {
   return (
     <footer className="border-t border-border bg-bg">
-      <div className="mx-auto max-w-6xl px-6 py-16">
+      <div className="mx-auto max-w-7xl px-6 py-20 sm:px-10">
         <div className="grid grid-cols-2 gap-10 md:grid-cols-5">
           <div className="col-span-2">
-            <p className="font-display text-lg font-bold tracking-tight text-text">
+            <p className="font-display text-2xl font-bold tracking-tight text-text">
               Creator<span className="text-accent">OS</span>
             </p>
-            <p className="mt-3 max-w-xs text-sm text-text-muted">
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-text-muted">
               One dashboard for your creator business — unified analytics across every platform
               you publish to.
             </p>
@@ -43,7 +43,7 @@ export function SiteFooter() {
           </nav>
         </div>
 
-        <div className="mt-14 flex flex-col gap-3 border-t border-border pt-6 font-mono-ui text-xs uppercase tracking-widest text-text-faint sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-16 flex flex-col gap-3 border-t border-border pt-8 font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} CreatorOS. All rights reserved.</p>
           <p>Built for creators, by creators</p>
         </div>
@@ -63,7 +63,7 @@ function FooterColumn({
 }) {
   return (
     <div>
-      <p className="font-mono-ui text-xs uppercase tracking-widest text-text-faint">{title}</p>
+      <p className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">{title}</p>
       <ul className="mt-4 flex flex-col gap-3">
         {links.map((link) => (
           <li key={link.href}>
