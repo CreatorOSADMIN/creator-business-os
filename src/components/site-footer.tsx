@@ -11,8 +11,9 @@ export function SiteFooter() {
               Creator<span className="text-accent">OS</span>
             </p>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-text-muted">
-              One dashboard for your creator business — unified analytics across every platform
-              you publish to.
+              The upcoming business dashboard for creators — unified analytics, brand deals, and
+              revenue across YouTube, Instagram, TikTok, Twitch, X, and more. Free to join early
+              access.
             </p>
           </div>
 

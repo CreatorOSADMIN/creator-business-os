@@ -35,18 +35,28 @@ const SOCIAL_PROFILES = [
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "CreatorOS — The Business Operating System for Creators",
+    default: "CreatorOS — Creator Business Management Platform (Free Early Access)",
     template: "%s | CreatorOS",
   },
   description:
-    "CreatorOS unifies YouTube, TikTok, and Instagram data into one creator business dashboard, so you can grow on evidence, not guesswork. Join Early Access today.",
+    "CreatorOS is an upcoming creator business dashboard unifying analytics, brand deals, and revenue across YouTube, Instagram, TikTok, Twitch, X, LinkedIn, Facebook, Patreon, and Substack. Join the free early access waitlist — freemium at launch.",
+  keywords: [
+    "creator business management platform",
+    "creator economy tools",
+    "creator operating system",
+    "manage brand deals",
+    "creator analytics",
+    "creator workflow management",
+    "creator business dashboard",
+    "influencer business tools",
+  ],
   alternates: {
     canonical: siteUrl,
   },
   openGraph: {
-    title: "CreatorOS — The Business Operating System for Creators",
+    title: "CreatorOS — Creator Business Management Platform",
     description:
-      "One dashboard for your creator business: unified analytics, clear insight, and growth tools built with early creators. Currently in early access.",
+      "One dashboard for your creator business: unified analytics, brand deals, and revenue across every platform you publish to. Free early access, freemium at launch.",
     url: siteUrl,
     siteName: "CreatorOS",
     type: "website",
@@ -54,9 +64,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary",
-    title: "CreatorOS — The Business Operating System for Creators",
+    title: "CreatorOS — Creator Business Management Platform",
     description:
-      "One dashboard for your creator business: unified analytics, clear insight, and growth tools built with early creators. Currently in early access.",
+      "One dashboard for your creator business: unified analytics, brand deals, and revenue across every platform you publish to. Free early access, freemium at launch.",
   },
   icons: {
     icon: "/favicon.ico",

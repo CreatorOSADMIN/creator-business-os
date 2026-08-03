@@ -50,16 +50,23 @@ export function CookieConsentBanner() {
       role="dialog"
       aria-modal="false"
       aria-label="Cookie consent"
-      className="fixed inset-x-0 bottom-0"
+      className="fixed inset-x-0 bottom-0 z-[60] px-4 pb-4 sm:inset-x-auto sm:bottom-6 sm:right-6 sm:max-w-md sm:px-0 sm:pb-0"
     >
-      <div>
-        <p>
+      <div className="rounded-2xl border border-border-strong bg-bg-elevated p-6 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.6)]">
+        <p className="font-mono-ui text-[11px] uppercase tracking-[0.2em] text-text-faint">
+          <span className="text-accent">[</span> Cookies <span className="text-accent">]</span>
+        </p>
+        <p className="mt-3 text-sm leading-relaxed text-text-muted">
           We use cookies to run this site and, with your permission, to understand how it&apos;s
-          used. See our <a href="/privacy">Privacy Policy</a> for details.
+          used. See our{" "}
+          <a href="/privacy" className="text-text underline underline-offset-2 hover:text-accent">
+            Privacy Policy
+          </a>{" "}
+          for details.
         </p>
 
         {managing && (
-          <div>
+          <div className="mt-5 flex flex-col gap-4 border-t border-border pt-5">
             <PreferenceRow
               label="Strictly necessary"
               description="Required for the site to function. Always on."
@@ -81,21 +88,37 @@ export function CookieConsentBanner() {
           </div>
         )}
 
-        <div>
+        <div className="mt-6 flex flex-wrap items-center gap-3">
           {managing ? (
-            <button type="button" onClick={() => choose(prefs)}>
+            <button
+              type="button"
+              onClick={() => choose(prefs)}
+              className="rounded-full bg-accent px-5 py-2.5 font-mono-ui text-xs font-medium uppercase tracking-[0.15em] text-bg transition-transform hover:scale-[1.03]"
+            >
               Save preferences
             </button>
           ) : (
-            <button type="button" onClick={() => choose(ALL_CONSENT_GRANTED)}>
+            <button
+              type="button"
+              onClick={() => choose(ALL_CONSENT_GRANTED)}
+              className="rounded-full bg-accent px-5 py-2.5 font-mono-ui text-xs font-medium uppercase tracking-[0.15em] text-bg transition-transform hover:scale-[1.03]"
+            >
               Accept
             </button>
           )}
-          <button type="button" onClick={() => choose(ALL_CONSENT_DENIED)}>
+          <button
+            type="button"
+            onClick={() => choose(ALL_CONSENT_DENIED)}
+            className="rounded-full border border-border-strong px-5 py-2.5 font-mono-ui text-xs uppercase tracking-[0.15em] text-text transition-colors hover:border-accent hover:text-accent"
+          >
             Reject{managing ? " all" : ""}
           </button>
           {!managing && (
-            <button type="button" onClick={() => setManaging(true)}>
+            <button
+              type="button"
+              onClick={() => setManaging(true)}
+              className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text-muted transition-colors hover:text-text"
+            >
               Manage preferences
             </button>
           )}
@@ -119,16 +142,19 @@ function PreferenceRow({
   onChange?: (value: boolean) => void;
 }) {
   return (
-    <label>
+    <label className="flex items-start gap-3">
       <input
         type="checkbox"
         checked={checked}
         disabled={disabled}
         onChange={(e) => onChange?.(e.target.checked)}
+        className="mt-1 h-4 w-4 shrink-0 accent-accent"
       />
-      <span>
-        <span>{label}</span>
-        <span>{description}</span>
+      <span className="flex flex-col gap-0.5">
+        <span className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text">
+          {label}
+        </span>
+        <span className="text-xs leading-relaxed text-text-muted">{description}</span>
       </span>
     </label>
   );

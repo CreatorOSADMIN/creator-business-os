@@ -1,0 +1,385 @@
+diff --git a/src/app/early-access/page.tsx b/src/app/early-access/page.tsx
+index f3103d9..9d029d4 100644
+--- a/src/app/early-access/page.tsx
++++ b/src/app/early-access/page.tsx
+@@ -7,9 +7,9 @@ import { getRegisteredCreatorIdFromCookie } from "@/lib/creator-session";
+ import { prisma } from "@/lib/prisma";
+ 
+ export const metadata: Metadata = {
+-  title: "Join Early Access",
++  title: "Join Free Early Access",
+   description:
+-    "Become an early creator on CreatorOS, the business operating system for creators. Join a limited early access program and help shape the platform.",
++    "CreatorOS is an upcoming creator business dashboard for YouTube, Instagram, TikTok, Twitch, X, and more. Join the free early access waitlist and help shape a freemium platform built for creator analytics, brand deals, and revenue.",
+   alternates: { canonical: "/early-access" },
+ };
+ 
+@@ -44,7 +44,7 @@ export default async function EarlyAccessPage({
+     <>
+       <SiteHeader />
+       <main className="flex-1">
+-        <h1>Become an Early Creator</h1>
++        <h1>Join Free Early Access</h1>
+         <EarlyAccessForm
+           initialReferralCode={first(params.ref)}
+           initialUtmSource={first(params.utm_source)}
+diff --git a/src/app/layout.tsx b/src/app/layout.tsx
+index 5e18744..2afc391 100644
+--- a/src/app/layout.tsx
++++ b/src/app/layout.tsx
+@@ -35,18 +35,28 @@ const SOCIAL_PROFILES = [
+ export const metadata: Metadata = {
+   metadataBase: new URL(siteUrl),
+   title: {
+-    default: "CreatorOS — The Business Operating System for Creators",
++    default: "CreatorOS — Creator Business Management Platform (Free Early Access)",
+     template: "%s | CreatorOS",
+   },
+   description:
+-    "CreatorOS unifies YouTube, TikTok, and Instagram data into one creator business dashboard, so you can grow on evidence, not guesswork. Join Early Access today.",
++    "CreatorOS is an upcoming creator business dashboard unifying analytics, brand deals, and revenue across YouTube, Instagram, TikTok, Twitch, X, LinkedIn, Facebook, Patreon, and Substack. Join the free early access waitlist — freemium at launch.",
++  keywords: [
++    "creator business management platform",
++    "creator economy tools",
++    "creator operating system",
++    "manage brand deals",
++    "creator analytics",
++    "creator workflow management",
++    "creator business dashboard",
++    "influencer business tools",
++  ],
+   alternates: {
+     canonical: siteUrl,
+   },
+   openGraph: {
+-    title: "CreatorOS — The Business Operating System for Creators",
++    title: "CreatorOS — Creator Business Management Platform",
+     description:
+-      "One dashboard for your creator business: unified analytics, clear insight, and growth tools built with early creators. Currently in early access.",
++      "One dashboard for your creator business: unified analytics, brand deals, and revenue across every platform you publish to. Free early access, freemium at launch.",
+     url: siteUrl,
+     siteName: "CreatorOS",
+     type: "website",
+@@ -54,9 +64,9 @@ export const metadata: Metadata = {
+   },
+   twitter: {
+     card: "summary",
+-    title: "CreatorOS — The Business Operating System for Creators",
++    title: "CreatorOS — Creator Business Management Platform",
+     description:
+-      "One dashboard for your creator business: unified analytics, clear insight, and growth tools built with early creators. Currently in early access.",
++      "One dashboard for your creator business: unified analytics, brand deals, and revenue across every platform you publish to. Free early access, freemium at launch.",
+   },
+   icons: {
+     icon: "/favicon.ico",
+diff --git a/src/app/page.tsx b/src/app/page.tsx
+index 4e814c0..89c4de7 100644
+--- a/src/app/page.tsx
++++ b/src/app/page.tsx
+@@ -12,23 +12,33 @@ import { TrackedLink } from "@/components/analytics/tracked-link";
+ // verified-creator count from the database.
+ export const revalidate = 60;
+ 
+-const PLATFORMS = ["YouTube", "TikTok", "Instagram"];
++const PLATFORMS = [
++  "YouTube",
++  "Instagram",
++  "TikTok",
++  "Twitch",
++  "X",
++  "LinkedIn",
++  "Facebook",
++  "Patreon",
++  "Substack",
++];
+ 
+ const PROBLEMS = [
+   {
+     n: "01",
+-    title: "Data lives in three apps",
+-    body: "YouTube Studio, TikTok Analytics, Instagram Insights — none of them talk to each other, and none of them talk to your revenue.",
++    title: "Data lives in a dozen tabs",
++    body: "YouTube Studio, Instagram Insights, TikTok Analytics, Patreon, Substack — none of them talk to each other, and none of them talk to your revenue.",
+   },
+   {
+     n: "02",
+     title: "Growth decisions made on gut feel",
+-    body: "Without a unified view, it's guesswork which platform, format, or post is actually moving your business forward.",
++    body: "Without a unified view, it's guesswork which platform, format, or post is actually moving your creator business forward.",
+   },
+   {
+     n: "03",
+     title: "Revenue and content are disconnected",
+-    body: "Views and follower counts don't tell you what's paying the bills. CreatorOS connects performance to income.",
++    body: "Views and follower counts don't tell you what's paying the bills. CreatorOS connects performance to income — and brand deals to real ROI.",
+   },
+ ];
+ 
+@@ -36,17 +46,17 @@ const STEPS = [
+   {
+     n: "01",
+     title: "Connect your platforms",
+-    body: "Link YouTube, TikTok, and Instagram in a couple of minutes. Read-only, revocable anytime.",
++    body: "Link YouTube, Instagram, TikTok, Twitch, X, and more in a couple of minutes. Read-only, revocable anytime.",
+   },
+   {
+     n: "02",
+     title: "See it in one dashboard",
+-    body: "Views, engagement, and audience growth normalized across platforms — no more tab-switching.",
++    body: "Analytics, audience growth, and brand deals normalized across every platform you publish to — no more tab-switching.",
+   },
+   {
+     n: "03",
+     title: "Grow on evidence",
+-    body: "Spot what's actually working and put your time into the content and platforms that compound.",
++    body: "Spot what's actually working and put your time into the content, platforms, and deals that compound.",
+   },
+ ];
+ 
+@@ -70,22 +80,23 @@ export default async function HomePage() {
+         <section className="px-6 pb-16 pt-20 sm:px-10 sm:pt-28">
+           <div className="mx-auto max-w-6xl">
+             <Reveal>
+-              <Eyebrow>The Business OS for Creators</Eyebrow>
++              <Eyebrow>Coming soon — free early access</Eyebrow>
+             </Reveal>
+ 
+             <Reveal delay={80}>
+               <h1 className="mt-6 text-balance font-display text-[clamp(2.75rem,8vw,7rem)] font-bold leading-[0.95] tracking-[-0.04em] text-text">
+-                Your growth,
++                The business OS
+                 <br />
+-                on <span className="text-accent">one dashboard.</span>
++                for <span className="text-accent">creators.</span>
+               </h1>
+             </Reveal>
+ 
+             <div className="mt-10 flex flex-col gap-10 border-t border-border pt-10 lg:flex-row lg:items-end lg:justify-between">
+               <Reveal delay={160} className="max-w-md">
+                 <p className="text-balance text-lg leading-relaxed text-text-muted">
+-                  CreatorOS unifies your YouTube, TikTok, and Instagram data into a single view —
+-                  so you grow your creator business on evidence, not guesswork.
++                  CreatorOS is an upcoming creator business dashboard for anyone building an
++                  audience across YouTube, Instagram, TikTok, Twitch, X, and beyond — analytics,
++                  brand deals, and revenue in one place, so you grow on evidence, not guesswork.
+                 </p>
+               </Reveal>
+ 
+@@ -97,7 +108,7 @@ export default async function HomePage() {
+                     eventProps={{ location: "hero" }}
+                     className="rounded-full bg-accent px-7 py-3 font-mono-ui text-xs font-medium uppercase tracking-[0.15em] text-bg transition-transform hover:scale-[1.03]"
+                   >
+-                    Request Early Access
++                    Join Free Early Access
+                   </TrackedLink>
+                   <TrackedLink
+                     href="/updates"
+@@ -114,7 +125,7 @@ export default async function HomePage() {
+             <Reveal delay={320}>
+               <div className="mx-auto mt-16 max-w-sm">
+                 <div className="flex items-center justify-between font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">
+-                  <span>Early Access</span>
++                  <span>Free Early Access</span>
+                   <span>
+                     {progressPct}% of {goal.toLocaleString()} spots filled
+                   </span>
+@@ -125,6 +136,10 @@ export default async function HomePage() {
+                     style={{ width: `${Math.min(100, Math.max(0, progressPct))}%` }}
+                   />
+                 </div>
++                <p className="mt-4 text-center text-xs leading-relaxed text-text-faint">
++                  No cost to join. CreatorOS will launch on a freemium model — early members lock
++                  in founding-member benefits before it opens to everyone.
++                </p>
+               </div>
+             </Reveal>
+           </div>
+@@ -138,7 +153,7 @@ export default async function HomePage() {
+             <Reveal>
+               <Eyebrow>Why CreatorOS</Eyebrow>
+               <h2 className="mt-5 max-w-2xl text-balance font-display text-3xl font-bold leading-tight tracking-[-0.02em] text-text sm:text-5xl">
+-                Growing a creator business shouldn&apos;t mean living in four different apps.
++                Growing a creator business shouldn&apos;t mean living in a dozen different apps.
+               </h2>
+             </Reveal>
+ 
+@@ -235,7 +250,9 @@ export default async function HomePage() {
+                 Ready to see your business clearly?
+               </h2>
+               <p className="mx-auto mt-5 max-w-md text-text-muted">
+-                Request early access and be one of the first creators building on CreatorOS.
++                CreatorOS is built for creators, streamers, and influencers who treat their
++                audience like a business. Join the free waitlist now — early members help shape
++                the product and lock in founding-member perks before public launch.
+               </p>
+               <div className="mt-10">
+                 <TrackedLink
+@@ -244,11 +261,11 @@ export default async function HomePage() {
+                   eventProps={{ location: "final_cta" }}
+                   className="inline-block rounded-full bg-accent px-8 py-3.5 font-mono-ui text-xs font-medium uppercase tracking-[0.15em] text-bg transition-transform hover:scale-[1.03]"
+                 >
+-                  Request Early Access
++                  Join Free Early Access
+                 </TrackedLink>
+               </div>
+               <p className="mt-8 font-mono-ui text-xs italic tracking-wide text-text-faint">
+-                One dashboard. Every platform. No guesswork.
++                Free to join. Every platform. No guesswork.
+               </p>
+             </Reveal>
+           </div>
+diff --git a/src/components/consent/cookie-consent-banner.tsx b/src/components/consent/cookie-consent-banner.tsx
+index 1b2bfc8..a949494 100644
+--- a/src/components/consent/cookie-consent-banner.tsx
++++ b/src/components/consent/cookie-consent-banner.tsx
+@@ -50,16 +50,23 @@ export function CookieConsentBanner() {
+       role="dialog"
+       aria-modal="false"
+       aria-label="Cookie consent"
+-      className="fixed inset-x-0 bottom-0"
++      className="fixed inset-x-0 bottom-0 z-[60] px-4 pb-4 sm:inset-x-auto sm:bottom-6 sm:right-6 sm:max-w-md sm:px-0 sm:pb-0"
+     >
+-      <div>
+-        <p>
++      <div className="rounded-2xl border border-border-strong bg-bg-elevated p-6 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.6)]">
++        <p className="font-mono-ui text-[11px] uppercase tracking-[0.2em] text-text-faint">
++          <span className="text-accent">[</span> Cookies <span className="text-accent">]</span>
++        </p>
++        <p className="mt-3 text-sm leading-relaxed text-text-muted">
+           We use cookies to run this site and, with your permission, to understand how it&apos;s
+-          used. See our <a href="/privacy">Privacy Policy</a> for details.
++          used. See our{" "}
++          <a href="/privacy" className="text-text underline underline-offset-2 hover:text-accent">
++            Privacy Policy
++          </a>{" "}
++          for details.
+         </p>
+ 
+         {managing && (
+-          <div>
++          <div className="mt-5 flex flex-col gap-4 border-t border-border pt-5">
+             <PreferenceRow
+               label="Strictly necessary"
+               description="Required for the site to function. Always on."
+@@ -81,21 +88,37 @@ export function CookieConsentBanner() {
+           </div>
+         )}
+ 
+-        <div>
++        <div className="mt-6 flex flex-wrap items-center gap-3">
+           {managing ? (
+-            <button type="button" onClick={() => choose(prefs)}>
++            <button
++              type="button"
++              onClick={() => choose(prefs)}
++              className="rounded-full bg-accent px-5 py-2.5 font-mono-ui text-xs font-medium uppercase tracking-[0.15em] text-bg transition-transform hover:scale-[1.03]"
++            >
+               Save preferences
+             </button>
+           ) : (
+-            <button type="button" onClick={() => choose(ALL_CONSENT_GRANTED)}>
++            <button
++              type="button"
++              onClick={() => choose(ALL_CONSENT_GRANTED)}
++              className="rounded-full bg-accent px-5 py-2.5 font-mono-ui text-xs font-medium uppercase tracking-[0.15em] text-bg transition-transform hover:scale-[1.03]"
++            >
+               Accept
+             </button>
+           )}
+-          <button type="button" onClick={() => choose(ALL_CONSENT_DENIED)}>
++          <button
++            type="button"
++            onClick={() => choose(ALL_CONSENT_DENIED)}
++            className="rounded-full border border-border-strong px-5 py-2.5 font-mono-ui text-xs uppercase tracking-[0.15em] text-text transition-colors hover:border-accent hover:text-accent"
++          >
+             Reject{managing ? " all" : ""}
+           </button>
+           {!managing && (
+-            <button type="button" onClick={() => setManaging(true)}>
++            <button
++              type="button"
++              onClick={() => setManaging(true)}
++              className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text-muted transition-colors hover:text-text"
++            >
+               Manage preferences
+             </button>
+           )}
+@@ -119,16 +142,19 @@ function PreferenceRow({
+   onChange?: (value: boolean) => void;
+ }) {
+   return (
+-    <label>
++    <label className="flex items-start gap-3">
+       <input
+         type="checkbox"
+         checked={checked}
+         disabled={disabled}
+         onChange={(e) => onChange?.(e.target.checked)}
++        className="mt-1 h-4 w-4 shrink-0 accent-accent"
+       />
+-      <span>
+-        <span>{label}</span>
+-        <span>{description}</span>
++      <span className="flex flex-col gap-0.5">
++        <span className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text">
++          {label}
++        </span>
++        <span className="text-xs leading-relaxed text-text-muted">{description}</span>
+       </span>
+     </label>
+   );
+diff --git a/src/components/consent/cookie-preferences-link.tsx b/src/components/consent/cookie-preferences-link.tsx
+index b1c2421..dc7b6fe 100644
+--- a/src/components/consent/cookie-preferences-link.tsx
++++ b/src/components/consent/cookie-preferences-link.tsx
+@@ -5,7 +5,11 @@ import { requestConsentPreferencesPanel } from "@/lib/consent";
+ /** Reopens the cookie consent banner's preferences panel. Styled to match the surrounding footer links. */
+ export function CookiePreferencesLink() {
+   return (
+-    <button type="button" onClick={requestConsentPreferencesPanel}>
++    <button
++      type="button"
++      onClick={requestConsentPreferencesPanel}
++      className="text-sm text-text-muted transition-colors hover:text-text"
++    >
+       Cookie Preferences
+     </button>
+   );
+diff --git a/src/components/site-footer.tsx b/src/components/site-footer.tsx
+index a50c56e..a521648 100644
+--- a/src/components/site-footer.tsx
++++ b/src/components/site-footer.tsx
+@@ -11,8 +11,9 @@ export function SiteFooter() {
+               Creator<span className="text-accent">OS</span>
+             </p>
+             <p className="mt-4 max-w-xs text-sm leading-relaxed text-text-muted">
+-              One dashboard for your creator business — unified analytics across every platform
+-              you publish to.
++              The upcoming business dashboard for creators — unified analytics, brand deals, and
++              revenue across YouTube, Instagram, TikTok, Twitch, X, and more. Free to join early
++              access.
+             </p>
+           </div>
+ 
+diff --git a/src/components/site-header.tsx b/src/components/site-header.tsx
+index 59b9195..fc469d2 100644
+--- a/src/components/site-header.tsx
++++ b/src/components/site-header.tsx
+@@ -44,7 +44,7 @@ export function SiteHeader() {
+             eventProps={{ location: "header" }}
+             className="hidden rounded-full border border-border-strong px-5 py-2 font-mono-ui text-xs uppercase tracking-[0.15em] text-text transition-colors hover:border-accent hover:text-accent sm:inline-block"
+           >
+-            Request Early Access
++            Join Free Early Access
+           </TrackedLink>
+           <button
+             type="button"
+@@ -91,7 +91,7 @@ export function SiteHeader() {
+             onClick={() => setOpen(false)}
+             className="block rounded-full border border-border-strong px-5 py-2.5 text-center font-mono-ui text-xs uppercase tracking-[0.15em] text-text"
+           >
+-            Request Early Access
++            Join Free Early Access
+           </TrackedLink>
+         </div>
+       </nav>

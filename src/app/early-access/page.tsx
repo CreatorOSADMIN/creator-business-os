@@ -7,9 +7,9 @@ import { getRegisteredCreatorIdFromCookie } from "@/lib/creator-session";
 import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
-  title: "Join Early Access",
+  title: "Join Free Early Access",
   description:
-    "Become an early creator on CreatorOS, the business operating system for creators. Join a limited early access program and help shape the platform.",
+    "CreatorOS is an upcoming creator business dashboard for YouTube, Instagram, TikTok, Twitch, X, and more. Join the free early access waitlist and help shape a freemium platform built for creator analytics, brand deals, and revenue.",
   alternates: { canonical: "/early-access" },
 };
 
@@ -44,7 +44,7 @@ export default async function EarlyAccessPage({
     <>
       <SiteHeader />
       <main className="flex-1">
-        <h1>Become an Early Creator</h1>
+        <h1>Join Free Early Access</h1>
         <EarlyAccessForm
           initialReferralCode={first(params.ref)}
           initialUtmSource={first(params.utm_source)}

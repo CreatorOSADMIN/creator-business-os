@@ -12,23 +12,33 @@ import { TrackedLink } from "@/components/analytics/tracked-link";
 // verified-creator count from the database.
 export const revalidate = 60;
 
-const PLATFORMS = ["YouTube", "TikTok", "Instagram"];
+const PLATFORMS = [
+  "YouTube",
+  "Instagram",
+  "TikTok",
+  "Twitch",
+  "X",
+  "LinkedIn",
+  "Facebook",
+  "Patreon",
+  "Substack",
+];
 
 const PROBLEMS = [
   {
     n: "01",
-    title: "Data lives in three apps",
-    body: "YouTube Studio, TikTok Analytics, Instagram Insights — none of them talk to each other, and none of them talk to your revenue.",
+    title: "Data lives in a dozen tabs",
+    body: "YouTube Studio, Instagram Insights, TikTok Analytics, Patreon, Substack — none of them talk to each other, and none of them talk to your revenue.",
   },
   {
     n: "02",
     title: "Growth decisions made on gut feel",
-    body: "Without a unified view, it's guesswork which platform, format, or post is actually moving your business forward.",
+    body: "Without a unified view, it's guesswork which platform, format, or post is actually moving your creator business forward.",
   },
   {
     n: "03",
     title: "Revenue and content are disconnected",
-    body: "Views and follower counts don't tell you what's paying the bills. CreatorOS connects performance to income.",
+    body: "Views and follower counts don't tell you what's paying the bills. CreatorOS connects performance to income — and brand deals to real ROI.",
   },
 ];
 
@@ -36,17 +46,17 @@ const STEPS = [
   {
     n: "01",
     title: "Connect your platforms",
-    body: "Link YouTube, TikTok, and Instagram in a couple of minutes. Read-only, revocable anytime.",
+    body: "Link YouTube, Instagram, TikTok, Twitch, X, and more in a couple of minutes. Read-only, revocable anytime.",
   },
   {
     n: "02",
     title: "See it in one dashboard",
-    body: "Views, engagement, and audience growth normalized across platforms — no more tab-switching.",
+    body: "Analytics, audience growth, and brand deals normalized across every platform you publish to — no more tab-switching.",
   },
   {
     n: "03",
     title: "Grow on evidence",
-    body: "Spot what's actually working and put your time into the content and platforms that compound.",
+    body: "Spot what's actually working and put your time into the content, platforms, and deals that compound.",
   },
 ];
 
@@ -70,22 +80,23 @@ export default async function HomePage() {
         <section className="px-6 pb-16 pt-20 sm:px-10 sm:pt-28">
           <div className="mx-auto max-w-6xl">
             <Reveal>
-              <Eyebrow>The Business OS for Creators</Eyebrow>
+              <Eyebrow>Coming soon — free early access</Eyebrow>
             </Reveal>
 
             <Reveal delay={80}>
               <h1 className="mt-6 text-balance font-display text-[clamp(2.75rem,8vw,7rem)] font-bold leading-[0.95] tracking-[-0.04em] text-text">
-                Your growth,
+                The business OS
                 <br />
-                on <span className="text-accent">one dashboard.</span>
+                for <span className="text-accent">creators.</span>
               </h1>
             </Reveal>
 
             <div className="mt-10 flex flex-col gap-10 border-t border-border pt-10 lg:flex-row lg:items-end lg:justify-between">
               <Reveal delay={160} className="max-w-md">
                 <p className="text-balance text-lg leading-relaxed text-text-muted">
-                  CreatorOS unifies your YouTube, TikTok, and Instagram data into a single view —
-                  so you grow your creator business on evidence, not guesswork.
+                  CreatorOS is an upcoming creator business dashboard for anyone building an
+                  audience across YouTube, Instagram, TikTok, Twitch, X, and beyond — analytics,
+                  brand deals, and revenue in one place, so you grow on evidence, not guesswork.
                 </p>
               </Reveal>
 
@@ -97,7 +108,7 @@ export default async function HomePage() {
                     eventProps={{ location: "hero" }}
                     className="rounded-full bg-accent px-7 py-3 font-mono-ui text-xs font-medium uppercase tracking-[0.15em] text-bg transition-transform hover:scale-[1.03]"
                   >
-                    Request Early Access
+                    Join Free Early Access
                   </TrackedLink>
                   <TrackedLink
                     href="/updates"
@@ -114,7 +125,7 @@ export default async function HomePage() {
             <Reveal delay={320}>
               <div className="mx-auto mt-16 max-w-sm">
                 <div className="flex items-center justify-between font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">
-                  <span>Early Access</span>
+                  <span>Free Early Access</span>
                   <span>
                     {progressPct}% of {goal.toLocaleString()} spots filled
                   </span>
@@ -125,6 +136,10 @@ export default async function HomePage() {
                     style={{ width: `${Math.min(100, Math.max(0, progressPct))}%` }}
                   />
                 </div>
+                <p className="mt-4 text-center text-xs leading-relaxed text-text-faint">
+                  No cost to join. CreatorOS will launch on a freemium model — early members lock
+                  in founding-member benefits before it opens to everyone.
+                </p>
               </div>
             </Reveal>
           </div>
@@ -138,7 +153,7 @@ export default async function HomePage() {
             <Reveal>
               <Eyebrow>Why CreatorOS</Eyebrow>
               <h2 className="mt-5 max-w-2xl text-balance font-display text-3xl font-bold leading-tight tracking-[-0.02em] text-text sm:text-5xl">
-                Growing a creator business shouldn&apos;t mean living in four different apps.
+                Growing a creator business shouldn&apos;t mean living in a dozen different apps.
               </h2>
             </Reveal>
 
@@ -235,7 +250,9 @@ export default async function HomePage() {
                 Ready to see your business clearly?
               </h2>
               <p className="mx-auto mt-5 max-w-md text-text-muted">
-                Request early access and be one of the first creators building on CreatorOS.
+                CreatorOS is built for creators, streamers, and influencers who treat their
+                audience like a business. Join the free waitlist now — early members help shape
+                the product and lock in founding-member perks before public launch.
               </p>
               <div className="mt-10">
                 <TrackedLink
@@ -244,11 +261,11 @@ export default async function HomePage() {
                   eventProps={{ location: "final_cta" }}
                   className="inline-block rounded-full bg-accent px-8 py-3.5 font-mono-ui text-xs font-medium uppercase tracking-[0.15em] text-bg transition-transform hover:scale-[1.03]"
                 >
-                  Request Early Access
+                  Join Free Early Access
                 </TrackedLink>
               </div>
               <p className="mt-8 font-mono-ui text-xs italic tracking-wide text-text-faint">
-                One dashboard. Every platform. No guesswork.
+                Free to join. Every platform. No guesswork.
               </p>
             </Reveal>
           </div>

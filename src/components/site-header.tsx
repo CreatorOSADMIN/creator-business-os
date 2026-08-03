@@ -44,7 +44,7 @@ export function SiteHeader() {
             eventProps={{ location: "header" }}
             className="hidden rounded-full border border-border-strong px-5 py-2 font-mono-ui text-xs uppercase tracking-[0.15em] text-text transition-colors hover:border-accent hover:text-accent sm:inline-block"
           >
-            Request Early Access
+            Join Free Early Access
           </TrackedLink>
           <button
             type="button"
@@ -91,7 +91,7 @@ export function SiteHeader() {
             onClick={() => setOpen(false)}
             className="block rounded-full border border-border-strong px-5 py-2.5 text-center font-mono-ui text-xs uppercase tracking-[0.15em] text-text"
           >
-            Request Early Access
+            Join Free Early Access
           </TrackedLink>
         </div>
       </nav>
