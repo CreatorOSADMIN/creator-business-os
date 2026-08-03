@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Space_Grotesk, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { AnalyticsGate } from "@/components/consent/analytics-gate";
 import { ConsentBootstrapScript } from "@/components/consent/consent-bootstrap-script";
@@ -6,6 +7,16 @@ import { CookieConsentBanner } from "@/components/consent/cookie-consent-banner"
 import { getPublicEnv } from "@/lib/env";
 import { getSiteUrl } from "@/lib/site-url";
 import { Analytics } from "@vercel/analytics/next"
+
+const displayFont = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-display-family",
+});
+const monoUiFont = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-mono-ui-family",
+});
 
 const siteUrl = getSiteUrl();
 // Canonical brand domain per organization records — used for structured
@@ -76,7 +87,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full antialiased">
+    <html
+      lang="en"
+      className={`h-full antialiased ${displayFont.variable} ${monoUiFont.variable}`}
+    >
       <body className="min-h-full flex flex-col font-sans">
         <ConsentBootstrapScript />
         <AnalyticsGate measurementId={getPublicEnv().NEXT_PUBLIC_GA_MEASUREMENT_ID} />

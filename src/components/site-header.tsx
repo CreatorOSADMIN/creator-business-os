@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { TrackedLink } from "@/components/analytics/tracked-link";
 
 const NAV_LINKS = [
   { href: "/#problem", label: "Why CreatorOS" },
@@ -14,48 +15,86 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header>
-      <div>
-        <Link href="/" onClick={() => setOpen(false)}>
-          CreatorOS
+    <header className="sticky top-0 z-50 border-b border-border/80 bg-bg/85 backdrop-blur-md">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <Link
+          href="/"
+          onClick={() => setOpen(false)}
+          className="font-display text-lg font-bold tracking-tight text-text"
+        >
+          Creator<span className="text-accent">OS</span>
         </Link>
-        <nav>
+
+        <nav className="hidden items-center gap-8 md:flex">
           {NAV_LINKS.map((link) => (
-            <Link key={link.href} href={link.href}>
+            <Link
+              key={link.href}
+              href={link.href}
+              className="font-mono-ui text-xs uppercase tracking-widest text-text-muted transition-colors hover:text-text"
+            >
               {link.label}
             </Link>
           ))}
         </nav>
-        <div>
-          <Link href="/early-access">Request Early Access</Link>
+
+        <div className="flex items-center gap-3">
+          <TrackedLink
+            href="/early-access"
+            event="early_access_click"
+            eventProps={{ location: "header" }}
+            className="hidden rounded-full bg-accent px-5 py-2 font-mono-ui text-xs font-medium uppercase tracking-widest text-bg transition-transform hover:scale-[1.03] sm:inline-block"
+          >
+            Request Early Access
+          </TrackedLink>
           <button
             type="button"
             aria-expanded={open}
             aria-controls="mobile-nav"
             aria-label={open ? "Close menu" : "Open menu"}
             onClick={() => setOpen((v) => !v)}
+            className="flex h-9 w-9 flex-col items-center justify-center gap-1.5 rounded-full border border-border md:hidden"
           >
-            Menu
+            <span
+              className={`h-px w-4 bg-text transition-transform ${open ? "translate-y-[3px] rotate-45" : ""}`}
+            />
+            <span
+              className={`h-px w-4 bg-text transition-transform ${open ? "-translate-y-[3px] -rotate-45" : ""}`}
+            />
           </button>
         </div>
       </div>
 
-      {open && (
-        <nav id="mobile-nav">
-          <ul>
-            {NAV_LINKS.map((link) => (
-              <li key={link.href}>
-                <Link href={link.href} onClick={() => setOpen(false)}>
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-          <Link href="/early-access" onClick={() => setOpen(false)}>
+      <nav
+        id="mobile-nav"
+        className={`overflow-hidden border-t border-border/80 bg-bg transition-[max-height] duration-300 ease-out md:hidden ${
+          open ? "max-h-96" : "max-h-0 border-t-0"
+        }`}
+      >
+        <ul className="flex flex-col gap-1 px-6 py-4">
+          {NAV_LINKS.map((link) => (
+            <li key={link.href}>
+              <Link
+                href={link.href}
+                onClick={() => setOpen(false)}
+                className="block py-2 font-mono-ui text-xs uppercase tracking-widest text-text-muted"
+              >
+                {link.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+        <div className="px-6 pb-6">
+          <TrackedLink
+            href="/early-access"
+            event="early_access_click"
+            eventProps={{ location: "header_mobile" }}
+            onClick={() => setOpen(false)}
+            className="block rounded-full bg-accent px-5 py-2.5 text-center font-mono-ui text-xs font-medium uppercase tracking-widest text-bg"
+          >
             Request Early Access
-          </Link>
-        </nav>
-      )}
+          </TrackedLink>
+        </div>
+      </nav>
     </header>
   );
 }
