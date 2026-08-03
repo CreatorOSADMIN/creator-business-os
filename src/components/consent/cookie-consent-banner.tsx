@@ -50,20 +50,16 @@ export function CookieConsentBanner() {
       role="dialog"
       aria-modal="false"
       aria-label="Cookie consent"
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-[var(--border-subtle)] bg-[var(--surface)] px-4 py-5 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] sm:px-6"
+      className="fixed inset-x-0 bottom-0"
     >
-      <div className="mx-auto flex max-w-4xl flex-col gap-4">
-        <p className="text-sm text-[var(--foreground)]">
+      <div>
+        <p>
           We use cookies to run this site and, with your permission, to understand how it&apos;s
-          used. See our{" "}
-          <a href="/privacy" className="underline underline-offset-2 hover:text-[var(--accent)]">
-            Privacy Policy
-          </a>{" "}
-          for details.
+          used. See our <a href="/privacy">Privacy Policy</a> for details.
         </p>
 
         {managing && (
-          <div className="space-y-3 rounded-lg border border-[var(--border-subtle)] p-4">
+          <div>
             <PreferenceRow
               label="Strictly necessary"
               description="Required for the site to function. Always on."
@@ -85,37 +81,21 @@ export function CookieConsentBanner() {
           </div>
         )}
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div>
           {managing ? (
-            <button
-              type="button"
-              onClick={() => choose(prefs)}
-              className="rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--accent-strong)]"
-            >
+            <button type="button" onClick={() => choose(prefs)}>
               Save preferences
             </button>
           ) : (
-            <button
-              type="button"
-              onClick={() => choose(ALL_CONSENT_GRANTED)}
-              className="rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--accent-strong)]"
-            >
+            <button type="button" onClick={() => choose(ALL_CONSENT_GRANTED)}>
               Accept
             </button>
           )}
-          <button
-            type="button"
-            onClick={() => choose(ALL_CONSENT_DENIED)}
-            className="rounded-full border border-[var(--border-subtle)] px-4 py-2 text-sm font-medium text-[var(--foreground)] transition hover:bg-[var(--accent-soft)]"
-          >
+          <button type="button" onClick={() => choose(ALL_CONSENT_DENIED)}>
             Reject{managing ? " all" : ""}
           </button>
           {!managing && (
-            <button
-              type="button"
-              onClick={() => setManaging(true)}
-              className="text-sm font-medium text-[var(--foreground)] underline underline-offset-2 hover:text-[var(--accent)]"
-            >
+            <button type="button" onClick={() => setManaging(true)}>
               Manage preferences
             </button>
           )}
@@ -139,17 +119,16 @@ function PreferenceRow({
   onChange?: (value: boolean) => void;
 }) {
   return (
-    <label className={`flex items-start gap-3 ${disabled ? "opacity-70" : "cursor-pointer"}`}>
+    <label>
       <input
         type="checkbox"
         checked={checked}
         disabled={disabled}
         onChange={(e) => onChange?.(e.target.checked)}
-        className="mt-1 h-4 w-4 accent-[var(--accent)]"
       />
       <span>
-        <span className="block text-sm font-medium text-[var(--foreground)]">{label}</span>
-        <span className="block text-xs text-[var(--ink-muted)]">{description}</span>
+        <span>{label}</span>
+        <span>{description}</span>
       </span>
     </label>
   );

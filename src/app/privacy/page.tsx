@@ -11,7 +11,7 @@ export default function PrivacyPage() {
         revised as the product develops and before any paid service launches.
       </p>
       <section>
-        <h2 className="font-medium text-lg">What we collect</h2>
+        <h2>What we collect</h2>
         <p>
           When you join the Early Access program, we collect the information you provide in the
           registration form: your name, creator handle, email address, country, social platform
@@ -21,7 +21,7 @@ export default function PrivacyPage() {
         </p>
       </section>
       <section>
-        <h2 className="font-medium text-lg">How we use it</h2>
+        <h2>How we use it</h2>
         <p>
           We use this information to evaluate and manage the Early Access program, to contact you
           about the status of your application and the development of CreatorOS, and — only if
@@ -29,7 +29,7 @@ export default function PrivacyPage() {
         </p>
       </section>
       <section>
-        <h2 className="font-medium text-lg">Your rights</h2>
+        <h2>Your rights</h2>
         <p>
           Depending on where you live, you may have rights under applicable data protection law
           (including the EU General Data Protection Regulation) to access, correct, delete, or
@@ -38,14 +38,14 @@ export default function PrivacyPage() {
         </p>
       </section>
       <section>
-        <h2 className="font-medium text-lg">Data retention</h2>
+        <h2>Data retention</h2>
         <p>
           We retain Early Access registration data for as long as the program is active and for a
           reasonable period afterward, unless you request earlier deletion.
         </p>
       </section>
       <section>
-        <h2 className="font-medium text-lg">Contact</h2>
+        <h2>Contact</h2>
         <p>
           Questions about this policy can be sent through our Contact page.
         </p>

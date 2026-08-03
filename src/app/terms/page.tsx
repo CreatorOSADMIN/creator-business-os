@@ -11,7 +11,7 @@ export default function TermsPage() {
         revised as the product develops and before any paid service launches.
       </p>
       <section>
-        <h2 className="font-medium text-lg">The Early Access program</h2>
+        <h2>The Early Access program</h2>
         <p>
           By registering for CreatorOS Early Access, you are joining a waitlist for a product
           that is still in development. Registration does not constitute purchase of, or
@@ -19,7 +19,7 @@ export default function TermsPage() {
         </p>
       </section>
       <section>
-        <h2 className="font-medium text-lg">Early Access benefit</h2>
+        <h2>Early Access benefit</h2>
         <p>
           Creators who join the Early Access Program will be eligible for a 50% discount on the
           first three months of their paid subscription after launch, subject to the final terms
@@ -27,7 +27,7 @@ export default function TermsPage() {
         </p>
       </section>
       <section>
-        <h2 className="font-medium text-lg">Referrals</h2>
+        <h2>Referrals</h2>
         <p>
           Creators may share a personal referral link. Any rewards associated with referrals are
           not automatically granted at the time of a referred creator&apos;s registration; they
@@ -36,7 +36,7 @@ export default function TermsPage() {
         </p>
       </section>
       <section>
-        <h2 className="font-medium text-lg">Changes</h2>
+        <h2>Changes</h2>
         <p>
           We may update these terms as CreatorOS develops. We will communicate material changes
           to registered creators.

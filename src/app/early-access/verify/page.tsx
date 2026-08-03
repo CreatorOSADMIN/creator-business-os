@@ -32,20 +32,9 @@ export default async function EarlyAccessVerifyPage({
     <>
       <SiteHeader />
       <main className="flex-1">
-        <div className="mx-auto max-w-xl px-6 py-24 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-[var(--danger)]">
-            !
-          </div>
-          <h1 className="mt-6 font-display text-4xl tracking-tight">Link not valid</h1>
-          <p className="mt-4 text-[var(--ink-muted)]">{message}</p>
-
-          <Link
-            href="/early-access"
-            className="mt-10 inline-block text-sm font-medium text-[var(--accent)] hover:underline"
-          >
-            ← Back to Early Access
-          </Link>
-        </div>
+        <h1>Link not valid</h1>
+        <p>{message}</p>
+        <Link href="/early-access">Back to Early Access</Link>
       </main>
       <SiteFooter />
     </>

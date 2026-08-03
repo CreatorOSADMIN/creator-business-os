@@ -1,0 +1,2173 @@
+diff --git a/public/file.svg b/public/file.svg
+deleted file mode 100644
+index 004145c..0000000
+--- a/public/file.svg
++++ /dev/null
+@@ -1 +0,0 @@
+-<svg fill="none" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M14.5 13.5V5.41a1 1 0 0 0-.3-.7L9.8.29A1 1 0 0 0 9.08 0H1.5v13.5A2.5 2.5 0 0 0 4 16h8a2.5 2.5 0 0 0 2.5-2.5m-1.5 0v-7H8v-5H3v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1M9.5 5V2.12L12.38 5zM5.13 5h-.62v1.25h2.12V5zm-.62 3h7.12v1.25H4.5zm.62 3h-.62v1.25h7.12V11z" clip-rule="evenodd" fill="#666" fill-rule="evenodd"/></svg>
+\ No newline at end of file
+diff --git a/public/globe.svg b/public/globe.svg
+deleted file mode 100644
+index 567f17b..0000000
+--- a/public/globe.svg
++++ /dev/null
+@@ -1 +0,0 @@
+-<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><g clip-path="url(#a)"><path fill-rule="evenodd" clip-rule="evenodd" d="M10.27 14.1a6.5 6.5 0 0 0 3.67-3.45q-1.24.21-2.7.34-.31 1.83-.97 3.1M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.48-1.52a7 7 0 0 1-.96 0H7.5a4 4 0 0 1-.84-1.32q-.38-.89-.63-2.08a40 40 0 0 0 3.92 0q-.25 1.2-.63 2.08a4 4 0 0 1-.84 1.31zm2.94-4.76q1.66-.15 2.95-.43a7 7 0 0 0 0-2.58q-1.3-.27-2.95-.43a18 18 0 0 1 0 3.44m-1.27-3.54a17 17 0 0 1 0 3.64 39 39 0 0 1-4.3 0 17 17 0 0 1 0-3.64 39 39 0 0 1 4.3 0m1.1-1.17q1.45.13 2.69.34a6.5 6.5 0 0 0-3.67-3.44q.65 1.26.98 3.1M8.48 1.5l.01.02q.41.37.84 1.31.38.89.63 2.08a40 40 0 0 0-3.92 0q.25-1.2.63-2.08a4 4 0 0 1 .85-1.32 7 7 0 0 1 .96 0m-2.75.4a6.5 6.5 0 0 0-3.67 3.44 29 29 0 0 1 2.7-.34q.31-1.83.97-3.1M4.58 6.28q-1.66.16-2.95.43a7 7 0 0 0 0 2.58q1.3.27 2.95.43a18 18 0 0 1 0-3.44m.17 4.71q-1.45-.12-2.69-.34a6.5 6.5 0 0 0 3.67 3.44q-.65-1.27-.98-3.1" fill="#666"/></g><defs><clipPath id="a"><path fill="#fff" d="M0 0h16v16H0z"/></clipPath></defs></svg>
+\ No newline at end of file
+diff --git a/public/next.svg b/public/next.svg
+deleted file mode 100644
+index 5174b28..0000000
+--- a/public/next.svg
++++ /dev/null
+@@ -1 +0,0 @@
+-<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 394 80"><path fill="#000" d="M262 0h68.5v12.7h-27.2v66.6h-13.6V12.7H262V0ZM149 0v12.7H94v20.4h44.3v12.6H94v21h55v12.6H80.5V0h68.7zm34.3 0h-17.8l63.8 79.4h17.9l-32-39.7 32-39.6h-17.9l-23 28.6-23-28.6zm18.3 56.7-9-11-27.1 33.7h17.8l18.3-22.7z"/><path fill="#000" d="M81 79.3 17 0H0v79.3h13.6V17l50.2 62.3H81Zm252.6-.4c-1 0-1.8-.4-2.5-1s-1.1-1.6-1.1-2.6.3-1.8 1-2.5 1.6-1 2.6-1 1.8.3 2.5 1a3.4 3.4 0 0 1 .6 4.3 3.7 3.7 0 0 1-3 1.8zm23.2-33.5h6v23.3c0 2.1-.4 4-1.3 5.5a9.1 9.1 0 0 1-3.8 3.5c-1.6.8-3.5 1.3-5.7 1.3-2 0-3.7-.4-5.3-1s-2.8-1.8-3.7-3.2c-.9-1.3-1.4-3-1.4-5h6c.1.8.3 1.6.7 2.2s1 1.2 1.6 1.5c.7.4 1.5.5 2.4.5 1 0 1.8-.2 2.4-.6a4 4 0 0 0 1.6-1.8c.3-.8.5-1.8.5-3V45.5zm30.9 9.1a4.4 4.4 0 0 0-2-3.3 7.5 7.5 0 0 0-4.3-1.1c-1.3 0-2.4.2-3.3.5-.9.4-1.6 1-2 1.6a3.5 3.5 0 0 0-.3 4c.3.5.7.9 1.3 1.2l1.8 1 2 .5 3.2.8c1.3.3 2.5.7 3.7 1.2a13 13 0 0 1 3.2 1.8 8.1 8.1 0 0 1 3 6.5c0 2-.5 3.7-1.5 5.1a10 10 0 0 1-4.4 3.5c-1.8.8-4.1 1.2-6.8 1.2-2.6 0-4.9-.4-6.8-1.2-2-.8-3.4-2-4.5-3.5a10 10 0 0 1-1.7-5.6h6a5 5 0 0 0 3.5 4.6c1 .4 2.2.6 3.4.6 1.3 0 2.5-.2 3.5-.6 1-.4 1.8-1 2.4-1.7a4 4 0 0 0 .8-2.4c0-.9-.2-1.6-.7-2.2a11 11 0 0 0-2.1-1.4l-3.2-1-3.8-1c-2.8-.7-5-1.7-6.6-3.2a7.2 7.2 0 0 1-2.4-5.7 8 8 0 0 1 1.7-5 10 10 0 0 1 4.3-3.5c2-.8 4-1.2 6.4-1.2 2.3 0 4.4.4 6.2 1.2 1.8.8 3.2 2 4.3 3.4 1 1.4 1.5 3 1.5 5h-5.8z"/></svg>
+\ No newline at end of file
+diff --git a/public/vercel.svg b/public/vercel.svg
+deleted file mode 100644
+index 7705396..0000000
+--- a/public/vercel.svg
++++ /dev/null
+@@ -1 +0,0 @@
+-<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1155 1000"><path d="m577.3 0 577.4 1000H0z" fill="#fff"/></svg>
+\ No newline at end of file
+diff --git a/public/window.svg b/public/window.svg
+deleted file mode 100644
+index b2b2a44..0000000
+--- a/public/window.svg
++++ /dev/null
+@@ -1 +0,0 @@
+-<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M1.5 2.5h13v10a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1zM0 1h16v11.5a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 0 12.5zm3.75 4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5M7 4.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0m1.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5" fill="#666"/></svg>
+\ No newline at end of file
+diff --git a/src/app/about/page.tsx b/src/app/about/page.tsx
+index 0fb86d4..1acf877 100644
+--- a/src/app/about/page.tsx
++++ b/src/app/about/page.tsx
+@@ -14,31 +14,7 @@ export default function AboutPage() {
+     <>
+       <SiteHeader />
+       <main className="flex-1">
+-        <div className="mx-auto max-w-3xl px-6 py-20">
+-          <p className="font-mono-label text-xs uppercase text-[var(--accent)]">About</p>
+-          <h1 className="mt-3 font-display text-4xl tracking-tight">
+-            We&apos;re building CreatorOS in the open, with creators.
+-          </h1>
+-          <div className="mt-8 space-y-5 text-[15px] leading-relaxed text-[var(--ink-muted)]">
+-            <p>
+-              CreatorOS started from a simple observation: creators today run their business
+-              across half a dozen platforms, each with its own analytics, and none of them talk
+-              to each other. Understanding what&apos;s actually working — and why — takes more
+-              guesswork than it should.
+-            </p>
+-            <p>
+-              We&apos;re building a platform to bring that picture together: your data, your
+-              audience, and the insight to grow deliberately instead of by trial and error. In
+-              time, we also want to help creators get discovered by the brands and agencies
+-              looking for exactly what they do.
+-            </p>
+-            <p>
+-              We&apos;re early. Rather than build in isolation and launch a finished product, we&apos;re
+-              inviting a first group of creators into the process now, through our Early Access
+-              program, so the platform is shaped by the people who&apos;ll actually use it.
+-            </p>
+-          </div>
+-        </div>
++        <h1>About</h1>
+       </main>
+       <SiteFooter />
+     </>
+diff --git a/src/app/contact/page.tsx b/src/app/contact/page.tsx
+index bb4d346..ecaeb9f 100644
+--- a/src/app/contact/page.tsx
++++ b/src/app/contact/page.tsx
+@@ -13,72 +13,13 @@ export default function ContactPage() {
+   return (
+     <>
+       <SiteHeader />
+-
+       <main className="flex-1">
+-        <div className="mx-auto max-w-2xl px-6 py-20">
+-          <p className="font-mono-label text-xs uppercase text-[var(--accent)]">
+-            Contact
+-          </p>
+-
+-          <h1 className="mt-3 font-display text-4xl tracking-tight">
+-            Get in touch
+-          </h1>
+-
+-          <p className="mt-6 text-[var(--ink-muted)]">
+-            For questions about the CreatorOS Early Access program, privacy
+-            requests, or press inquiries, reach us at:
+-          </p>
+-
+-          <div className="mt-8 space-y-4">
+-            <p className="text-lg font-medium">
+-              <span className="block text-sm text-[var(--ink-muted)]">
+-                Name
+-              </span>
+-              Ferretti William
+-            </p>
+-
+-            <p className="text-lg font-medium">
+-              <span className="block text-sm text-[var(--ink-muted)]">
+-                Email
+-              </span>
+-              <a
+-                href="mailto:ferrettiwilliam68@gmail.com"
+-                className="break-all text-[var(--accent)] hover:underline"
+-              >
+-                ferrettiwilliam68@gmail.com
+-              </a>
+-            </p>
+-
+-            <p className="text-lg font-medium">
+-              <span className="block text-sm text-[var(--ink-muted)]">
+-                Phone
+-              </span>
+-              <a
+-                href="tel:+393923502977"
+-                className="text-[var(--accent)] hover:underline"
+-              >
+-                +39 392 350 2977
+-              </a>
+-            </p>
+-
+-            <p className="text-lg font-medium">
+-              <span className="block text-sm text-[var(--ink-muted)]">
+-                LinkedIn
+-              </span>
+-              <a
+-                href="https://www.linkedin.com/in/william-ferretti-97b326385/"
+-                target="_blank"
+-                rel="noopener noreferrer"
+-                className="text-[var(--accent)] hover:underline"
+-              >
+-                William Ferretti
+-              </a>
+-            </p>
+-          </div>
+-        </div>
++        <h1>Contact</h1>
++        <p>
++          <a href="mailto:ferrettiwilliam68@gmail.com">ferrettiwilliam68@gmail.com</a>
++        </p>
+       </main>
+-
+       <SiteFooter />
+     </>
+   );
+-}
+\ No newline at end of file
++}
+diff --git a/src/app/early-access/loading.tsx b/src/app/early-access/loading.tsx
+index dc33787..b3f6a6c 100644
+--- a/src/app/early-access/loading.tsx
++++ b/src/app/early-access/loading.tsx
+@@ -5,14 +5,8 @@ export default function EarlyAccessLoading() {
+   return (
+     <>
+       <SiteHeader />
+-      <main className="flex-1 bg-[var(--surface)]">
+-        <div className="mx-auto max-w-3xl animate-pulse px-6 py-16">
+-          <div className="h-3 w-24 rounded bg-[var(--border-subtle)]" />
+-          <div className="mt-3 h-10 w-2/3 rounded bg-[var(--border-subtle)]" />
+-          <div className="mt-5 h-4 w-full rounded bg-[var(--border-subtle)]" />
+-          <div className="mt-2 h-4 w-5/6 rounded bg-[var(--border-subtle)]" />
+-          <div className="mt-8 h-64 w-full rounded-xl bg-[var(--border-subtle)]" />
+-        </div>
++      <main className="flex-1">
++        <p>Loading…</p>
+       </main>
+       <SiteFooter />
+     </>
+diff --git a/src/app/early-access/page.tsx b/src/app/early-access/page.tsx
+index db48da3..f3103d9 100644
+--- a/src/app/early-access/page.tsx
++++ b/src/app/early-access/page.tsx
+@@ -43,30 +43,14 @@ export default async function EarlyAccessPage({
+   return (
+     <>
+       <SiteHeader />
+-      <main className="flex-1 bg-[var(--surface)]">
+-        <div className="mx-auto max-w-3xl px-6 py-16">
+-          <p className="font-mono-label text-xs uppercase text-[var(--accent)]">Early Access</p>
+-          <h1 className="mt-3 font-display text-4xl tracking-tight sm:text-5xl">
+-            Become an Early Creator
+-          </h1>
+-          <p className="mt-5 max-w-xl text-[var(--ink-muted)]">
+-            CreatorOS is in active development. We&apos;re not selling a finished product — you&apos;re
+-            joining a waitlist of the first creators we&apos;ll work with. You&apos;ll be
+-            contacted as the platform takes shape, and you&apos;ll keep the benefits reserved for
+-            our earliest members.
+-          </p>
+-          <div className="mt-6 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] p-4 text-sm text-[var(--ink-muted)]">
+-            A quick note before you start: please answer honestly. We only use these details to
+-            understand creators better and prioritize what to build first. Your answers stay
+-            private — we never publish or share them.
+-          </div>
+-          <EarlyAccessForm
+-            initialReferralCode={first(params.ref)}
+-            initialUtmSource={first(params.utm_source)}
+-            initialUtmMedium={first(params.utm_medium)}
+-            initialUtmCampaign={first(params.utm_campaign)}
+-          />
+-        </div>
++      <main className="flex-1">
++        <h1>Become an Early Creator</h1>
++        <EarlyAccessForm
++          initialReferralCode={first(params.ref)}
++          initialUtmSource={first(params.utm_source)}
++          initialUtmMedium={first(params.utm_medium)}
++          initialUtmCampaign={first(params.utm_campaign)}
++        />
+       </main>
+       <SiteFooter />
+     </>
+diff --git a/src/app/early-access/pending/page.tsx b/src/app/early-access/pending/page.tsx
+index 0ed34c7..7fb557e 100644
+--- a/src/app/early-access/pending/page.tsx
++++ b/src/app/early-access/pending/page.tsx
+@@ -27,57 +27,30 @@ export default async function EarlyAccessPendingPage({
+       <SiteHeader />
+       <EarlyAccessPendingStatus enabled={hasSession} />
+       <main className="flex-1">
+-        <div className="mx-auto max-w-xl px-6 py-24 text-center">
+-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[var(--accent-strong)]">
+-            ✉
+-          </div>
+-          {emailSent ? (
+-            <>
+-              <h1 className="mt-6 font-display text-4xl tracking-tight">Check your email to confirm your registration.</h1>
+-              <p className="mt-4 text-[var(--ink-muted)]">
+-                We&apos;ve sent a confirmation link{email ? <> to <strong>{email}</strong></> : null}. Open it
+-                to finish joining the CreatorOS Early Access Program. The link expires in 24 hours.
+-              </p>
+-              <div className="mt-6 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] p-5 text-left text-sm text-[var(--ink-muted)]">
+-                <p className="font-medium text-[var(--foreground)]">Don&apos;t see it in your inbox?</p>
+-                <ul className="mt-2 list-disc space-y-1.5 pl-4">
+-                  <li>Check your <strong>Spam</strong> or Junk folder — first emails from a new sender sometimes land there.</li>
+-                  <li>Using Gmail? Check the <strong>Promotions</strong> or <strong>Updates</strong> tab as well as your main inbox.</li>
+-                  <li>To avoid missing future updates, add us to your contacts once you find the email.</li>
+-                </ul>
+-                <p className="mt-3">
+-                  Still nothing after a few minutes? Submit the form again with the same email to get a new link.
+-                </p>
+-              </div>
+-            </>
+-          ) : (
+-            <>
+-              <h1 className="mt-6 font-display text-4xl tracking-tight">Your registration was saved, but we couldn&apos;t send the confirmation email.</h1>
+-              <p className="mt-4 text-[var(--ink-muted)]">
+-                We weren&apos;t able to deliver a confirmation link{email ? <> to <strong>{email}</strong></> : null} right
+-                now. Your details are safely saved — please submit the form again with the same
+-                email in a few minutes to get a new link, or try a different email below.
+-              </p>
+-            </>
+-          )}
+-
+-          <div className="mt-10 border-t border-[var(--border-subtle)] pt-6 text-sm text-[var(--ink-muted)]">
+-            <p className="font-medium text-[var(--foreground)]">Wrong email?</p>
+-            <p className="mt-1">
+-              If you entered the wrong email address, you can start again with a different email.
++        {emailSent ? (
++          <>
++            <h1>Check your email to confirm your registration.</h1>
++            <p>
++              We&apos;ve sent a confirmation link{email ? <> to {email}</> : null}. The link
++              expires in 24 hours.
++            </p>
++          </>
++        ) : (
++          <>
++            <h1>Your registration was saved, but we couldn&apos;t send the confirmation email.</h1>
++            <p>
++              We weren&apos;t able to deliver a confirmation link{email ? <> to {email}</> : null}{" "}
++              right now. Please submit the form again with the same email, or try a different
++              email below.
+             </p>
+-            <div className="mt-3">
+-              <EarlyAccessRestartButton />
+-            </div>
+-          </div>
++          </>
++        )}
+ 
+-          <Link
+-            href="/"
+-            className="mt-6 inline-block text-sm font-medium text-[var(--accent)] hover:underline"
+-          >
+-            ← Back to homepage
+-          </Link>
++        <div>
++          <EarlyAccessRestartButton />
+         </div>
++
++        <Link href="/">Back to homepage</Link>
+       </main>
+       <SiteFooter />
+     </>
+diff --git a/src/app/early-access/success/page.tsx b/src/app/early-access/success/page.tsx
+index e2815e8..c510adc 100644
+--- a/src/app/early-access/success/page.tsx
++++ b/src/app/early-access/success/page.tsx
+@@ -27,45 +27,18 @@ export default async function EarlyAccessSuccessPage({
+           conversion in the GA4 property's Admin > Events settings. */}
+       {id && <TrackEventOnMount event="early_access_signup" props={{ creatorId: id }} />}
+       <main className="flex-1">
+-        <div className="mx-auto max-w-xl px-6 py-24 text-center">
+-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[var(--accent-strong)]">
+-            ✓
+-          </div>
+-          <h1 className="mt-6 font-display text-4xl tracking-tight">You&apos;re on the list.</h1>
+-          <p className="mt-4 text-[var(--ink-muted)]">
+-            Thank you for joining the CreatorOS Early Access Program. We are building the
+-            platform and will keep you updated about the next steps.
+-          </p>
+-
+-          {id && (
+-            <div className="mt-8 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] p-6 text-left text-sm">
+-              <p className="font-mono-label text-xs uppercase text-[var(--ink-muted)]">
+-                Reference
+-              </p>
+-              <p className="mt-1 font-mono text-[var(--foreground)]">{id}</p>
+-              {referralLink && (
+-                <>
+-                  <p className="mt-4 font-mono-label text-xs uppercase text-[var(--ink-muted)]">
+-                    Your referral link
+-                  </p>
+-                  <p className="mt-1 break-all font-mono text-[var(--accent)]">{referralLink}</p>
+-                  <p className="mt-2 text-xs text-[var(--ink-muted)]">
+-                    Share it with other creators — referral benefits will be confirmed as the
+-                    program develops.
+-                  </p>
+-                </>
+-              )}
+-            </div>
+-          )}
++        <h1>You&apos;re on the list.</h1>
+ 
+-          <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-medium">
+-            <Link href="/" className="text-[var(--accent)] hover:underline">
+-              ← Back to homepage
+-            </Link>
+-            <Link href="/updates" className="text-[var(--accent)] hover:underline">
+-              See what&apos;s next →
+-            </Link>
++        {id && (
++          <div>
++            <p>Reference: {id}</p>
++            {referralLink && <p>Referral link: {referralLink}</p>}
+           </div>
++        )}
++
++        <div>
++          <Link href="/">Back to homepage</Link>
++          <Link href="/updates">See what&apos;s next</Link>
+         </div>
+       </main>
+       <SiteFooter />
+diff --git a/src/app/early-access/verify/page.tsx b/src/app/early-access/verify/page.tsx
+index c219eac..b6630c1 100644
+--- a/src/app/early-access/verify/page.tsx
++++ b/src/app/early-access/verify/page.tsx
+@@ -32,20 +32,9 @@ export default async function EarlyAccessVerifyPage({
+     <>
+       <SiteHeader />
+       <main className="flex-1">
+-        <div className="mx-auto max-w-xl px-6 py-24 text-center">
+-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-[var(--danger)]">
+-            !
+-          </div>
+-          <h1 className="mt-6 font-display text-4xl tracking-tight">Link not valid</h1>
+-          <p className="mt-4 text-[var(--ink-muted)]">{message}</p>
+-
+-          <Link
+-            href="/early-access"
+-            className="mt-10 inline-block text-sm font-medium text-[var(--accent)] hover:underline"
+-          >
+-            ← Back to Early Access
+-          </Link>
+-        </div>
++        <h1>Link not valid</h1>
++        <p>{message}</p>
++        <Link href="/early-access">Back to Early Access</Link>
+       </main>
+       <SiteFooter />
+     </>
+diff --git a/src/app/globals.css b/src/app/globals.css
+index aaa2faa..f1d8c73 100644
+--- a/src/app/globals.css
++++ b/src/app/globals.css
+@@ -1,376 +1 @@
+ @import "tailwindcss";
+-
+-:root {
+-  /* Core surfaces — near-black / charcoal / graphite scale, tuned for a
+-     premium "keynote" backdrop rather than a flat dark theme. */
+-  --background: #060607;
+-  --surface: #101012;
+-  --surface-2: #16161a;
+-  --surface-dark: #000000;
+-  --foreground: #f7f7f5;
+-  --ink-muted: #9a9aa1;
+-
+-  /* Borders */
+-  --border-subtle: #201f23;
+-  --border-strong: #2c2b30;
+-
+-  /* Accent — single premium accent, desaturated, no neon */
+-  --accent: #3ea589;
+-  --accent-soft: #12211d;
+-  --accent-strong: #2c7d67;
+-
+-  --highlight: #c99a5b;
+-  --danger: #cf6152;
+-
+-  /* Radius scale */
+-  --radius-sm: 0.375rem;
+-  --radius-md: 0.75rem;
+-  --radius-lg: 1.25rem;
+-
+-  /* Elevation — soft, low-opacity, no heavy drop shadows */
+-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+-  --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.45);
+-  --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.55);
+-
+-  --font-display: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+-
+-  /* Section rhythm — shared vertical cadence for marketing bands */
+-  --section-y: 8rem;
+-  --section-y-sm: 5.5rem;
+-}
+-
+-@theme inline {
+-  --color-background: var(--background);
+-  --color-foreground: var(--foreground);
+-  --color-surface: var(--surface);
+-  --color-surface-2: var(--surface-2);
+-  --color-surface-dark: var(--surface-dark);
+-  --color-ink-muted: var(--ink-muted);
+-  --color-border-subtle: var(--border-subtle);
+-  --color-border-strong: var(--border-strong);
+-  --color-accent: var(--accent);
+-  --color-accent-soft: var(--accent-soft);
+-  --color-accent-strong: var(--accent-strong);
+-  --color-highlight: var(--highlight);
+-  --color-danger: var(--danger);
+-  --font-sans: var(--font-sans);
+-  --font-mono: var(--font-mono);
+-  --radius-sm: var(--radius-sm);
+-  --radius-md: var(--radius-md);
+-  --radius-lg: var(--radius-lg);
+-}
+-
+-* {
+-  border-color: var(--border-subtle);
+-}
+-
+-html,
+-body {
+-  overflow-x: hidden;
+-  max-width: 100%;
+-}
+-
+-body {
+-  background: var(--background);
+-  color: var(--foreground);
+-  line-height: 1.55;
+-  -webkit-font-smoothing: antialiased;
+-  text-rendering: optimizeLegibility;
+-}
+-
+-h1, h2, h3, h4, h5, h6 {
+-  font-weight: 700;
+-  line-height: 1.05;
+-  letter-spacing: -0.035em;
+-}
+-
+-.font-display {
+-  font-family: var(--font-display);
+-  font-weight: 800;
+-  letter-spacing: -0.045em;
+-}
+-
+-.font-mono-label {
+-  font-family: var(--font-mono);
+-  letter-spacing: 0.14em;
+-  font-weight: 500;
+-}
+-
+-/* Accent word — used to punch up a phrase inside an otherwise muted
+-   heading, mirroring the single-color emphasis pattern of premium
+-   agency sites. */
+-.text-accent-ink {
+-  color: var(--accent);
+-}
+-
+-.section-eyebrow {
+-  display: inline-flex;
+-  align-items: center;
+-  gap: 0.625rem;
+-}
+-
+-.section-eyebrow::before {
+-  content: "";
+-  width: 22px;
+-  height: 1px;
+-  background: var(--accent);
+-}
+-
+-/* Inputs */
+-.input {
+-  width: 100%;
+-  border-radius: var(--radius-md);
+-  border: 1px solid var(--border-subtle);
+-  background: var(--surface);
+-  padding: 0.625rem 0.875rem;
+-  font-size: 16px; /* prevents iOS Safari from auto-zooming on focus */
+-  color: var(--foreground);
+-  transition: border-color 0.15s ease, background-color 0.15s ease;
+-}
+-
+-.input::placeholder {
+-  color: var(--ink-muted);
+-}
+-
+-.input:hover {
+-  border-color: var(--border-strong);
+-}
+-
+-@media (min-width: 640px) {
+-  .input {
+-    font-size: 0.9375rem;
+-  }
+-}
+-
+-.input:focus {
+-  outline: 2px solid var(--accent);
+-  outline-offset: 1px;
+-  border-color: var(--accent);
+-}
+-
+-.input:disabled {
+-  opacity: 0.5;
+-  cursor: not-allowed;
+-  background: var(--surface-2);
+-}
+-
+-select.input {
+-  appearance: none;
+-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%2396969c' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+-  background-repeat: no-repeat;
+-  background-position: right 0.75rem center;
+-  padding-right: 2rem;
+-}
+-
+-/* Buttons — shared foundation for future component work */
+-.btn {
+-  display: inline-flex;
+-  align-items: center;
+-  justify-content: center;
+-  gap: 0.5rem;
+-  border-radius: var(--radius-md);
+-  padding: 0.625rem 1.125rem;
+-  font-size: 0.9375rem;
+-  font-weight: 500;
+-  line-height: 1;
+-  border: 1px solid transparent;
+-  transition: background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+-}
+-
+-.btn:disabled {
+-  opacity: 0.5;
+-  cursor: not-allowed;
+-}
+-
+-.btn-primary {
+-  background: var(--accent);
+-  color: #08100e;
+-}
+-
+-.btn-primary:hover:not(:disabled) {
+-  background: var(--accent-strong);
+-}
+-
+-.btn-primary:active:not(:disabled) {
+-  background: var(--accent-strong);
+-  transform: translateY(0.5px);
+-}
+-
+-.btn-secondary {
+-  background: var(--surface-2);
+-  color: var(--foreground);
+-  border-color: var(--border-subtle);
+-}
+-
+-.btn-secondary:hover:not(:disabled) {
+-  border-color: var(--border-strong);
+-  background: var(--surface);
+-}
+-
+-.btn-ghost {
+-  background: transparent;
+-  color: var(--foreground);
+-}
+-
+-.btn-ghost:hover:not(:disabled) {
+-  background: var(--surface-2);
+-}
+-
+-.card {
+-  background: var(--surface);
+-  border: 1px solid var(--border-subtle);
+-  border-radius: var(--radius-lg);
+-  box-shadow: var(--shadow-sm);
+-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+-}
+-
+-.card-interactive:hover {
+-  border-color: var(--border-strong);
+-  box-shadow: var(--shadow-md);
+-  transform: translateY(-2px);
+-}
+-
+-.card-flush {
+-  background: var(--surface);
+-  border: 1px solid var(--border-subtle);
+-  border-radius: var(--radius-lg);
+-  overflow: hidden;
+-}
+-
+-/* Badges — neutral pill shape, differentiated by a status dot + text color
+-   rather than saturated fills, to stay premium/matte instead of pastel. */
+-.badge {
+-  display: inline-flex;
+-  align-items: center;
+-  gap: 0.375rem;
+-  border-radius: 999px;
+-  padding: 0.3125rem 0.6875rem;
+-  font-size: 0.75rem;
+-  font-weight: 500;
+-  line-height: 1;
+-  white-space: nowrap;
+-  background: var(--surface-2);
+-  border: 1px solid var(--border-subtle);
+-  color: var(--foreground);
+-}
+-
+-.badge::before {
+-  content: "";
+-  width: 5px;
+-  height: 5px;
+-  border-radius: 999px;
+-  background: currentColor;
+-  flex-shrink: 0;
+-}
+-
+-.badge-neutral {
+-  color: var(--ink-muted);
+-}
+-
+-.badge-accent {
+-  color: var(--accent);
+-  background: var(--accent-soft);
+-  border-color: color-mix(in srgb, var(--accent) 30%, var(--border-subtle));
+-}
+-
+-.badge-highlight {
+-  color: var(--highlight);
+-  background: color-mix(in srgb, var(--highlight) 12%, var(--surface-2));
+-  border-color: color-mix(in srgb, var(--highlight) 30%, var(--border-subtle));
+-}
+-
+-.badge-danger {
+-  color: var(--danger);
+-  background: color-mix(in srgb, var(--danger) 12%, var(--surface-2));
+-  border-color: color-mix(in srgb, var(--danger) 30%, var(--border-subtle));
+-}
+-
+-/* Tables */
+-.table-head {
+-  background: var(--surface-2);
+-  border-bottom: 1px solid var(--border-subtle);
+-}
+-
+-.table-row {
+-  transition: background-color 0.12s ease;
+-}
+-
+-.table-row:hover {
+-  background: var(--surface-2);
+-}
+-
+-/* Empty states */
+-.empty-state {
+-  display: flex;
+-  flex-direction: column;
+-  align-items: center;
+-  justify-content: center;
+-  gap: 0.375rem;
+-  padding: 3rem 1.5rem;
+-  color: var(--ink-muted);
+-  text-align: center;
+-}
+-
+-/* KPI figures */
+-.stat-value {
+-  font-family: var(--font-display);
+-  font-size: 1.75rem;
+-  letter-spacing: -0.02em;
+-  font-variant-numeric: tabular-nums;
+-}
+-
+-.faq-item {
+-  border-bottom: 1px solid var(--border-subtle);
+-}
+-
+-.faq-item summary {
+-  list-style: none;
+-  cursor: pointer;
+-}
+-
+-.faq-item summary::-webkit-details-marker {
+-  display: none;
+-}
+-
+-.faq-item .faq-chevron {
+-  transition: transform 0.2s ease;
+-}
+-
+-.faq-item[open] .faq-chevron {
+-  transform: rotate(45deg);
+-}
+-
+-/* Oversized KPI figures for "by the numbers" style bands. */
+-.figure-xl {
+-  font-family: var(--font-display);
+-  font-weight: 800;
+-  letter-spacing: -0.04em;
+-  font-variant-numeric: tabular-nums;
+-  line-height: 1;
+-}
+-
+-::selection {
+-  background: var(--accent);
+-  color: #08100e;
+-}
+-
+-a:focus-visible,
+-button:focus-visible,
+-input:focus-visible,
+-textarea:focus-visible,
+-select:focus-visible,
+-[tabindex]:focus-visible {
+-  outline: 2px solid var(--accent);
+-  outline-offset: 2px;
+-}
+-
+-@media (prefers-reduced-motion: reduce) {
+-  * {
+-    animation-duration: 0.001ms !important;
+-    animation-iteration-count: 1 !important;
+-    transition-duration: 0.001ms !important;
+-  }
+-}
+-
+diff --git a/src/app/not-found.tsx b/src/app/not-found.tsx
+index d9c0382..86a17bc 100644
+--- a/src/app/not-found.tsx
++++ b/src/app/not-found.tsx
+@@ -7,26 +7,10 @@ export default function NotFound() {
+     <>
+       <SiteHeader />
+       <main className="flex-1">
+-        <div className="mx-auto max-w-xl px-6 py-24 text-center">
+-          <p className="font-mono-label text-xs uppercase text-[var(--accent)]">404</p>
+-          <h1 className="mt-3 font-display text-4xl tracking-tight">Page not found.</h1>
+-          <p className="mt-4 text-[var(--ink-muted)]">
+-            The page you&apos;re looking for doesn&apos;t exist or may have moved.
+-          </p>
+-          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+-            <Link
+-              href="/"
+-              className="rounded-full bg-[var(--accent)] px-6 py-3 text-sm font-medium text-white transition hover:bg-[var(--accent-strong)]"
+-            >
+-              Back to homepage
+-            </Link>
+-            <Link
+-              href="/early-access"
+-              className="text-sm font-medium text-[var(--foreground)] underline decoration-[var(--border-subtle)] underline-offset-4 hover:decoration-[var(--accent)]"
+-            >
+-              Join Early Access
+-            </Link>
+-          </div>
++        <h1>Page not found.</h1>
++        <div>
++          <Link href="/">Back to homepage</Link>
++          <Link href="/early-access">Join Early Access</Link>
+         </div>
+       </main>
+       <SiteFooter />
+diff --git a/src/app/page.tsx b/src/app/page.tsx
+index 1c4e317..e6e123f 100644
+--- a/src/app/page.tsx
++++ b/src/app/page.tsx
+@@ -1,4 +1,3 @@
+-import Link from "next/link";
+ import { SiteHeader } from "@/components/site-header";
+ import { SiteFooter } from "@/components/site-footer";
+ import { getEarlyAccessProgress } from "@/lib/early-access-progress";
+@@ -17,459 +16,17 @@ export default async function HomePage() {
+       <SiteHeader />
+       <TrackEventOnMount event="homepage_view" />
+       <main className="flex-1">
+-        <Hero />
+-        <Problem />
+-        <Solution />
+-        <HowItWorks />
+-        <ProductPreview />
+-        <Audience />
+-        <Faq />
+-        <EarlyAccessBand progress={progress} goal={goal} />
+-      </main>
+-      <SiteFooter />
+-    </>
+-  );
+-}
+-
+-function Hero() {
+-  return (
+-    <section className="border-b border-[var(--border-subtle)]">
+-      <div className="mx-auto flex max-w-4xl flex-col items-center px-6 py-24 text-center sm:py-32">
+-        <span className="badge badge-accent">Now building — early access open</span>
+-        <h1 className="mt-9 text-balance font-display text-6xl leading-[0.98] tracking-tight sm:text-8xl">
+-          Your creator business.
+-          <br />
+-          <span className="text-[var(--ink-muted)]">Finally run like a company.</span>
+-        </h1>
+-        <p className="mt-8 max-w-xl text-lg leading-relaxed text-[var(--ink-muted)]">
+-          CreatorOS is the operating system behind the numbers — one system of record for
+-          every platform, every metric, every decision. Built for creators who&apos;ve
+-          outgrown spreadsheets and gut feel.
+-        </p>
+-        <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+-          <TrackedLink
+-            href="/early-access"
+-            event="early_access_click"
+-            eventProps={{ location: "hero" }}
+-            className="btn btn-primary rounded-full px-8 py-3.5 text-sm"
+-          >
++        <h1>CreatorOS</h1>
++        <p>
++          <TrackedLink href="/early-access" event="early_access_click" eventProps={{ location: "hero" }}>
+             Request Early Access
+           </TrackedLink>
+-          <Link
+-            href="#problem"
+-            className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--foreground)]/80 transition hover:text-[var(--foreground)]"
+-          >
+-            See how it works
+-            <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.75">
+-              <path d="M3 8h10M9 4l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
+-            </svg>
+-          </Link>
+-        </div>
+-        <p className="mt-8 font-mono-label text-[11px] uppercase text-[var(--ink-muted)]">
+-          No credit card · Shaped by the first creators who join
+         </p>
+-
+-        <HeroPreview />
+-      </div>
+-      <PlatformMarquee />
+-    </section>
+-  );
+-}
+-
+-function PlatformMarquee() {
+-  const platforms = ["YouTube", "TikTok", "Instagram", "Twitch", "X"];
+-  return (
+-    <div className="border-t border-[var(--border-subtle)] bg-[var(--surface)] py-6">
+-      <p className="sr-only">Built for creators publishing on YouTube, TikTok, Instagram, Twitch, and X.</p>
+-      <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-2" aria-hidden>
+-        {platforms.map((name) => (
+-          <span key={name} className="font-mono-label text-sm uppercase text-[var(--ink-muted)]">
+-            {name}
+-          </span>
+-        ))}
+-      </div>
+-    </div>
+-  );
+-}
+-
+-function HeroPreview() {
+-  const rows = [
+-    { label: "YouTube", value: 62, note: "watch-time trending up" },
+-    { label: "TikTok", value: 84, note: "best performing this week" },
+-    { label: "Instagram", value: 41, note: "needs a closer look" },
+-  ];
+-  return (
+-    <div className="card-flush mt-16 w-full max-w-3xl p-2 text-left">
+-      <div className="flex items-center gap-1.5 border-b border-[var(--border-subtle)] px-4 py-3">
+-        <span className="h-2.5 w-2.5 rounded-full bg-[var(--border-strong)]" />
+-        <span className="h-2.5 w-2.5 rounded-full bg-[var(--border-strong)]" />
+-        <span className="h-2.5 w-2.5 rounded-full bg-[var(--border-strong)]" />
+-        <span className="ml-3 font-mono-label text-[10px] uppercase text-[var(--ink-muted)]">
+-          CreatorOS — Overview
+-        </span>
+-      </div>
+-      <div className="grid gap-px overflow-hidden rounded-xl sm:grid-cols-3">
+-        {rows.map((row) => (
+-          <div key={row.label} className="bg-[var(--surface)] p-5">
+-            <div className="flex items-center justify-between">
+-              <span className="text-sm font-medium">{row.label}</span>
+-              <span className="font-mono-label text-[10px] text-[var(--ink-muted)]">{row.value}%</span>
+-            </div>
+-            <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[var(--accent-soft)]">
+-              <div
+-                className="h-full rounded-full bg-[var(--accent)]"
+-                style={{ width: `${row.value}%` }}
+-              />
+-            </div>
+-            <p className="mt-3 text-xs text-[var(--ink-muted)]">{row.note}</p>
+-          </div>
+-        ))}
+-      </div>
+-      <p className="px-4 py-3 text-center text-[11px] text-[var(--ink-muted)]">
+-        Illustrative preview — cross-platform insight is on our roadmap, not yet live.
+-      </p>
+-    </div>
+-  );
+-}
+-
+-function Problem() {
+-  const points = [
+-    {
+-      title: "Fragmented by design",
+-      body: "Every platform ships its own dashboard, its own definitions, its own blind spots. None of them talk to each other.",
+-      icon: (
+-        <path d="M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm10 3h6" strokeLinecap="round" strokeLinejoin="round" />
+-      ),
+-    },
+-    {
+-      title: "No single source of truth",
+-      body: "Why one video takes off and another doesn't stays a mystery when the evidence is scattered across five tabs.",
+-      icon: <path d="M4 18V9m6 9V4m6 14v-7m6 7V6" strokeLinecap="round" strokeLinejoin="round" />,
+-    },
+-    {
+-      title: "Run like a hobby, not a company",
+-      body: "Serious creators make six-figure decisions on instinct, because no tool treats their channel like a real business.",
+-      icon: (
+-        <path
+-          d="M12 3a9 9 0 1 0 9 9M12 3v9l6.5-4.5"
+-          strokeLinecap="round"
+-          strokeLinejoin="round"
+-        />
+-      ),
+-    },
+-  ];
+-  return (
+-    <section id="problem" className="border-b border-[var(--border-subtle)] bg-[var(--surface)]">
+-      <div className="mx-auto max-w-6xl px-6 py-32">
+-        <p className="section-eyebrow font-mono-label text-xs uppercase text-[var(--accent)]">The problem</p>
+-        <h2 className="mt-5 max-w-2xl text-balance font-display text-4xl tracking-tight sm:text-6xl">
+-          You&apos;re not an influencer. You&apos;re a founder without an operating system.
+-        </h2>
+-        <div className="mt-20 grid gap-x-10 gap-y-14 sm:grid-cols-3">
+-          {points.map((point, i) => (
+-            <div key={point.title} className="relative border-t border-[var(--border-subtle)] pt-6">
+-              <span className="font-mono-label text-[11px] uppercase text-[var(--ink-muted)]">
+-                0{i + 1}
+-              </span>
+-              <div className="mt-4 flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)]">
+-                <svg viewBox="0 0 24 24" className="h-5 w-5 text-[var(--accent)]" fill="none" stroke="currentColor" strokeWidth="1.5">
+-                  {point.icon}
+-                </svg>
+-              </div>
+-              <h3 className="mt-5 font-medium">{point.title}</h3>
+-              <p className="mt-2 text-sm leading-relaxed text-[var(--ink-muted)]">{point.body}</p>
+-            </div>
+-          ))}
+-        </div>
+-      </div>
+-    </section>
+-  );
+-}
+-
+-function Solution() {
+-  const items = [
+-    { title: "Data", body: "Every platform's numbers, pulled into one system of record — not five browser tabs." },
+-    { title: "Analysis", body: "Direct, apples-to-apples comparison across channels, so patterns stop hiding in the gaps." },
+-    { title: "Insight", body: "The why behind the growth, not just the what — the layer platform analytics never gives you." },
+-    { title: "Operations", body: "The tools to act on what you learn, built alongside the first creators using it." },
+-  ];
+-  return (
+-    <section className="border-b border-[var(--border-subtle)]">
+-      <div className="mx-auto max-w-6xl px-6 py-32">
+-        <p className="section-eyebrow font-mono-label text-xs uppercase text-[var(--accent)]">The solution</p>
+-        <h2 className="mt-5 max-w-2xl text-balance font-display text-4xl tracking-tight sm:text-6xl">
+-          From content creation to business operations.
+-        </h2>
+-        <p className="mt-5 max-w-2xl leading-relaxed text-[var(--ink-muted)]">
+-          CreatorOS is infrastructure, not another analytics widget. We&apos;re building the
+-          operating layer underneath your channel — assembled in the open, with the creators
+-          who&apos;ll depend on it.
++        <p>
++          {progress}% of {goal} spots filled
+         </p>
+-        <div className="mt-16 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+-          {items.map((item, i) => (
+-            <div key={item.title} className="card card-interactive rounded-xl p-7">
+-              <span className="font-mono-label text-xs text-[var(--ink-muted)]">0{i + 1}</span>
+-              <h3 className="mt-5 font-medium">{item.title}</h3>
+-              <p className="mt-2 text-sm leading-relaxed text-[var(--ink-muted)]">{item.body}</p>
+-            </div>
+-          ))}
+-        </div>
+-      </div>
+-    </section>
+-  );
+-}
+-
+-function HowItWorks() {
+-  const steps = [
+-    {
+-      step: "01",
+-      title: "Connect your channels",
+-      body: "Link YouTube, TikTok, and Instagram once. CreatorOS becomes the single place your numbers live.",
+-    },
+-    {
+-      step: "02",
+-      title: "See one unified picture",
+-      body: "Every platform, normalized into one dashboard — no more reconciling metrics by hand.",
+-    },
+-    {
+-      step: "03",
+-      title: "Operate on evidence",
+-      body: "Make the calls that grow the business — content, timing, focus — backed by data, not gut feel.",
+-    },
+-  ];
+-  return (
+-    <section className="border-b border-[var(--border-subtle)] bg-[var(--surface)]">
+-      <div className="mx-auto max-w-6xl px-6 py-32">
+-        <p className="section-eyebrow font-mono-label text-xs uppercase text-[var(--accent)]">How it works</p>
+-        <h2 className="mt-5 max-w-xl text-balance font-display text-4xl tracking-tight sm:text-6xl">
+-          Set up once. Operate with clarity every day after.
+-        </h2>
+-        <div className="mt-20 grid gap-12 sm:grid-cols-3">
+-          {steps.map((s) => (
+-            <div key={s.step} className="relative pl-0">
+-              <span className="figure-xl block text-6xl text-[var(--border-strong)] sm:text-7xl">{s.step}</span>
+-              <h3 className="mt-5 font-medium">{s.title}</h3>
+-              <p className="mt-2 text-sm leading-relaxed text-[var(--ink-muted)]">{s.body}</p>
+-            </div>
+-          ))}
+-        </div>
+-      </div>
+-    </section>
+-  );
+-}
+-
+-function ProductPreview() {
+-  const metrics = [
+-    { label: "Total audience", value: "128.4K", delta: "+4.2%" },
+-    { label: "Watch-time / week", value: "312 hrs", delta: "+11%" },
+-    { label: "Cross-platform reach", value: "3 channels", delta: "unified" },
+-  ];
+-  return (
+-    <section className="border-b border-[var(--border-subtle)]">
+-      <div className="mx-auto max-w-6xl px-6 py-32">
+-        <div className="grid gap-14 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
+-          <div>
+-            <p className="section-eyebrow font-mono-label text-xs uppercase text-[var(--accent)]">The dashboard</p>
+-            <h2 className="mt-5 text-balance font-display text-4xl tracking-tight sm:text-5xl">
+-              One dashboard. Every channel. No spreadsheets.
+-            </h2>
+-            <p className="mt-5 max-w-md leading-relaxed text-[var(--ink-muted)]">
+-              This is a concept preview of the CreatorOS workspace — a single view of every
+-              platform&apos;s performance, built to feel like software you&apos;d run a real
+-              company on.
+-            </p>
+-          </div>
+-          <div className="card-flush p-2">
+-            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-5 py-3.5">
+-              <span className="font-mono-label text-[10px] uppercase text-[var(--ink-muted)]">
+-                Business overview
+-              </span>
+-              <span className="badge badge-neutral">Concept</span>
+-            </div>
+-            <div className="grid gap-px overflow-hidden rounded-xl sm:grid-cols-3">
+-              {metrics.map((m) => (
+-                <div key={m.label} className="bg-[var(--surface)] p-5">
+-                  <p className="text-xs text-[var(--ink-muted)]">{m.label}</p>
+-                  <p className="figure-xl mt-1.5 text-2xl">{m.value}</p>
+-                  <p className="mt-1 text-xs font-medium text-[var(--accent)]">{m.delta}</p>
+-                </div>
+-              ))}
+-            </div>
+-            <div className="space-y-3 p-5">
+-              {["YouTube", "TikTok", "Instagram"].map((platform, i) => (
+-                <div key={platform} className="flex items-center gap-4">
+-                  <span className="w-16 shrink-0 text-xs text-[var(--ink-muted)]">{platform}</span>
+-                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--surface-2)]">
+-                    <div
+-                      className="h-full rounded-full bg-[var(--accent)]"
+-                      style={{ width: `${[62, 84, 41][i]}%` }}
+-                    />
+-                  </div>
+-                </div>
+-              ))}
+-            </div>
+-          </div>
+-        </div>
+-      </div>
+-    </section>
+-  );
+-}
+-
+-function Audience() {
+-  const personas = [
+-    {
+-      title: "Full-time creators",
+-      body: "Content is the job. Decisions deserve better than vibes — across every channel you run.",
+-    },
+-    {
+-      title: "Multi-platform publishers",
+-      body: "You post to YouTube, TikTok, and Instagram in the same week and need one place that reflects it all.",
+-    },
+-    {
+-      title: "Growing creator businesses",
+-      body: "You're past the point where spreadsheets and gut feel scale. It's time for real infrastructure.",
+-    },
+-  ];
+-  return (
+-    <section className="border-b border-[var(--border-subtle)] bg-[var(--surface)]">
+-      <div className="mx-auto max-w-6xl px-6 py-32">
+-        <p className="section-eyebrow font-mono-label text-xs uppercase text-[var(--accent)]">Who it&apos;s for</p>
+-        <h2 className="mt-5 max-w-xl text-balance font-display text-4xl tracking-tight sm:text-6xl">
+-          Built for creators who run content like a company.
+-        </h2>
+-        <div className="mt-16 grid gap-6 sm:grid-cols-3">
+-          {personas.map((persona, i) => (
+-            <div key={persona.title} className="card card-interactive rounded-xl p-7">
+-              <span className="font-mono-label text-xs text-[var(--ink-muted)]">0{i + 1} /</span>
+-              <h3 className="mt-4 font-medium">{persona.title}</h3>
+-              <p className="mt-2 text-sm leading-relaxed text-[var(--ink-muted)]">{persona.body}</p>
+-            </div>
+-          ))}
+-        </div>
+-      </div>
+-    </section>
+-  );
+-}
+-
+-function Faq() {
+-  const faqs = [
+-    {
+-      q: "What is CreatorOS?",
+-      a: "CreatorOS is the operating system for creator businesses: it unifies your YouTube, TikTok, and Instagram data into one system of record, so decisions run on evidence instead of five separate dashboards.",
+-    },
+-    {
+-      q: "Is CreatorOS live today?",
+-      a: "CreatorOS is in active development. Early access members get the platform as it ships, plus a direct line to shape what we build next.",
+-    },
+-    {
+-      q: "Which platforms will it support?",
+-      a: "YouTube, TikTok, and Instagram first, based on early creator feedback. Coverage expands from there as the product matures.",
+-    },
+-    {
+-      q: "What does early access include?",
+-      a: "Access to the platform as new capability ships, direct input into the roadmap, and 50% off your first three months once paid plans launch — subject to final program terms.",
+-    },
+-    {
+-      q: "Do I need a credit card to join?",
+-      a: "No. Joining the early access list is free and takes about a minute — no payment details required.",
+-    },
+-  ];
+-  return (
+-    <section className="border-b border-[var(--border-subtle)]">
+-      <div className="mx-auto max-w-3xl px-6 py-32">
+-        <p className="section-eyebrow font-mono-label text-xs uppercase text-[var(--accent)]">FAQ</p>
+-        <h2 className="mt-5 font-display text-4xl tracking-tight sm:text-6xl">
+-          Questions, answered.
+-        </h2>
+-        <div className="mt-12">
+-          {faqs.map((faq) => (
+-            <details key={faq.q} className="faq-item group py-5">
+-              <summary className="flex items-center justify-between gap-4">
+-                <span className="font-medium">{faq.q}</span>
+-                <svg
+-                  viewBox="0 0 24 24"
+-                  className="faq-chevron h-4 w-4 shrink-0 text-[var(--ink-muted)]"
+-                  fill="none"
+-                  stroke="currentColor"
+-                  strokeWidth="1.75"
+-                >
+-                  <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+-                </svg>
+-              </summary>
+-              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[var(--ink-muted)]">{faq.a}</p>
+-            </details>
+-          ))}
+-        </div>
+-      </div>
+-    </section>
+-  );
+-}
+-
+-function EarlyAccessBand({ progress, goal }: { progress: number; goal: number }) {
+-  return (
+-    <section className="bg-[var(--surface-dark)] text-white">
+-      <div className="mx-auto max-w-6xl px-6 py-32">
+-        <div className="grid gap-12 lg:grid-cols-[1fr_auto] lg:items-center">
+-          <div>
+-            <p className="section-eyebrow font-mono-label text-xs uppercase text-white/50">Early access</p>
+-            <h2 className="mt-5 max-w-xl text-balance font-display text-4xl tracking-tight sm:text-6xl">
+-              A limited number of creator businesses are being invited in.
+-            </h2>
+-            <ul className="mt-8 space-y-2.5 text-sm text-white/70">
+-              <li className="flex gap-2.5">
+-                <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-white/40" />
+-                Early access to the platform as it&apos;s built
+-              </li>
+-              <li className="flex gap-2.5">
+-                <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-white/40" />
+-                A direct line to influence what we build next
+-              </li>
+-              <li className="flex gap-2.5">
+-                <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-white/40" />
+-                50% off your first three months once paid plans launch, subject to final program
+-                terms
+-              </li>
+-            </ul>
+-            <EarlyAccessProgress progress={progress} goal={goal} />
+-          </div>
+-          <TrackedLink
+-            href="/early-access"
+-            event="early_access_click"
+-            eventProps={{ location: "band" }}
+-            className="inline-flex items-center justify-center rounded-full bg-white px-7 py-3.5 text-sm font-medium text-[var(--surface-dark)] transition hover:bg-white/90"
+-          >
+-            Request Early Access
+-          </TrackedLink>
+-        </div>
+-      </div>
+-    </section>
+-  );
+-}
+-
+-function EarlyAccessProgress({ progress, goal }: { progress: number; goal: number }) {
+-  const pct = Math.round(progress * 10) / 10;
+-  return (
+-    <div className="mt-8 max-w-sm">
+-      <div className="flex items-center justify-between text-xs">
+-        <span className="font-medium text-white/80">Early access is filling up</span>
+-        <span className="font-mono-label text-white/50">{pct}%</span>
+-      </div>
+-      <div
+-        className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10"
+-        role="progressbar"
+-        aria-valuenow={pct}
+-        aria-valuemin={0}
+-        aria-valuemax={100}
+-        aria-label="Early access spots filled"
+-      >
+-        <div
+-          className="h-full rounded-full bg-[var(--highlight)] transition-[width] duration-500"
+-          style={{ width: `${pct}%` }}
+-        />
+-      </div>
+-      <p className="mt-2 text-xs text-white/50">
+-        Limited to the first {goal.toLocaleString("en-US")} creators.
+-      </p>
+-    </div>
++      </main>
++      <SiteFooter />
++    </>
+   );
+ }
+diff --git a/src/app/privacy/page.tsx b/src/app/privacy/page.tsx
+index ee5ddcf..2b6ed54 100644
+--- a/src/app/privacy/page.tsx
++++ b/src/app/privacy/page.tsx
+@@ -11,7 +11,7 @@ export default function PrivacyPage() {
+         revised as the product develops and before any paid service launches.
+       </p>
+       <section>
+-        <h2 className="font-medium text-lg">What we collect</h2>
++        <h2>What we collect</h2>
+         <p>
+           When you join the Early Access program, we collect the information you provide in the
+           registration form: your name, creator handle, email address, country, social platform
+@@ -21,7 +21,7 @@ export default function PrivacyPage() {
+         </p>
+       </section>
+       <section>
+-        <h2 className="font-medium text-lg">How we use it</h2>
++        <h2>How we use it</h2>
+         <p>
+           We use this information to evaluate and manage the Early Access program, to contact you
+           about the status of your application and the development of CreatorOS, and — only if
+@@ -29,7 +29,7 @@ export default function PrivacyPage() {
+         </p>
+       </section>
+       <section>
+-        <h2 className="font-medium text-lg">Your rights</h2>
++        <h2>Your rights</h2>
+         <p>
+           Depending on where you live, you may have rights under applicable data protection law
+           (including the EU General Data Protection Regulation) to access, correct, delete, or
+@@ -38,14 +38,14 @@ export default function PrivacyPage() {
+         </p>
+       </section>
+       <section>
+-        <h2 className="font-medium text-lg">Data retention</h2>
++        <h2>Data retention</h2>
+         <p>
+           We retain Early Access registration data for as long as the program is active and for a
+           reasonable period afterward, unless you request earlier deletion.
+         </p>
+       </section>
+       <section>
+-        <h2 className="font-medium text-lg">Contact</h2>
++        <h2>Contact</h2>
+         <p>
+           Questions about this policy can be sent through our Contact page.
+         </p>
+diff --git a/src/app/terms/page.tsx b/src/app/terms/page.tsx
+index 94b0a2f..470fc37 100644
+--- a/src/app/terms/page.tsx
++++ b/src/app/terms/page.tsx
+@@ -11,7 +11,7 @@ export default function TermsPage() {
+         revised as the product develops and before any paid service launches.
+       </p>
+       <section>
+-        <h2 className="font-medium text-lg">The Early Access program</h2>
++        <h2>The Early Access program</h2>
+         <p>
+           By registering for CreatorOS Early Access, you are joining a waitlist for a product
+           that is still in development. Registration does not constitute purchase of, or
+@@ -19,7 +19,7 @@ export default function TermsPage() {
+         </p>
+       </section>
+       <section>
+-        <h2 className="font-medium text-lg">Early Access benefit</h2>
++        <h2>Early Access benefit</h2>
+         <p>
+           Creators who join the Early Access Program will be eligible for a 50% discount on the
+           first three months of their paid subscription after launch, subject to the final terms
+@@ -27,7 +27,7 @@ export default function TermsPage() {
+         </p>
+       </section>
+       <section>
+-        <h2 className="font-medium text-lg">Referrals</h2>
++        <h2>Referrals</h2>
+         <p>
+           Creators may share a personal referral link. Any rewards associated with referrals are
+           not automatically granted at the time of a referred creator&apos;s registration; they
+@@ -36,7 +36,7 @@ export default function TermsPage() {
+         </p>
+       </section>
+       <section>
+-        <h2 className="font-medium text-lg">Changes</h2>
++        <h2>Changes</h2>
+         <p>
+           We may update these terms as CreatorOS develops. We will communicate material changes
+           to registered creators.
+diff --git a/src/app/updates/page.tsx b/src/app/updates/page.tsx
+index 844b5eb..d816e22 100644
+--- a/src/app/updates/page.tsx
++++ b/src/app/updates/page.tsx
+@@ -12,30 +12,10 @@ export const metadata: Metadata = {
+ };
+ 
+ const ROADMAP = [
+-  {
+-    phase: "Phase 1",
+-    status: "In progress",
+-    title: "Foundation & early access",
+-    body: "Core platform architecture, creator onboarding, and the early access program that shapes what we build next.",
+-  },
+-  {
+-    phase: "Phase 2",
+-    status: "Planned",
+-    title: "Unified analytics",
+-    body: "Pulling data from the platforms creators actually use into a single, coherent view — replacing today's illustrative preview with real numbers.",
+-  },
+-  {
+-    phase: "Phase 3",
+-    status: "Planned",
+-    title: "Insight & recommendations",
+-    body: "Understanding the why behind growth, not just the what — surfacing what's working and what needs attention.",
+-  },
+-  {
+-    phase: "Phase 4",
+-    status: "Future",
+-    title: "Brand discovery",
+-    body: "Helping creators get discovered by the brands and agencies looking for exactly what they do.",
+-  },
++  { phase: "Phase 1", status: "In progress", title: "Foundation & early access" },
++  { phase: "Phase 2", status: "Planned", title: "Unified analytics" },
++  { phase: "Phase 3", status: "Planned", title: "Insight & recommendations" },
++  { phase: "Phase 4", status: "Future", title: "Brand discovery" },
+ ] as const;
+ 
+ export default function UpdatesPage() {
+@@ -43,105 +23,24 @@ export default function UpdatesPage() {
+     <>
+       <SiteHeader />
+       <main className="flex-1">
+-        <section className="border-b border-[var(--border-subtle)]">
+-          <div className="mx-auto max-w-3xl px-6 py-20">
+-            <p className="font-mono-label text-xs uppercase text-[var(--accent)]">Updates</p>
+-            <h1 className="mt-3 font-display text-4xl tracking-tight">
+-              Building CreatorOS in the open.
+-            </h1>
+-            <div className="mt-8 space-y-5 text-[15px] leading-relaxed text-[var(--ink-muted)]">
+-              <p>
+-                This page tracks where CreatorOS actually stands — what&apos;s built, what&apos;s
+-                next, and how the project is funded. No polished announcements, just an honest
+-                account of progress, updated as the project itself develops.
+-              </p>
+-              <p>
+-                CreatorOS is self-funded and community-supported. Development speed depends
+-                directly on the resources available to it, so we&apos;d rather be upfront about
+-                that than imply a bigger team or budget than we have.
+-              </p>
+-            </div>
+-          </div>
+-        </section>
+-
+-        <section className="border-b border-[var(--border-subtle)] bg-[var(--surface)]">
+-          <div className="mx-auto max-w-6xl px-6 py-20">
+-            <p className="font-mono-label text-xs uppercase text-[var(--accent)]">Roadmap</p>
+-            <h2 className="mt-3 max-w-xl font-display text-3xl tracking-tight sm:text-4xl">
+-              Where we are, and where we&apos;re headed.
+-            </h2>
+-            <p className="mt-4 max-w-2xl text-[var(--ink-muted)]">
+-              Timelines are intentionally not fixed dates — they depend on funding and creator
+-              feedback. This roadmap will be updated as phases progress.
+-            </p>
+-            <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+-              {ROADMAP.map((item) => (
+-                <div key={item.phase} className="rounded-xl border border-[var(--border-subtle)] p-5">
+-                  <div className="flex items-center justify-between gap-2">
+-                    <span className="font-mono-label text-xs text-[var(--ink-muted)]">
+-                      {item.phase}
+-                    </span>
+-                    <span className="rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-[11px] font-medium text-[var(--accent)]">
+-                      {item.status}
+-                    </span>
+-                  </div>
+-                  <h3 className="mt-3 font-medium">{item.title}</h3>
+-                  <p className="mt-2 text-sm leading-relaxed text-[var(--ink-muted)]">{item.body}</p>
+-                </div>
+-              ))}
+-            </div>
+-          </div>
+-        </section>
+-
+-        <section className="bg-[var(--surface-dark)] text-white">
+-          <div className="mx-auto max-w-6xl px-6 py-20">
+-            <div className="grid gap-10 lg:grid-cols-[1fr_auto] lg:items-center">
+-              <div>
+-                <p className="font-mono-label text-xs uppercase text-white/50">Support the project</p>
+-                <h2 className="mt-3 max-w-xl font-display text-3xl tracking-tight sm:text-4xl">
+-                  CreatorOS depends on funding to keep moving.
+-                </h2>
+-                <ul className="mt-6 space-y-2 text-sm text-white/70">
+-                  <li>— We&apos;re building without outside investment, on a limited budget</li>
+-                  <li>— Every contribution goes directly toward development time and infrastructure</li>
+-                  <li>— Supporters help decide which parts of the roadmap move faster</li>
+-                </ul>
+-              </div>
+-              {GOFUNDME_URL ? (
+-                <a
+-                  href={GOFUNDME_URL}
+-                  target="_blank"
+-                  rel="noopener noreferrer"
+-                  className="inline-flex items-center justify-center rounded-full bg-white px-7 py-3.5 text-sm font-medium text-[var(--surface-dark)] transition hover:bg-white/90"
+-                >
+-                  Support on GoFundMe
+-                </a>
+-              ) : (
+-                <Link
+-                  href="/contact"
+-                  className="inline-flex items-center justify-center rounded-full bg-white px-7 py-3.5 text-sm font-medium text-[var(--surface-dark)] transition hover:bg-white/90"
+-                >
+-                  Get in touch to support us
+-                </Link>
+-              )}
+-            </div>
+-          </div>
+-        </section>
+-
+-        <section>
+-          <div className="mx-auto max-w-3xl px-6 py-16 text-center">
+-            <p className="text-sm text-[var(--ink-muted)]">
+-              Want to be part of shaping the product instead?{" "}
+-              <Link
+-                href="/early-access"
+-                className="font-medium text-[var(--foreground)] underline decoration-[var(--border-subtle)] underline-offset-4 hover:decoration-[var(--accent)]"
+-              >
+-                Join Early Access
+-              </Link>
+-              .
+-            </p>
+-          </div>
+-        </section>
++        <h1>Updates</h1>
++        <ul>
++          {ROADMAP.map((item) => (
++            <li key={item.phase}>
++              {item.phase} — {item.status} — {item.title}
++            </li>
++          ))}
++        </ul>
++        {GOFUNDME_URL ? (
++          <a href={GOFUNDME_URL} target="_blank" rel="noopener noreferrer">
++            Support on GoFundMe
++          </a>
++        ) : (
++          <Link href="/contact">Get in touch to support us</Link>
++        )}
++        <p>
++          <Link href="/early-access">Join Early Access</Link>
++        </p>
+       </main>
+       <SiteFooter />
+     </>
+diff --git a/src/components/consent/cookie-consent-banner.tsx b/src/components/consent/cookie-consent-banner.tsx
+index 0b1b4b8..1b2bfc8 100644
+--- a/src/components/consent/cookie-consent-banner.tsx
++++ b/src/components/consent/cookie-consent-banner.tsx
+@@ -50,20 +50,16 @@ export function CookieConsentBanner() {
+       role="dialog"
+       aria-modal="false"
+       aria-label="Cookie consent"
+-      className="fixed inset-x-0 bottom-0 z-50 border-t border-[var(--border-subtle)] bg-[var(--surface)] px-4 py-5 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] sm:px-6"
++      className="fixed inset-x-0 bottom-0"
+     >
+-      <div className="mx-auto flex max-w-4xl flex-col gap-4">
+-        <p className="text-sm text-[var(--foreground)]">
++      <div>
++        <p>
+           We use cookies to run this site and, with your permission, to understand how it&apos;s
+-          used. See our{" "}
+-          <a href="/privacy" className="underline underline-offset-2 hover:text-[var(--accent)]">
+-            Privacy Policy
+-          </a>{" "}
+-          for details.
++          used. See our <a href="/privacy">Privacy Policy</a> for details.
+         </p>
+ 
+         {managing && (
+-          <div className="space-y-3 rounded-lg border border-[var(--border-subtle)] p-4">
++          <div>
+             <PreferenceRow
+               label="Strictly necessary"
+               description="Required for the site to function. Always on."
+@@ -85,37 +81,21 @@ export function CookieConsentBanner() {
+           </div>
+         )}
+ 
+-        <div className="flex flex-wrap items-center gap-3">
++        <div>
+           {managing ? (
+-            <button
+-              type="button"
+-              onClick={() => choose(prefs)}
+-              className="rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--accent-strong)]"
+-            >
++            <button type="button" onClick={() => choose(prefs)}>
+               Save preferences
+             </button>
+           ) : (
+-            <button
+-              type="button"
+-              onClick={() => choose(ALL_CONSENT_GRANTED)}
+-              className="rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--accent-strong)]"
+-            >
++            <button type="button" onClick={() => choose(ALL_CONSENT_GRANTED)}>
+               Accept
+             </button>
+           )}
+-          <button
+-            type="button"
+-            onClick={() => choose(ALL_CONSENT_DENIED)}
+-            className="rounded-full border border-[var(--border-subtle)] px-4 py-2 text-sm font-medium text-[var(--foreground)] transition hover:bg-[var(--accent-soft)]"
+-          >
++          <button type="button" onClick={() => choose(ALL_CONSENT_DENIED)}>
+             Reject{managing ? " all" : ""}
+           </button>
+           {!managing && (
+-            <button
+-              type="button"
+-              onClick={() => setManaging(true)}
+-              className="text-sm font-medium text-[var(--foreground)] underline underline-offset-2 hover:text-[var(--accent)]"
+-            >
++            <button type="button" onClick={() => setManaging(true)}>
+               Manage preferences
+             </button>
+           )}
+@@ -139,17 +119,16 @@ function PreferenceRow({
+   onChange?: (value: boolean) => void;
+ }) {
+   return (
+-    <label className={`flex items-start gap-3 ${disabled ? "opacity-70" : "cursor-pointer"}`}>
++    <label>
+       <input
+         type="checkbox"
+         checked={checked}
+         disabled={disabled}
+         onChange={(e) => onChange?.(e.target.checked)}
+-        className="mt-1 h-4 w-4 accent-[var(--accent)]"
+       />
+       <span>
+-        <span className="block text-sm font-medium text-[var(--foreground)]">{label}</span>
+-        <span className="block text-xs text-[var(--ink-muted)]">{description}</span>
++        <span>{label}</span>
++        <span>{description}</span>
+       </span>
+     </label>
+   );
+diff --git a/src/components/consent/cookie-preferences-link.tsx b/src/components/consent/cookie-preferences-link.tsx
+index 5dcf537..b1c2421 100644
+--- a/src/components/consent/cookie-preferences-link.tsx
++++ b/src/components/consent/cookie-preferences-link.tsx
+@@ -5,11 +5,7 @@ import { requestConsentPreferencesPanel } from "@/lib/consent";
+ /** Reopens the cookie consent banner's preferences panel. Styled to match the surrounding footer links. */
+ export function CookiePreferencesLink() {
+   return (
+-    <button
+-      type="button"
+-      onClick={requestConsentPreferencesPanel}
+-      className="text-left text-[var(--foreground)]/80 hover:text-[var(--accent)]"
+-    >
++    <button type="button" onClick={requestConsentPreferencesPanel}>
+       Cookie Preferences
+     </button>
+   );
+diff --git a/src/components/early-access-form.tsx b/src/components/early-access-form.tsx
+index d956de7..e6c88bb 100644
+--- a/src/components/early-access-form.tsx
++++ b/src/components/early-access-form.tsx
+@@ -189,24 +189,23 @@ export function EarlyAccessForm({
+   }
+ 
+   return (
+-    <form onSubmit={handleSubmit} noValidate className="mt-10 space-y-12">
++    <form onSubmit={handleSubmit} noValidate>
+       {/* Honeypot field — hidden from real users, catches simple bots */}
+       <input
+         type="text"
+         name="website"
+         value={form.website}
+         onChange={(e) => setForm((p) => ({ ...p, website: e.target.value }))}
+-        className="hidden"
++        style={{ display: "none" }}
+         tabIndex={-1}
+         autoComplete="off"
+         aria-hidden="true"
+       />
+ 
+       <Section number="01" title="Basic Information">
+-        <div className="grid gap-5 sm:grid-cols-2">
++        <div>
+           <Field id="fullName" label="Full Name" error={errors.fullName} required>
+             <input
+-              className="input"
+               value={form.fullName}
+               onChange={(e) => setForm((p) => ({ ...p, fullName: e.target.value }))}
+               placeholder="Jane Doe"
+@@ -214,7 +213,6 @@ export function EarlyAccessForm({
+           </Field>
+           <Field id="creatorHandle" label="Creator Name / Handle" error={errors.creatorHandle} required>
+             <input
+-              className="input"
+               value={form.creatorHandle}
+               onChange={(e) => setForm((p) => ({ ...p, creatorHandle: e.target.value }))}
+               placeholder="@janedoe"
+@@ -223,7 +221,6 @@ export function EarlyAccessForm({
+           <Field id="email" label="Email Address" error={errors.email} required>
+             <input
+               type="email"
+-              className="input"
+               value={form.email}
+               onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
+               placeholder="jane@example.com"
+@@ -231,7 +228,6 @@ export function EarlyAccessForm({
+           </Field>
+           <Field id="country" label="Country" error={errors.country} required>
+             <select
+-              className="input"
+               value={form.country}
+               onChange={(e) => setForm((p) => ({ ...p, country: e.target.value }))}
+             >
+@@ -248,19 +244,13 @@ export function EarlyAccessForm({
+ 
+       <Section number="02" title="Social Platforms" subtitle="Which platforms do you actively use?">
+         <div data-error={errors.platforms ? "true" : "false"}>
+-          <div className="flex flex-wrap gap-3">
++          <div>
+             {PLATFORMS.map((platform) => (
+               <label
+                 key={platform.value}
+-                className={`flex cursor-pointer items-center gap-2 rounded-full border px-4 py-2 text-sm transition ${
+-                  form.platforms.includes(platform.value)
+-                    ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]"
+-                    : "border-[var(--border-subtle)] text-[var(--ink-muted)] hover:border-[var(--foreground)]/30"
+-                }`}
+               >
+                 <input
+                   type="checkbox"
+-                  className="h-4 w-4 shrink-0 accent-[var(--accent)]"
+                   checked={form.platforms.includes(platform.value)}
+                   onChange={() => toggleArrayValue("platforms", platform.value)}
+                 />
+@@ -283,8 +273,8 @@ export function EarlyAccessForm({
+       </Section>
+ 
+       <Section number="04" title="Creator Activity">
+-        <p className="text-sm font-medium">How often do you publish?</p>
+-        <div className="mt-3">
++        <p>How often do you publish?</p>
++        <div>
+           <RadioGroup
+             name="publishingFrequency"
+             options={PUBLISHING_FREQUENCIES}
+@@ -293,8 +283,8 @@ export function EarlyAccessForm({
+             error={errors.publishingFrequency}
+           />
+         </div>
+-        <p className="mt-6 text-sm font-medium">How long have you been creating content?</p>
+-        <div className="mt-3">
++        <p>How long have you been creating content?</p>
++        <div>
+           <RadioGroup
+             name="creatorExperience"
+             options={CREATOR_EXPERIENCE}
+@@ -312,7 +302,6 @@ export function EarlyAccessForm({
+       >
+         <Field id="biggestChallenge" label="" error={errors.biggestChallenge}>
+           <textarea
+-            className="input min-h-32"
+             aria-label="Biggest challenge you currently face as a creator"
+             value={form.biggestChallenge}
+             onChange={(e) => setForm((p) => ({ ...p, biggestChallenge: e.target.value }))}
+@@ -326,15 +315,13 @@ export function EarlyAccessForm({
+         title="Product Interest"
+         subtitle="Which part of CreatorOS would be most valuable to you?"
+       >
+-        <div className="space-y-2">
++        <div>
+           {PRODUCT_INTERESTS.map((interest) => (
+             <label
+               key={interest.value}
+-              className="flex cursor-pointer items-start gap-3 rounded-lg border border-[var(--border-subtle)] p-3 text-sm hover:border-[var(--foreground)]/30"
+             >
+               <input
+                 type="checkbox"
+-                className="mt-0.5"
+                 checked={form.productInterests.includes(interest.value)}
+                 onChange={() => toggleArrayValue("productInterests", interest.value)}
+               />
+@@ -346,7 +333,7 @@ export function EarlyAccessForm({
+       </Section>
+ 
+       <Section number="07" title="Early Access Benefit">
+-        <p className="rounded-lg border border-[var(--border-subtle)] bg-[var(--accent-soft)] p-4 text-sm text-[var(--accent-strong)]">
++        <p>
+           By joining the CreatorOS Early Access Program, you will be eligible for a 50% discount
+           on the first three months of your paid subscription after launch, subject to the final
+           terms of the program.
+@@ -354,32 +341,30 @@ export function EarlyAccessForm({
+       </Section>
+ 
+       <Section number="08" title="Consent">
+-        <div className="space-y-4">
+-          <label className="flex items-start gap-3 text-sm">
++        <div>
++          <label>
+             <input
+               type="checkbox"
+-              className="mt-0.5"
+               checked={form.privacyAccepted}
+               onChange={(e) => setForm((p) => ({ ...p, privacyAccepted: e.target.checked }))}
+             />
+             <span>
+               I have read and accept the{" "}
+-              <a href="/privacy" target="_blank" className="text-[var(--accent)] underline">
++              <a href="/privacy" target="_blank">
+                 Privacy Policy
+               </a>{" "}
+               and{" "}
+-              <a href="/terms" target="_blank" className="text-[var(--accent)] underline">
++              <a href="/terms" target="_blank">
+                 Terms of Service
+               </a>
+-              . <span className="text-[var(--danger)]">*</span>
++              . <span>*</span>
+             </span>
+           </label>
+           {errors.privacyAccepted && <ErrorText>{errors.privacyAccepted}</ErrorText>}
+ 
+-          <label className="flex items-start gap-3 text-sm">
++          <label>
+             <input
+               type="checkbox"
+-              className="mt-0.5"
+               checked={form.marketingConsent}
+               onChange={(e) => setForm((p) => ({ ...p, marketingConsent: e.target.checked }))}
+             />
+@@ -393,7 +378,6 @@ export function EarlyAccessForm({
+       {serverError && (
+         <div
+           data-server-error="true"
+-          className="rounded-lg border border-[var(--danger)]/30 bg-red-50 p-4 text-sm text-[var(--danger)]"
+         >
+           {serverError}
+         </div>
+@@ -403,7 +387,6 @@ export function EarlyAccessForm({
+         <button
+           type="submit"
+           disabled={submitting}
+-          className="w-full rounded-full bg-[var(--accent)] px-6 py-3.5 text-sm font-medium text-white transition hover:bg-[var(--accent-strong)] disabled:opacity-60 sm:w-auto"
+         >
+           {submitting ? "Submitting…" : "Join the Early Access Program"}
+         </button>
+@@ -424,13 +407,13 @@ function Section({
+   children: React.ReactNode;
+ }) {
+   return (
+-    <div className="border-t border-[var(--border-subtle)] pt-8">
+-      <div className="flex items-baseline gap-3">
+-        <span className="font-mono-label text-xs text-[var(--ink-muted)]">{number}</span>
+-        <h2 className="font-display text-xl tracking-tight">{title}</h2>
++    <div>
++      <div>
++        <span>{number}</span>
++        <h2>{title}</h2>
+       </div>
+-      {subtitle && <p className="mt-2 text-sm text-[var(--ink-muted)]">{subtitle}</p>}
+-      <div className="mt-5">{children}</div>
++      {subtitle && <p>{subtitle}</p>}
++      <div>{children}</div>
+     </div>
+   );
+ }
+@@ -460,8 +443,8 @@ function Field({
+   return (
+     <div data-error={error ? "true" : "false"}>
+       {label && (
+-        <label htmlFor={id} className="mb-1.5 block text-sm font-medium">
+-          {label} {required && <span className="text-[var(--danger)]">*</span>}
++        <label htmlFor={id}>
++          {label} {required && <span>*</span>}
+         </label>
+       )}
+       {input}
+@@ -472,7 +455,7 @@ function Field({
+ 
+ function ErrorText({ children, id }: { children: React.ReactNode; id?: string }) {
+   return (
+-    <p id={id} className="mt-1.5 text-xs text-[var(--danger)]">
++    <p id={id}>
+       {children}
+     </p>
+   );
+@@ -493,20 +476,14 @@ function RadioGroup({
+ }) {
+   return (
+     <div data-error={error ? "true" : "false"}>
+-      <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label={name}>
++      <div role="radiogroup" aria-label={name}>
+         {options.map((option) => (
+           <label
+             key={option.value}
+-            className={`flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2.5 text-sm transition ${
+-              value === option.value
+-                ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]"
+-                : "border-[var(--border-subtle)] text-[var(--ink-muted)] hover:border-[var(--foreground)]/30"
+-            }`}
+           >
+             <input
+               type="radio"
+               name={name}
+-              className="h-4 w-4 shrink-0 accent-[var(--accent)]"
+               checked={value === option.value}
+               onChange={() => onChange(option.value)}
+             />
+diff --git a/src/components/early-access-restart-button.tsx b/src/components/early-access-restart-button.tsx
+index 82cca25..b1e7529 100644
+--- a/src/components/early-access-restart-button.tsx
++++ b/src/components/early-access-restart-button.tsx
+@@ -23,11 +23,7 @@ export function EarlyAccessRestartButton() {
+   }
+ 
+   return (
+-    <button
+-      onClick={handleRestart}
+-      disabled={loading}
+-      className="text-sm font-medium text-[var(--accent)] hover:underline disabled:opacity-60"
+-    >
++    <button onClick={handleRestart} disabled={loading}>
+       {loading ? "Resetting…" : "Use a different email"}
+     </button>
+   );
+diff --git a/src/components/error-state.tsx b/src/components/error-state.tsx
+index 0164ee6..6bd46e2 100644
+--- a/src/components/error-state.tsx
++++ b/src/components/error-state.tsx
+@@ -14,27 +14,12 @@ export function ErrorState({
+   homeHref?: string;
+ }) {
+   return (
+-    <div className="mx-auto max-w-xl px-6 py-24 text-center">
+-      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[var(--danger)]">
+-        !
+-      </div>
+-      <h1 className="mt-6 font-display text-3xl tracking-tight">{title}</h1>
+-      <p className="mt-4 text-[var(--ink-muted)]">{message}</p>
+-      <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+-        {onRetry && (
+-          <button
+-            onClick={onRetry}
+-            className="rounded-full bg-[var(--accent)] px-6 py-3 text-sm font-medium text-white transition hover:bg-[var(--accent-strong)]"
+-          >
+-            Try again
+-          </button>
+-        )}
+-        <Link
+-          href={homeHref}
+-          className="text-sm font-medium text-[var(--foreground)] underline decoration-[var(--border-subtle)] underline-offset-4 hover:decoration-[var(--accent)]"
+-        >
+-          Back to homepage
+-        </Link>
++    <div>
++      <h1>{title}</h1>
++      <p>{message}</p>
++      <div>
++        {onRetry && <button onClick={onRetry}>Try again</button>}
++        <Link href={homeHref}>Back to homepage</Link>
+       </div>
+     </div>
+   );
+diff --git a/src/components/legal-page.tsx b/src/components/legal-page.tsx
+index 12752d0..9462286 100644
+--- a/src/components/legal-page.tsx
++++ b/src/components/legal-page.tsx
+@@ -14,13 +14,9 @@ export function LegalPage({
+     <>
+       <SiteHeader />
+       <main className="flex-1">
+-        <div className="mx-auto max-w-3xl px-6 py-16">
+-          <h1 className="font-display text-4xl tracking-tight">{title}</h1>
+-          {updated && <p className="mt-2 text-sm text-[var(--ink-muted)]">Last updated: {updated}</p>}
+-          <div className="prose-legal mt-10 space-y-6 text-[15px] leading-relaxed text-[var(--foreground)]/90">
+-            {children}
+-          </div>
+-        </div>
++        <h1>{title}</h1>
++        {updated && <p>Last updated: {updated}</p>}
++        <div>{children}</div>
+       </main>
+       <SiteFooter />
+     </>
+diff --git a/src/components/site-footer.tsx b/src/components/site-footer.tsx
+index 36a3946..55d70f2 100644
+--- a/src/components/site-footer.tsx
++++ b/src/components/site-footer.tsx
+@@ -3,51 +3,37 @@ import { CookiePreferencesLink } from "@/components/consent/cookie-preferences-l
+ 
+ export function SiteFooter() {
+   return (
+-    <footer className="border-t border-[var(--border-subtle)] bg-[var(--surface-dark)]">
+-      <div className="mx-auto max-w-6xl px-6 py-20">
+-        <div className="flex flex-col gap-12 sm:flex-row sm:items-start sm:justify-between">
+-          <div className="max-w-xs">
+-            <div className="flex items-center gap-2.5">
+-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[var(--foreground)] font-mono-label text-[11px] font-semibold tracking-normal text-[var(--surface-dark)]">
+-                OS
+-              </span>
+-              <span className="font-display text-lg">CreatorOS</span>
+-            </div>
+-            <p className="mt-4 text-sm leading-relaxed text-[var(--ink-muted)]">
+-              The operating system for creator businesses — one system of record for data,
+-              analysis, and growth. Currently in early access.
+-            </p>
+-          </div>
+-          <nav aria-label="Footer" className="grid grid-cols-2 gap-10 text-sm sm:grid-cols-4">
+-            <FooterColumn
+-              title="Product"
+-              links={[
+-                { href: "/", label: "CreatorOS" },
+-                { href: "/early-access", label: "Early Access" },
+-                { href: "/updates", label: "Updates" },
+-              ]}
+-            />
+-            <FooterColumn
+-              title="Company"
+-              links={[
+-                { href: "/about", label: "About" },
+-                { href: "/contact", label: "Contact" },
+-              ]}
+-            />
+-            <FooterColumn
+-              title="Legal"
+-              links={[
+-                { href: "/privacy", label: "Privacy Policy" },
+-                { href: "/terms", label: "Terms" },
+-              ]}
+-              extra={<CookiePreferencesLink />}
+-            />
+-          </nav>
+-        </div>
+-        <div className="mt-16 flex flex-col gap-2 border-t border-[var(--border-subtle)] pt-8 font-mono-label text-[11px] uppercase text-[var(--ink-muted)] sm:flex-row sm:items-center sm:justify-between">
+-          <p>© {new Date().getFullYear()} CreatorOS. All rights reserved.</p>
+-          <p>Made for creators, everywhere.</p>
++    <footer>
++      <div>
++        <div>
++          <p>CreatorOS</p>
+         </div>
++        <nav aria-label="Footer">
++          <FooterColumn
++            title="Product"
++            links={[
++              { href: "/", label: "CreatorOS" },
++              { href: "/early-access", label: "Early Access" },
++              { href: "/updates", label: "Updates" },
++            ]}
++          />
++          <FooterColumn
++            title="Company"
++            links={[
++              { href: "/about", label: "About" },
++              { href: "/contact", label: "Contact" },
++            ]}
++          />
++          <FooterColumn
++            title="Legal"
++            links={[
++              { href: "/privacy", label: "Privacy Policy" },
++              { href: "/terms", label: "Terms" },
++            ]}
++            extra={<CookiePreferencesLink />}
++          />
++        </nav>
++        <p>© {new Date().getFullYear()} CreatorOS. All rights reserved.</p>
+       </div>
+     </footer>
+   );
+@@ -64,13 +50,11 @@ function FooterColumn({
+ }) {
+   return (
+     <div>
+-      <p className="font-mono-label text-xs uppercase text-[var(--ink-muted)]">{title}</p>
+-      <ul className="mt-3 space-y-2">
++      <p>{title}</p>
++      <ul>
+         {links.map((link) => (
+           <li key={link.href}>
+-            <Link href={link.href} className="text-[var(--foreground)]/80 hover:text-[var(--accent)]">
+-              {link.label}
+-            </Link>
++            <Link href={link.href}>{link.label}</Link>
+           </li>
+         ))}
+         {extra && <li>{extra}</li>}
+diff --git a/src/components/site-header.tsx b/src/components/site-header.tsx
+index 080c8e8..4948788 100644
+--- a/src/components/site-header.tsx
++++ b/src/components/site-header.tsx
+@@ -14,76 +14,44 @@ export function SiteHeader() {
+   const [open, setOpen] = useState(false);
+ 
+   return (
+-    <header className="sticky top-0 z-40 border-b border-[var(--border-subtle)] bg-[var(--background)]/70 backdrop-blur-xl">
+-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
+-        <Link href="/" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
+-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[var(--foreground)] font-mono-label text-[11px] font-semibold tracking-normal text-[var(--surface-dark)]">
+-            OS
+-          </span>
+-          <span className="font-display text-lg tracking-tight">CreatorOS</span>
++    <header>
++      <div>
++        <Link href="/" onClick={() => setOpen(false)}>
++          CreatorOS
+         </Link>
+-        <nav className="hidden items-center gap-9 font-mono-label text-[11px] uppercase text-[var(--ink-muted)] sm:flex">
++        <nav>
+           {NAV_LINKS.map((link) => (
+-            <Link
+-              key={link.href}
+-              href={link.href}
+-              className="relative py-1 transition-colors hover:text-[var(--foreground)] after:absolute after:-bottom-1 after:left-0 after:h-px after:w-0 after:bg-[var(--accent)] after:transition-all after:duration-200 hover:after:w-full"
+-            >
++            <Link key={link.href} href={link.href}>
+               {link.label}
+             </Link>
+           ))}
+         </nav>
+-        <div className="flex items-center gap-2 sm:gap-3">
+-          <Link
+-            href="/early-access"
+-            className="hidden items-center gap-1.5 rounded-full bg-[var(--accent)] px-4 py-2 text-[13px] font-medium text-white transition hover:bg-[var(--accent-strong)] sm:inline-flex"
+-          >
+-            Request Early Access
+-          </Link>
++        <div>
++          <Link href="/early-access">Request Early Access</Link>
+           <button
+             type="button"
+             aria-expanded={open}
+             aria-controls="mobile-nav"
+             aria-label={open ? "Close menu" : "Open menu"}
+             onClick={() => setOpen((v) => !v)}
+-            className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border-subtle)] text-[var(--foreground)] sm:hidden"
+           >
+-            {open ? (
+-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+-                <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />
+-              </svg>
+-            ) : (
+-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+-                <path d="M4 7h16M4 12h16M4 17h16" strokeLinecap="round" />
+-              </svg>
+-            )}
++            Menu
+           </button>
+         </div>
+       </div>
+ 
+       {open && (
+-        <nav
+-          id="mobile-nav"
+-          className="border-t border-[var(--border-subtle)] bg-[var(--background)] px-4 py-4 sm:hidden"
+-        >
+-          <ul className="flex flex-col gap-1 text-sm text-[var(--ink-muted)]">
++        <nav id="mobile-nav">
++          <ul>
+             {NAV_LINKS.map((link) => (
+               <li key={link.href}>
+-                <Link
+-                  href={link.href}
+-                  onClick={() => setOpen(false)}
+-                  className="block rounded-lg px-3 py-2.5 hover:bg-[var(--accent-soft)] hover:text-[var(--foreground)]"
+-                >
++                <Link href={link.href} onClick={() => setOpen(false)}>
+                   {link.label}
+                 </Link>
+               </li>
+             ))}
+           </ul>
+-          <Link
+-            href="/early-access"
+-            onClick={() => setOpen(false)}
+-            className="mt-3 block rounded-full bg-[var(--accent)] px-4 py-2.5 text-center text-sm font-medium text-white transition hover:bg-[var(--accent-strong)]"
+-          >
++          <Link href="/early-access" onClick={() => setOpen(false)}>
+             Request Early Access
+           </Link>
+         </nav>

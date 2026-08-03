@@ -43,30 +43,14 @@ export default async function EarlyAccessPage({
   return (
     <>
       <SiteHeader />
-      <main className="flex-1 bg-[var(--surface)]">
-        <div className="mx-auto max-w-3xl px-6 py-16">
-          <p className="font-mono-label text-xs uppercase text-[var(--accent)]">Early Access</p>
-          <h1 className="mt-3 font-display text-4xl tracking-tight sm:text-5xl">
-            Become an Early Creator
-          </h1>
-          <p className="mt-5 max-w-xl text-[var(--ink-muted)]">
-            CreatorOS is in active development. We&apos;re not selling a finished product — you&apos;re
-            joining a waitlist of the first creators we&apos;ll work with. You&apos;ll be
-            contacted as the platform takes shape, and you&apos;ll keep the benefits reserved for
-            our earliest members.
-          </p>
-          <div className="mt-6 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] p-4 text-sm text-[var(--ink-muted)]">
-            A quick note before you start: please answer honestly. We only use these details to
-            understand creators better and prioritize what to build first. Your answers stay
-            private — we never publish or share them.
-          </div>
-          <EarlyAccessForm
-            initialReferralCode={first(params.ref)}
-            initialUtmSource={first(params.utm_source)}
-            initialUtmMedium={first(params.utm_medium)}
-            initialUtmCampaign={first(params.utm_campaign)}
-          />
-        </div>
+      <main className="flex-1">
+        <h1>Become an Early Creator</h1>
+        <EarlyAccessForm
+          initialReferralCode={first(params.ref)}
+          initialUtmSource={first(params.utm_source)}
+          initialUtmMedium={first(params.utm_medium)}
+          initialUtmCampaign={first(params.utm_campaign)}
+        />
       </main>
       <SiteFooter />
     </>

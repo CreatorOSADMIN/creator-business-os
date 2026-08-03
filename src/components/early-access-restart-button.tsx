@@ -23,11 +23,7 @@ export function EarlyAccessRestartButton() {
   }
 
   return (
-    <button
-      onClick={handleRestart}
-      disabled={loading}
-      className="text-sm font-medium text-[var(--accent)] hover:underline disabled:opacity-60"
-    >
+    <button onClick={handleRestart} disabled={loading}>
       {loading ? "Resetting…" : "Use a different email"}
     </button>
   );
