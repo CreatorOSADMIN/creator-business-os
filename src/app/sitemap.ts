@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getSiteUrl } from "@/lib/site-url";
 import { prisma } from "@/lib/prisma";
+import { QUESTION_CATEGORIES, QUESTION_CATEGORY_SLUGS } from "@/lib/constants";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = getSiteUrl();
@@ -11,6 +12,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: new Date(),
     changeFrequency: "weekly",
     priority: route === "" ? 1 : 0.7,
+  }));
+
+  const categoryEntries: MetadataRoute.Sitemap = QUESTION_CATEGORIES.map((category) => ({
+    url: `${siteUrl}/questions/category/${QUESTION_CATEGORY_SLUGS[category]}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly",
+    priority: 0.6,
   }));
 
   const questions = await prisma.question.findMany({
@@ -27,5 +35,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     }));
 
-  return [...staticEntries, ...questionEntries];
+  return [...staticEntries, ...categoryEntries, ...questionEntries];
 }

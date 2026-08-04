@@ -6,11 +6,12 @@ import { Reveal } from "@/components/landing/reveal";
 import { Eyebrow } from "@/components/landing/eyebrow";
 import { TrackedLink } from "@/components/analytics/tracked-link";
 import { GOFUNDME_URL } from "@/lib/constants";
+import { getSiteUrl } from "@/lib/site-url";
 
 export const metadata: Metadata = {
-  title: "Updates",
+  title: "Updates & Roadmap",
   description:
-    "Development updates and roadmap for CreatorOS — built in the open, and dependent on community support to keep going.",
+    "CreatorOS updates, product development, feature releases and roadmap — built in the open, and dependent on community support to keep going.",
   alternates: { canonical: "/updates" },
 };
 
@@ -22,10 +23,24 @@ const ROADMAP = [
 ] as const;
 
 export default function UpdatesPage() {
+  const siteUrl = getSiteUrl();
+  const breadcrumbData = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: siteUrl },
+      { "@type": "ListItem", position: 2, name: "Updates", item: `${siteUrl}/updates` },
+    ],
+  };
+
   return (
     <>
       <SiteHeader />
       <main className="flex-1 bg-bg">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
+        />
         <section className="px-6 pb-16 pt-20 sm:px-10 sm:pt-28">
           <div className="mx-auto max-w-6xl">
             <Reveal>
@@ -34,7 +49,8 @@ export default function UpdatesPage() {
                 What&apos;s coming to CreatorOS.
               </h1>
               <p className="mt-8 max-w-xl text-balance border-t border-border pt-8 text-lg leading-relaxed text-text-muted">
-                Built in the open. Here&apos;s where things stand today, and what&apos;s next.
+                CreatorOS updates, product development, feature releases and roadmap — built in
+                the open. Here&apos;s where things stand today, and what&apos;s next.
               </p>
             </Reveal>
           </div>

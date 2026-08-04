@@ -1,0 +1,513 @@
+diff --git a/src/app/about/page.tsx b/src/app/about/page.tsx
+index 65569d6..59ef919 100644
+--- a/src/app/about/page.tsx
++++ b/src/app/about/page.tsx
+@@ -4,6 +4,7 @@ import { SiteFooter } from "@/components/site-footer";
+ import { Reveal } from "@/components/landing/reveal";
+ import { Eyebrow } from "@/components/landing/eyebrow";
+ import { TrackedLink } from "@/components/analytics/tracked-link";
++import { getSiteUrl } from "@/lib/site-url";
+ 
+ export const metadata: Metadata = {
+   title: "About",
+@@ -31,10 +32,24 @@ const VALUES = [
+ ];
+ 
+ export default function AboutPage() {
++  const siteUrl = getSiteUrl();
++  const breadcrumbData = {
++    "@context": "https://schema.org",
++    "@type": "BreadcrumbList",
++    itemListElement: [
++      { "@type": "ListItem", position: 1, name: "Home", item: siteUrl },
++      { "@type": "ListItem", position: 2, name: "About", item: `${siteUrl}/about` },
++    ],
++  };
++
+   return (
+     <>
+       <SiteHeader />
+       <main className="flex-1 bg-bg">
++        <script
++          type="application/ld+json"
++          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
++        />
+         <section className="px-6 pb-16 pt-20 sm:px-10 sm:pt-28">
+           <div className="mx-auto max-w-6xl">
+             <Reveal>
+diff --git a/src/app/contact/page.tsx b/src/app/contact/page.tsx
+index 9ee43c2..bdf7094 100644
+--- a/src/app/contact/page.tsx
++++ b/src/app/contact/page.tsx
+@@ -4,6 +4,7 @@ import { SiteFooter } from "@/components/site-footer";
+ import { Reveal } from "@/components/landing/reveal";
+ import { Eyebrow } from "@/components/landing/eyebrow";
+ import { SocialLinks } from "@/components/contact/social-links";
++import { getSiteUrl } from "@/lib/site-url";
+ 
+ export const metadata: Metadata = {
+   title: "Contact",
+@@ -13,10 +14,24 @@ export const metadata: Metadata = {
+ };
+ 
+ export default function ContactPage() {
++  const siteUrl = getSiteUrl();
++  const breadcrumbData = {
++    "@context": "https://schema.org",
++    "@type": "BreadcrumbList",
++    itemListElement: [
++      { "@type": "ListItem", position: 1, name: "Home", item: siteUrl },
++      { "@type": "ListItem", position: 2, name: "Contact", item: `${siteUrl}/contact` },
++    ],
++  };
++
+   return (
+     <>
+       <SiteHeader />
+       <main className="flex-1 bg-bg">
++        <script
++          type="application/ld+json"
++          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
++        />
+         <section className="px-6 pb-16 pt-20 sm:px-10 sm:pt-28">
+           <div className="mx-auto max-w-4xl">
+             <Reveal>
+diff --git a/src/app/questions/[slug]/page.tsx b/src/app/questions/[slug]/page.tsx
+index 12c462e..d529d89 100644
+--- a/src/app/questions/[slug]/page.tsx
++++ b/src/app/questions/[slug]/page.tsx
+@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
+ import { markdownToHtml, markdownToExcerpt } from "@/lib/markdown";
+ import { serializeQuestion } from "@/lib/serialize-question";
+ import { getSiteUrl } from "@/lib/site-url";
++import { QUESTION_CATEGORY_SLUGS, type QuestionCategoryValue } from "@/lib/constants";
+ 
+ // ISR: published answers rarely change after the fact, but a short window
+ // lets edits/corrections roll out without a full redeploy.
+@@ -164,7 +165,16 @@ export default async function QuestionDetailPage({
+               {question.category && (
+                 <>
+                   <span aria-hidden="true">·</span>
+-                  <span className="text-accent">{question.category}</span>
++                  {question.category in QUESTION_CATEGORY_SLUGS ? (
++                    <Link
++                      href={`/questions/category/${QUESTION_CATEGORY_SLUGS[question.category as QuestionCategoryValue]}`}
++                      className="text-accent transition-colors hover:underline"
++                    >
++                      {question.category}
++                    </Link>
++                  ) : (
++                    <span className="text-accent">{question.category}</span>
++                  )}
+                 </>
+               )}
+             </div>
+diff --git a/src/app/questions/category/[category]/page.tsx b/src/app/questions/category/[category]/page.tsx
+new file mode 100644
+index 0000000..3abf688
+--- /dev/null
++++ b/src/app/questions/category/[category]/page.tsx
+@@ -0,0 +1,204 @@
++import type { Metadata } from "next";
++import Link from "next/link";
++import { notFound } from "next/navigation";
++import { SiteHeader } from "@/components/site-header";
++import { SiteFooter } from "@/components/site-footer";
++import { Reveal } from "@/components/landing/reveal";
++import { Eyebrow } from "@/components/landing/eyebrow";
++import { prisma } from "@/lib/prisma";
++import { markdownToExcerpt } from "@/lib/markdown";
++import { getSiteUrl } from "@/lib/site-url";
++import {
++  QUESTION_CATEGORIES,
++  QUESTION_CATEGORY_SLUGS,
++  getCategoryBySlug,
++  type QuestionCategoryValue,
++} from "@/lib/constants";
++
++// Short, unique blurb per category so each indexable page has distinct copy
++// instead of a templated one-liner. Keeps the existing "General"/"Other"
++// buckets honest rather than forcing keyword-stuffed descriptions onto them.
++const CATEGORY_INTROS: Record<QuestionCategoryValue, string> = {
++  General:
++    "General questions from creators about running CreatorOS and building a creator business day to day.",
++  "Getting Started":
++    "Answers for creators getting started with CreatorOS — setup, early access, and what to expect first.",
++  "Pricing & Plans":
++    "Questions about CreatorOS pricing and plans, so creators can plan monetization without surprises.",
++  "Platforms & Integrations":
++    "How CreatorOS connects to YouTube, Instagram, TikTok, Twitch, X, and other social media management tools creators already use.",
++  Analytics:
++    "Questions about CreatorOS analytics — the creator tools for tracking growth, engagement, and content performance across platforms.",
++  "Brand Deals":
++    "Answers about brand collaborations on CreatorOS — negotiating, tracking, and managing deals as part of a creator business.",
++  "Account & Billing":
++    "Account and billing questions for CreatorOS members managing their creator economy toolkit.",
++  Other:
++    "Other creator business questions that don't fit neatly elsewhere, answered by the CreatorOS team.",
++};
++
++export const revalidate = 300;
++
++export async function generateStaticParams() {
++  return QUESTION_CATEGORIES.map((label) => ({ category: QUESTION_CATEGORY_SLUGS[label] }));
++}
++
++export async function generateMetadata({
++  params,
++}: {
++  params: Promise<{ category: string }>;
++}): Promise<Metadata> {
++  const { category: slug } = await params;
++  const category = getCategoryBySlug(slug);
++  if (!category) return {};
++
++  const title = `${category} Questions — CreatorOS Knowledge Base`;
++  const description = CATEGORY_INTROS[category];
++  const url = `/questions/category/${slug}`;
++
++  return {
++    title,
++    description,
++    alternates: { canonical: url },
++    openGraph: { title, description, url, type: "website" },
++    twitter: { card: "summary", title, description },
++  };
++}
++
++export default async function QuestionCategoryPage({
++  params,
++}: {
++  params: Promise<{ category: string }>;
++}) {
++  const { category: slug } = await params;
++  const category = getCategoryBySlug(slug);
++  if (!category) notFound();
++
++  const questions = await prisma.question.findMany({
++    where: { status: "published", category, slug: { not: null } },
++    orderBy: { publishedAt: "desc" },
++    take: 50,
++  });
++
++  const siteUrl = getSiteUrl();
++  const pageUrl = `${siteUrl}/questions/category/${slug}`;
++
++  const breadcrumbData = {
++    "@context": "https://schema.org",
++    "@type": "BreadcrumbList",
++    itemListElement: [
++      { "@type": "ListItem", position: 1, name: "Questions", item: `${siteUrl}/questions` },
++      { "@type": "ListItem", position: 2, name: category, item: pageUrl },
++    ],
++  };
++
++  return (
++    <>
++      <SiteHeader />
++      <main className="flex-1 bg-bg">
++        <script
++          type="application/ld+json"
++          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
++        />
++
++        <section className="px-6 pb-12 pt-20 sm:px-10 sm:pt-28">
++          <div className="mx-auto max-w-6xl">
++            <Reveal>
++              <nav aria-label="Breadcrumb" className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">
++                <Link href="/questions" className="text-text-muted transition-colors hover:text-text">
++                  Questions
++                </Link>
++                <span className="mx-2">/</span>
++                <span className="text-text-faint">{category}</span>
++              </nav>
++
++              <Eyebrow>Questions &amp; Answers</Eyebrow>
++              <h1 className="mt-6 max-w-2xl text-balance font-display text-[clamp(2.25rem,6vw,4.5rem)] font-bold leading-[0.98] tracking-[-0.03em] text-text">
++                {category} questions.
++              </h1>
++              <p className="mt-8 max-w-xl text-balance border-t border-border pt-8 text-lg leading-relaxed text-text-muted">
++                {CATEGORY_INTROS[category]}
++              </p>
++            </Reveal>
++          </div>
++        </section>
++
++        <section className="border-t border-border px-6 py-16 sm:px-10 sm:py-20">
++          <div className="mx-auto max-w-6xl">
++            <div className="mb-8 flex flex-wrap items-center gap-2">
++              <Link
++                href="/questions"
++                className="rounded-full border border-border px-3.5 py-1.5 font-mono-ui text-[11px] uppercase tracking-[0.1em] text-text-muted transition-colors hover:border-border-strong hover:text-text"
++              >
++                All
++              </Link>
++              {QUESTION_CATEGORIES.map((c) => (
++                <Link
++                  key={c}
++                  href={`/questions/category/${QUESTION_CATEGORY_SLUGS[c]}`}
++                  className={`rounded-full border px-3.5 py-1.5 font-mono-ui text-[11px] uppercase tracking-[0.1em] transition-colors ${
++                    c === category
++                      ? "border-accent text-accent"
++                      : "border-border text-text-muted hover:border-border-strong hover:text-text"
++                  }`}
++                >
++                  {c}
++                </Link>
++              ))}
++            </div>
++
++            {questions.length === 0 ? (
++              <div className="py-16 text-center">
++                <p className="text-sm text-text-muted">
++                  No published {category.toLowerCase()} questions yet.
++                </p>
++                <Link
++                  href="/questions"
++                  className="mt-4 inline-block rounded-full border border-border-strong px-5 py-2 font-mono-ui text-xs uppercase tracking-[0.15em] text-text transition-colors hover:border-accent hover:text-accent"
++                >
++                  Browse all questions
++                </Link>
++              </div>
++            ) : (
++              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
++                {questions.map((q) => (
++                  <Link
++                    key={q.id}
++                    href={`/questions/${q.slug}`}
++                    className="group rounded-xl border border-border bg-bg-elevated p-5 transition-colors hover:border-border-strong"
++                  >
++                    <span className="font-mono-ui text-[10px] uppercase tracking-[0.15em] text-accent">
++                      {category}
++                    </span>
++                    <h2 className="mt-2 font-display text-lg font-bold leading-snug text-text group-hover:text-accent">
++                      {q.question}
++                    </h2>
++                    {q.answer && (
++                      <p className="mt-2 line-clamp-2 text-sm text-text-muted">
++                        {markdownToExcerpt(q.answer)}
++                      </p>
++                    )}
++                    <div className="mt-4 flex items-center justify-between font-mono-ui text-[11px] uppercase tracking-[0.1em] text-text-faint">
++                      <span>Asked by {q.username}</span>
++                      {q.publishedAt && <span>{new Date(q.publishedAt).toLocaleDateString()}</span>}
++                    </div>
++                  </Link>
++                ))}
++              </div>
++            )}
++
++            <div className="mt-14 border-t border-border pt-8 text-center">
++              <Link
++                href="/early-access"
++                className="inline-flex items-center gap-2 font-mono-ui text-xs uppercase tracking-[0.15em] text-accent transition-colors hover:text-text"
++              >
++                Join CreatorOS Early Access →
++              </Link>
++            </div>
++          </div>
++        </section>
++      </main>
++      <SiteFooter />
++    </>
++  );
++}
+diff --git a/src/app/questions/page.tsx b/src/app/questions/page.tsx
+index cc583dc..e961d3c 100644
+--- a/src/app/questions/page.tsx
++++ b/src/app/questions/page.tsx
+@@ -1,4 +1,5 @@
+ import type { Metadata } from "next";
++import Link from "next/link";
+ import { SiteHeader } from "@/components/site-header";
+ import { SiteFooter } from "@/components/site-footer";
+ import { Reveal } from "@/components/landing/reveal";
+@@ -6,23 +7,24 @@ import { Eyebrow } from "@/components/landing/eyebrow";
+ import { QuestionsExplorer, type QuestionListItem } from "@/components/questions/questions-explorer";
+ import { prisma } from "@/lib/prisma";
+ import { markdownToExcerpt } from "@/lib/markdown";
++import { QUESTION_CATEGORIES, QUESTION_CATEGORY_SLUGS } from "@/lib/constants";
+ 
+ export const metadata: Metadata = {
+-  title: "Questions & Answers — CreatorOS Knowledge Base",
++  title: "Creator Business Questions & Answers — CreatorOS Knowledge Base",
+   description:
+-    "Ask CreatorOS anything and browse a growing, publicly indexable knowledge base of answers from the team — pricing, platform support, analytics, brand deals, and more. No account required to ask.",
++    "CreatorOS Questions is a public knowledge base for creator business, social media management, monetization, and content management — pricing, platform support, analytics, brand collaborations, and more. No account required to ask.",
+   alternates: { canonical: "/questions" },
+   openGraph: {
+-    title: "Questions & Answers | CreatorOS",
++    title: "Creator Business Questions & Answers | CreatorOS",
+     description:
+-      "Ask CreatorOS anything and browse answers from the team — pricing, platform support, analytics, brand deals, and more.",
++      "A public knowledge base on creator business, the creator economy, and monetization — answered by the CreatorOS team.",
+     url: "/questions",
+     type: "website",
+   },
+   twitter: {
+     card: "summary",
+-    title: "Questions & Answers | CreatorOS",
+-    description: "Ask CreatorOS anything and browse answers from the team.",
++    title: "Creator Business Questions & Answers | CreatorOS",
++    description: "A public knowledge base on creator business, the creator economy, and monetization.",
+   },
+ };
+ 
+@@ -59,9 +61,12 @@ export default async function QuestionsPage() {
+                 Ask us anything.
+               </h1>
+               <p className="mt-8 max-w-xl text-balance border-t border-border pt-8 text-lg leading-relaxed text-text-muted">
+-                No account needed — just a username. Every question is reviewed and answered by
+-                the CreatorOS team, and every published answer gets its own indexable page —
+-                together they form a public CreatorOS knowledge base anyone can search.
++                CreatorOS Questions is a public knowledge base where creators and users find
++                answers on creator business, social media management, monetization, and content
++                management. No account needed — just a username. Every question is reviewed and
++                answered by the CreatorOS team, and every published answer gets its own indexable
++                page covering topics like creator tools, brand collaborations, and the creator
++                economy at large.
+               </p>
+             </Reveal>
+           </div>
+@@ -69,6 +74,18 @@ export default async function QuestionsPage() {
+ 
+         <section className="border-t border-border px-6 py-16 sm:px-10 sm:py-20">
+           <div className="mx-auto max-w-6xl">
++            <h2 className="sr-only">Browse questions by category</h2>
++            <nav aria-label="Question categories" className="mb-8 flex flex-wrap items-center gap-2">
++              {QUESTION_CATEGORIES.map((c) => (
++                <Link
++                  key={c}
++                  href={`/questions/category/${QUESTION_CATEGORY_SLUGS[c]}`}
++                  className="rounded-full border border-border px-3.5 py-1.5 font-mono-ui text-[11px] uppercase tracking-[0.1em] text-text-muted transition-colors hover:border-border-strong hover:text-text"
++                >
++                  {c}
++                </Link>
++              ))}
++            </nav>
+             <QuestionsExplorer initialQuestions={initialQuestions} />
+           </div>
+         </section>
+diff --git a/src/app/sitemap.ts b/src/app/sitemap.ts
+index 99d27b5..13892f7 100644
+--- a/src/app/sitemap.ts
++++ b/src/app/sitemap.ts
+@@ -1,6 +1,7 @@
+ import type { MetadataRoute } from "next";
+ import { getSiteUrl } from "@/lib/site-url";
+ import { prisma } from "@/lib/prisma";
++import { QUESTION_CATEGORIES, QUESTION_CATEGORY_SLUGS } from "@/lib/constants";
+ 
+ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+   const siteUrl = getSiteUrl();
+@@ -13,6 +14,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+     priority: route === "" ? 1 : 0.7,
+   }));
+ 
++  const categoryEntries: MetadataRoute.Sitemap = QUESTION_CATEGORIES.map((category) => ({
++    url: `${siteUrl}/questions/category/${QUESTION_CATEGORY_SLUGS[category]}`,
++    lastModified: new Date(),
++    changeFrequency: "weekly",
++    priority: 0.6,
++  }));
++
+   const questions = await prisma.question.findMany({
+     where: { status: "published", slug: { not: null } },
+     select: { slug: true, updatedAt: true },
+@@ -27,5 +35,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+       priority: 0.6,
+     }));
+ 
+-  return [...staticEntries, ...questionEntries];
++  return [...staticEntries, ...categoryEntries, ...questionEntries];
+ }
+diff --git a/src/app/updates/page.tsx b/src/app/updates/page.tsx
+index 30651dc..c235a24 100644
+--- a/src/app/updates/page.tsx
++++ b/src/app/updates/page.tsx
+@@ -6,11 +6,12 @@ import { Reveal } from "@/components/landing/reveal";
+ import { Eyebrow } from "@/components/landing/eyebrow";
+ import { TrackedLink } from "@/components/analytics/tracked-link";
+ import { GOFUNDME_URL } from "@/lib/constants";
++import { getSiteUrl } from "@/lib/site-url";
+ 
+ export const metadata: Metadata = {
+-  title: "Updates",
++  title: "Updates & Roadmap",
+   description:
+-    "Development updates and roadmap for CreatorOS — built in the open, and dependent on community support to keep going.",
++    "CreatorOS updates, product development, feature releases and roadmap — built in the open, and dependent on community support to keep going.",
+   alternates: { canonical: "/updates" },
+ };
+ 
+@@ -22,10 +23,24 @@ const ROADMAP = [
+ ] as const;
+ 
+ export default function UpdatesPage() {
++  const siteUrl = getSiteUrl();
++  const breadcrumbData = {
++    "@context": "https://schema.org",
++    "@type": "BreadcrumbList",
++    itemListElement: [
++      { "@type": "ListItem", position: 1, name: "Home", item: siteUrl },
++      { "@type": "ListItem", position: 2, name: "Updates", item: `${siteUrl}/updates` },
++    ],
++  };
++
+   return (
+     <>
+       <SiteHeader />
+       <main className="flex-1 bg-bg">
++        <script
++          type="application/ld+json"
++          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
++        />
+         <section className="px-6 pb-16 pt-20 sm:px-10 sm:pt-28">
+           <div className="mx-auto max-w-6xl">
+             <Reveal>
+@@ -34,7 +49,8 @@ export default function UpdatesPage() {
+                 What&apos;s coming to CreatorOS.
+               </h1>
+               <p className="mt-8 max-w-xl text-balance border-t border-border pt-8 text-lg leading-relaxed text-text-muted">
+-                Built in the open. Here&apos;s where things stand today, and what&apos;s next.
++                CreatorOS updates, product development, feature releases and roadmap — built in
++                the open. Here&apos;s where things stand today, and what&apos;s next.
+               </p>
+             </Reveal>
+           </div>
+diff --git a/src/lib/constants.ts b/src/lib/constants.ts
+index eccf1ca..1b40a17 100644
+--- a/src/lib/constants.ts
++++ b/src/lib/constants.ts
+@@ -120,6 +120,31 @@ export const QUESTION_CATEGORIES = [
+ ] as const;
+ export type QuestionCategoryValue = (typeof QUESTION_CATEGORIES)[number];
+ 
++// URL-safe slug for each category, used by the indexable
++// /questions/category/[category] pages. Derived from QUESTION_CATEGORIES so
++// there is a single source of truth and no risk of drifting from the values
++// actually stored on Question records.
++function slugifyCategory(label: string): string {
++  return label
++    .toLowerCase()
++    .replace(/&/g, "and")
++    .replace(/[^a-z0-9]+/g, "-")
++    .replace(/^-+|-+$/g, "");
++}
++
++export const QUESTION_CATEGORY_SLUGS: Record<QuestionCategoryValue, string> =
++  QUESTION_CATEGORIES.reduce(
++    (acc, label) => {
++      acc[label] = slugifyCategory(label);
++      return acc;
++    },
++    {} as Record<QuestionCategoryValue, string>
++  );
++
++export function getCategoryBySlug(slug: string): QuestionCategoryValue | null {
++  return QUESTION_CATEGORIES.find((label) => QUESTION_CATEGORY_SLUGS[label] === slug) ?? null;
++}
++
+ // Bumped whenever the Privacy Policy content changes materially. Stored on
+ // each Creator record at signup time so we always know which version of the
+ // policy a given consent was given under (GDPR accountability requirement).

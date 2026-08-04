@@ -4,6 +4,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { Reveal } from "@/components/landing/reveal";
 import { Eyebrow } from "@/components/landing/eyebrow";
 import { TrackedLink } from "@/components/analytics/tracked-link";
+import { getSiteUrl } from "@/lib/site-url";
 
 export const metadata: Metadata = {
   title: "About",
@@ -31,10 +32,24 @@ const VALUES = [
 ];
 
 export default function AboutPage() {
+  const siteUrl = getSiteUrl();
+  const breadcrumbData = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: siteUrl },
+      { "@type": "ListItem", position: 2, name: "About", item: `${siteUrl}/about` },
+    ],
+  };
+
   return (
     <>
       <SiteHeader />
       <main className="flex-1 bg-bg">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
+        />
         <section className="px-6 pb-16 pt-20 sm:px-10 sm:pt-28">
           <div className="mx-auto max-w-6xl">
             <Reveal>

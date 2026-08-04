@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Reveal } from "@/components/landing/reveal";
@@ -6,23 +7,24 @@ import { Eyebrow } from "@/components/landing/eyebrow";
 import { QuestionsExplorer, type QuestionListItem } from "@/components/questions/questions-explorer";
 import { prisma } from "@/lib/prisma";
 import { markdownToExcerpt } from "@/lib/markdown";
+import { QUESTION_CATEGORIES, QUESTION_CATEGORY_SLUGS } from "@/lib/constants";
 
 export const metadata: Metadata = {
-  title: "Questions & Answers — CreatorOS Knowledge Base",
+  title: "Creator Business Questions & Answers — CreatorOS Knowledge Base",
   description:
-    "Ask CreatorOS anything and browse a growing, publicly indexable knowledge base of answers from the team — pricing, platform support, analytics, brand deals, and more. No account required to ask.",
+    "CreatorOS Questions is a public knowledge base for creator business, social media management, monetization, and content management — pricing, platform support, analytics, brand collaborations, and more. No account required to ask.",
   alternates: { canonical: "/questions" },
   openGraph: {
-    title: "Questions & Answers | CreatorOS",
+    title: "Creator Business Questions & Answers | CreatorOS",
     description:
-      "Ask CreatorOS anything and browse answers from the team — pricing, platform support, analytics, brand deals, and more.",
+      "A public knowledge base on creator business, the creator economy, and monetization — answered by the CreatorOS team.",
     url: "/questions",
     type: "website",
   },
   twitter: {
     card: "summary",
-    title: "Questions & Answers | CreatorOS",
-    description: "Ask CreatorOS anything and browse answers from the team.",
+    title: "Creator Business Questions & Answers | CreatorOS",
+    description: "A public knowledge base on creator business, the creator economy, and monetization.",
   },
 };
 
@@ -59,9 +61,12 @@ export default async function QuestionsPage() {
                 Ask us anything.
               </h1>
               <p className="mt-8 max-w-xl text-balance border-t border-border pt-8 text-lg leading-relaxed text-text-muted">
-                No account needed — just a username. Every question is reviewed and answered by
-                the CreatorOS team, and every published answer gets its own indexable page —
-                together they form a public CreatorOS knowledge base anyone can search.
+                CreatorOS Questions is a public knowledge base where creators and users find
+                answers on creator business, social media management, monetization, and content
+                management. No account needed — just a username. Every question is reviewed and
+                answered by the CreatorOS team, and every published answer gets its own indexable
+                page covering topics like creator tools, brand collaborations, and the creator
+                economy at large.
               </p>
             </Reveal>
           </div>
@@ -69,6 +74,18 @@ export default async function QuestionsPage() {
 
         <section className="border-t border-border px-6 py-16 sm:px-10 sm:py-20">
           <div className="mx-auto max-w-6xl">
+            <h2 className="sr-only">Browse questions by category</h2>
+            <nav aria-label="Question categories" className="mb-8 flex flex-wrap items-center gap-2">
+              {QUESTION_CATEGORIES.map((c) => (
+                <Link
+                  key={c}
+                  href={`/questions/category/${QUESTION_CATEGORY_SLUGS[c]}`}
+                  className="rounded-full border border-border px-3.5 py-1.5 font-mono-ui text-[11px] uppercase tracking-[0.1em] text-text-muted transition-colors hover:border-border-strong hover:text-text"
+                >
+                  {c}
+                </Link>
+              ))}
+            </nav>
             <QuestionsExplorer initialQuestions={initialQuestions} />
           </div>
         </section>

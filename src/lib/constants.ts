@@ -120,6 +120,31 @@ export const QUESTION_CATEGORIES = [
 ] as const;
 export type QuestionCategoryValue = (typeof QUESTION_CATEGORIES)[number];
 
+// URL-safe slug for each category, used by the indexable
+// /questions/category/[category] pages. Derived from QUESTION_CATEGORIES so
+// there is a single source of truth and no risk of drifting from the values
+// actually stored on Question records.
+function slugifyCategory(label: string): string {
+  return label
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+export const QUESTION_CATEGORY_SLUGS: Record<QuestionCategoryValue, string> =
+  QUESTION_CATEGORIES.reduce(
+    (acc, label) => {
+      acc[label] = slugifyCategory(label);
+      return acc;
+    },
+    {} as Record<QuestionCategoryValue, string>
+  );
+
+export function getCategoryBySlug(slug: string): QuestionCategoryValue | null {
+  return QUESTION_CATEGORIES.find((label) => QUESTION_CATEGORY_SLUGS[label] === slug) ?? null;
+}
+
 // Bumped whenever the Privacy Policy content changes materially. Stored on
 // each Creator record at signup time so we always know which version of the
 // policy a given consent was given under (GDPR accountability requirement).

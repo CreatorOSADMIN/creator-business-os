@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { markdownToHtml, markdownToExcerpt } from "@/lib/markdown";
 import { serializeQuestion } from "@/lib/serialize-question";
 import { getSiteUrl } from "@/lib/site-url";
+import { QUESTION_CATEGORY_SLUGS, type QuestionCategoryValue } from "@/lib/constants";
 
 // ISR: published answers rarely change after the fact, but a short window
 // lets edits/corrections roll out without a full redeploy.
@@ -164,7 +165,16 @@ export default async function QuestionDetailPage({
               {question.category && (
                 <>
                   <span aria-hidden="true">·</span>
-                  <span className="text-accent">{question.category}</span>
+                  {question.category in QUESTION_CATEGORY_SLUGS ? (
+                    <Link
+                      href={`/questions/category/${QUESTION_CATEGORY_SLUGS[question.category as QuestionCategoryValue]}`}
+                      className="text-accent transition-colors hover:underline"
+                    >
+                      {question.category}
+                    </Link>
+                  ) : (
+                    <span className="text-accent">{question.category}</span>
+                  )}
                 </>
               )}
             </div>
