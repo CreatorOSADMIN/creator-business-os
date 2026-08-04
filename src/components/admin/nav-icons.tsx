@@ -45,6 +45,17 @@ export function AnnouncementsIcon({ className = "" }: IconProps) {
   );
 }
 
+export function QuestionsIcon({ className = "" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className={`${base} ${className}`}>
+      <path d="M12 16.5v.01" />
+      <path d="M9.5 9.25a2.5 2.5 0 1 1 3.7 2.2c-.85.5-1.2 1-1.2 1.8v.25" />
+      <rect x="3.5" y="3.5" width="17" height="14" rx="2.5" />
+      <path d="M8 21.5 12 17.5" />
+    </svg>
+  );
+}
+
 export function MenuIcon({ className = "" }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className={`${base} ${className}`}>

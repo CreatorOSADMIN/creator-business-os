@@ -20,7 +20,11 @@ export type AnalyticsEvent =
   | "early_access_form_start"
   | "early_access_form_submit"
   | "early_access_signup"
-  | "email_verified";
+  | "email_verified"
+  | "question_ask_open"
+  | "question_ask_submit"
+  | "question_view"
+  | "questions_search";
 
 export type AnalyticsProps = Record<string, string | number | boolean | null | undefined>;
 

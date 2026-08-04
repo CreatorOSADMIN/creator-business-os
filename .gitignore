@@ -50,6 +50,11 @@ yarn-error.log*
 # vercel
 .vercel
 
+# uploaded question media (filesystem-backed local/dev storage — see
+# src/lib/media-upload.ts). Not meant to be committed.
+/public/uploads/questions/*
+!/public/uploads/questions/.gitkeep
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

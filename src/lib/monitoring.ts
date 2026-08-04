@@ -17,7 +17,8 @@ export type MonitoringEvent =
   | "health_check_degraded"
   | "signup_failed"
   | "signup_email_failed"
-  | "signup_cookie_failed";
+  | "signup_cookie_failed"
+  | "question_submit_failed";
 
 export type MonitoringDetails = Record<string, unknown>;
 

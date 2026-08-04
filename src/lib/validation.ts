@@ -6,6 +6,8 @@ import {
   CREATOR_EXPERIENCE,
   PRODUCT_INTERESTS,
   CREATOR_STATUSES,
+  QUESTION_STATUSES,
+  QUESTION_CATEGORIES,
 } from "./constants";
 
 const platformValues = PLATFORMS.map((p) => p.value) as [string, ...string[]];
@@ -66,4 +68,42 @@ export const statusUpdateSchema = z.object({
 
 export const internalNoteSchema = z.object({
   internalNotes: z.string().max(10000),
+});
+
+// --- Public Q&A -------------------------------------------------------
+
+const usernamePattern = /^[\p{L}\p{N} ._-]+$/u;
+
+export const askQuestionSchema = z.object({
+  username: z
+    .string()
+    .trim()
+    .min(2, "Enter a username (at least 2 characters)")
+    .max(40, "Username must be 40 characters or fewer")
+    .regex(usernamePattern, "Username can only contain letters, numbers, spaces, . _ -"),
+  question: z
+    .string()
+    .trim()
+    .min(10, "Your question must be at least 10 characters")
+    .max(1000, "Your question must be 1000 characters or fewer"),
+  category: z.enum(QUESTION_CATEGORIES).optional(),
+  // Honeypot — real users never fill this (hidden via CSS).
+  website: z.string().max(200).optional(),
+  formRenderedAt: z.number().optional(),
+});
+export type AskQuestionInput = z.infer<typeof askQuestionSchema>;
+
+const mediaUrlSchema = z.string().trim().url().max(2000);
+
+export const questionAnswerSchema = z.object({
+  answer: z.string().max(20000).optional(),
+  answerImages: z.array(mediaUrlSchema).max(12).optional(),
+  answerVideos: z.array(mediaUrlSchema).max(6).optional(),
+  category: z.enum(QUESTION_CATEGORIES).optional().nullable(),
+  status: z.enum(QUESTION_STATUSES).optional(),
+});
+export type QuestionAnswerInput = z.infer<typeof questionAnswerSchema>;
+
+export const questionStatusSchema = z.object({
+  status: z.enum(QUESTION_STATUSES),
 });

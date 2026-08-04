@@ -1,0 +1,2495 @@
+diff --git a/.gitignore b/.gitignore
+index 58b8f74..74f9883 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -50,6 +50,11 @@ yarn-error.log*
+ # vercel
+ .vercel
+ 
++# uploaded question media (filesystem-backed local/dev storage — see
++# src/lib/media-upload.ts). Not meant to be committed.
++/public/uploads/questions/*
++!/public/uploads/questions/.gitkeep
++
+ # typescript
+ *.tsbuildinfo
+ next-env.d.ts
+diff --git a/prisma/migrations/20260803000000_add_questions/migration.sql b/prisma/migrations/20260803000000_add_questions/migration.sql
+new file mode 100644
+index 0000000..a42e358
+--- /dev/null
++++ b/prisma/migrations/20260803000000_add_questions/migration.sql
+@@ -0,0 +1,24 @@
++-- Public Q&A feature: anonymous-but-named question submissions, answered
++-- and published by an admin.
++CREATE TABLE "Question" (
++    "id" TEXT NOT NULL,
++    "username" TEXT NOT NULL,
++    "question" TEXT NOT NULL,
++    "slug" TEXT,
++    "answer" TEXT,
++    "answerImages" TEXT NOT NULL DEFAULT '[]',
++    "answerVideos" TEXT NOT NULL DEFAULT '[]',
++    "category" TEXT,
++    "status" TEXT NOT NULL DEFAULT 'pending',
++    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
++    "updatedAt" TIMESTAMP(3) NOT NULL,
++    "publishedAt" TIMESTAMP(3),
++
++    CONSTRAINT "Question_pkey" PRIMARY KEY ("id")
++);
++
++CREATE UNIQUE INDEX "Question_slug_key" ON "Question"("slug");
++
++CREATE INDEX "Question_status_createdAt_idx" ON "Question"("status", "createdAt");
++
++CREATE INDEX "Question_status_publishedAt_idx" ON "Question"("status", "publishedAt");
+diff --git a/prisma/schema.prisma b/prisma/schema.prisma
+index 1194181..cf05c46 100644
+--- a/prisma/schema.prisma
++++ b/prisma/schema.prisma
+@@ -65,6 +65,45 @@ model Creator {
+   @@index([referredBy])
+ }
+ 
++// Public Q&A. Anyone can submit a question with a username (no account,
++// no email/password). Questions start "pending" and are only shown on the
++// public site once an admin answers and publishes them.
++model Question {
++  id       String @id @default(cuid())
++  username String
++
++  question String
++
++  // URL slug, e.g. "how-does-creatoros-work". Generated from the question
++  // text once it's first published; null while pending since the slug is
++  // only meaningful for a page that actually exists publicly.
++  slug String? @unique
++
++  // Answer content (Markdown, rendered to sanitized HTML at render time).
++  // Null until an admin writes an answer.
++  answer String?
++
++  // JSON-encoded string arrays of media URLs, kept as-is with the rest of
++  // this codebase's convention for list fields (see Creator.platforms).
++  answerImages String @default("[]")
++  answerVideos String @default("[]")
++
++  // Optional free-text category/topic, shown as a filter chip on /questions.
++  category String?
++
++  // pending | published — enforced in application code (see
++  // src/lib/constants.ts), kept as a validated string rather than a native
++  // enum for the same reasons documented on Creator.status.
++  status String @default("pending")
++
++  createdAt   DateTime  @default(now())
++  updatedAt   DateTime  @updatedAt
++  publishedAt DateTime?
++
++  @@index([status, createdAt])
++  @@index([status, publishedAt])
++}
++
+ model EmailVerificationToken {
+   id        String    @id @default(cuid())
+   creatorId String
+diff --git a/public/uploads/questions/.gitkeep b/public/uploads/questions/.gitkeep
+new file mode 100644
+index 0000000..e69de29
+diff --git a/src/app/admin/(dashboard)/questions/[id]/page.tsx b/src/app/admin/(dashboard)/questions/[id]/page.tsx
+new file mode 100644
+index 0000000..e059ffc
+--- /dev/null
++++ b/src/app/admin/(dashboard)/questions/[id]/page.tsx
+@@ -0,0 +1,350 @@
++"use client";
++
++import { useEffect, useRef, useState } from "react";
++import { useParams, useRouter } from "next/navigation";
++import Link from "next/link";
++import { QUESTION_CATEGORIES } from "@/lib/constants";
++
++interface QuestionDetail {
++  id: string;
++  username: string;
++  question: string;
++  slug: string | null;
++  answer: string | null;
++  answerImages: string[];
++  answerVideos: string[];
++  category: string | null;
++  status: string;
++  createdAt: string;
++  publishedAt: string | null;
++}
++
++const TOOLBAR = [
++  { label: "B", title: "Bold", wrap: "**" },
++  { label: "I", title: "Italic", wrap: "*" },
++] as const;
++
++export default function AdminQuestionEditorPage() {
++  const params = useParams<{ id: string }>();
++  const router = useRouter();
++  const textareaRef = useRef<HTMLTextAreaElement>(null);
++  const fileInputRef = useRef<HTMLInputElement>(null);
++
++  const [question, setQuestion] = useState<QuestionDetail | null>(null);
++  const [answer, setAnswer] = useState("");
++  const [category, setCategory] = useState("");
++  const [images, setImages] = useState<string[]>([]);
++  const [videos, setVideos] = useState<string[]>([]);
++  const [loading, setLoading] = useState(true);
++  const [saving, setSaving] = useState<"draft" | "publish" | "delete" | null>(null);
++  const [uploading, setUploading] = useState(false);
++  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
++
++  useEffect(() => {
++    let cancelled = false;
++    async function load() {
++      const res = await fetch(`/api/admin/questions/${params.id}`);
++      if (!cancelled && res.ok) {
++        const data = await res.json();
++        const q: QuestionDetail = data.question;
++        setQuestion(q);
++        setAnswer(q.answer || "");
++        setCategory(q.category || "");
++        setImages(q.answerImages || []);
++        setVideos(q.answerVideos || []);
++      }
++      if (!cancelled) setLoading(false);
++    }
++    load();
++    return () => {
++      cancelled = true;
++    };
++  }, [params.id]);
++
++  function insertMarkdown(wrap: string) {
++    const el = textareaRef.current;
++    if (!el) return;
++    const { selectionStart, selectionEnd, value } = el;
++    const selected = value.slice(selectionStart, selectionEnd) || "text";
++    const next = `${value.slice(0, selectionStart)}${wrap}${selected}${wrap}${value.slice(selectionEnd)}`;
++    setAnswer(next);
++    requestAnimationFrame(() => {
++      el.focus();
++      el.setSelectionRange(selectionStart + wrap.length, selectionStart + wrap.length + selected.length);
++    });
++  }
++
++  function insertHeading() {
++    const el = textareaRef.current;
++    if (!el) return;
++    const { selectionStart, value } = el;
++    const lineStart = value.lastIndexOf("\n", selectionStart - 1) + 1;
++    const next = `${value.slice(0, lineStart)}## ${value.slice(lineStart)}`;
++    setAnswer(next);
++    requestAnimationFrame(() => el.focus());
++  }
++
++  function insertListItem() {
++    const el = textareaRef.current;
++    if (!el) return;
++    const { selectionStart, value } = el;
++    const prefix = value.slice(0, selectionStart);
++    const needsNewline = prefix.length > 0 && !prefix.endsWith("\n");
++    const next = `${prefix}${needsNewline ? "\n" : ""}- ${value.slice(selectionStart)}`;
++    setAnswer(next);
++    requestAnimationFrame(() => el.focus());
++  }
++
++  async function handleUpload(file: File) {
++    setUploading(true);
++    setMessage(null);
++    try {
++      const formData = new FormData();
++      formData.append("file", file);
++      const res = await fetch("/api/admin/questions/upload", { method: "POST", body: formData });
++      const data = await res.json().catch(() => ({}));
++      if (res.ok) {
++        if (data.kind === "video") {
++          setVideos((v) => [...v, data.url]);
++        } else {
++          setImages((v) => [...v, data.url]);
++        }
++      } else {
++        setMessage({ type: "error", text: data.error || "Upload failed." });
++      }
++    } catch {
++      setMessage({ type: "error", text: "Upload failed." });
++    } finally {
++      setUploading(false);
++      if (fileInputRef.current) fileInputRef.current.value = "";
++    }
++  }
++
++  async function save(status: "pending" | "published") {
++    setSaving(status === "published" ? "publish" : "draft");
++    setMessage(null);
++    try {
++      const res = await fetch(`/api/admin/questions/${params.id}`, {
++        method: "PATCH",
++        headers: { "Content-Type": "application/json" },
++        body: JSON.stringify({
++          answer,
++          answerImages: images,
++          answerVideos: videos,
++          category: category || null,
++          status,
++        }),
++      });
++      const data = await res.json().catch(() => ({}));
++      if (res.ok) {
++        setQuestion(data.question);
++        setMessage({
++          type: "success",
++          text: status === "published" ? "Published." : "Draft saved.",
++        });
++      } else {
++        setMessage({ type: "error", text: data.error || "Unable to save." });
++      }
++    } catch {
++      setMessage({ type: "error", text: "Unable to save." });
++    } finally {
++      setSaving(null);
++    }
++  }
++
++  async function handleDelete() {
++    if (!question) return;
++    if (!window.confirm(`Delete this question from ${question.username}? This cannot be undone.`)) return;
++    setSaving("delete");
++    try {
++      const res = await fetch(`/api/admin/questions/${params.id}`, { method: "DELETE" });
++      if (res.ok) {
++        router.push("/admin/questions");
++      } else {
++        const data = await res.json().catch(() => ({}));
++        setMessage({ type: "error", text: data.error || "Unable to delete." });
++        setSaving(null);
++      }
++    } catch {
++      setMessage({ type: "error", text: "Unable to delete." });
++      setSaving(null);
++    }
++  }
++
++  if (loading) {
++    return <p className="text-sm text-[var(--ink-muted)]">Loading…</p>;
++  }
++
++  if (!question) {
++    return (
++      <div className="empty-state">
++        <p className="text-sm">Question not found.</p>
++        <Link href="/admin/questions" className="mt-3 inline-block text-sm text-[var(--accent)] hover:underline">
++          ← Back to Questions
++        </Link>
++      </div>
++    );
++  }
++
++  return (
++    <div className="mx-auto max-w-3xl">
++      <Link href="/admin/questions" className="text-sm text-[var(--ink-muted)] hover:text-[var(--foreground)]">
++        ← Back to Questions
++      </Link>
++
++      <div className="card mt-4 p-5">
++        <span className={`badge ${question.status === "published" ? "badge-accent" : "badge-neutral"}`}>
++          {question.status === "published" ? "Published" : "Pending"}
++        </span>
++        <h1 className="mt-3 font-display text-xl tracking-tight">{question.question}</h1>
++        <p className="mt-1 text-sm text-[var(--ink-muted)]">
++          Asked by <span className="font-medium text-[var(--foreground)]">{question.username}</span> on{" "}
++          {new Date(question.createdAt).toLocaleString()}
++        </p>
++        {question.slug && (
++          <p className="mt-2 text-xs text-[var(--ink-muted)]">
++            Public URL: <span className="font-mono">/questions/{question.slug}</span>
++          </p>
++        )}
++      </div>
++
++      <div className="card mt-5 p-5">
++        <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[var(--ink-muted)]">
++          Category
++        </label>
++        <select className="input w-full max-w-xs" value={category} onChange={(e) => setCategory(e.target.value)}>
++          <option value="">No category</option>
++          {QUESTION_CATEGORIES.map((c) => (
++            <option key={c} value={c}>
++              {c}
++            </option>
++          ))}
++        </select>
++
++        <label className="mb-1.5 mt-5 block text-xs font-medium uppercase tracking-wide text-[var(--ink-muted)]">
++          Answer
++        </label>
++        <div className="flex flex-wrap items-center gap-1.5 rounded-t-lg border border-b-0 border-[var(--border-subtle)] bg-[var(--surface-2)] p-2">
++          {TOOLBAR.map((t) => (
++            <button
++              key={t.label}
++              type="button"
++              title={t.title}
++              onClick={() => insertMarkdown(t.wrap)}
++              className="flex h-7 w-7 items-center justify-center rounded text-sm font-semibold text-[var(--ink-muted)] hover:bg-[var(--surface-dark)] hover:text-[var(--foreground)]"
++            >
++              {t.label}
++            </button>
++          ))}
++          <button
++            type="button"
++            title="Heading"
++            onClick={insertHeading}
++            className="flex h-7 items-center justify-center rounded px-2 text-xs font-semibold text-[var(--ink-muted)] hover:bg-[var(--surface-dark)] hover:text-[var(--foreground)]"
++          >
++            H2
++          </button>
++          <button
++            type="button"
++            title="Bullet list"
++            onClick={insertListItem}
++            className="flex h-7 items-center justify-center rounded px-2 text-xs font-semibold text-[var(--ink-muted)] hover:bg-[var(--surface-dark)] hover:text-[var(--foreground)]"
++          >
++            • List
++          </button>
++          <div className="ml-auto flex items-center gap-2">
++            <button
++              type="button"
++              disabled={uploading}
++              onClick={() => fileInputRef.current?.click()}
++              className="btn btn-secondary h-7 px-3 text-xs disabled:opacity-50"
++            >
++              {uploading ? "Uploading…" : "Upload image/video"}
++            </button>
++            <input
++              ref={fileInputRef}
++              type="file"
++              accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime"
++              className="hidden"
++              onChange={(e) => {
++                const file = e.target.files?.[0];
++                if (file) handleUpload(file);
++              }}
++            />
++          </div>
++        </div>
++        <textarea
++          ref={textareaRef}
++          rows={12}
++          className="input w-full rounded-t-none font-mono text-sm"
++          placeholder="Write the answer using Markdown — **bold**, *italic*, ## headings, - bullet lists, [links](https://...)"
++          value={answer}
++          onChange={(e) => setAnswer(e.target.value)}
++        />
++
++        {(images.length > 0 || videos.length > 0) && (
++          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
++            {images.map((src) => (
++              <div key={src} className="group relative overflow-hidden rounded-lg border border-[var(--border-subtle)]">
++                {/* eslint-disable-next-line @next/next/no-img-element */}
++                <img src={src} alt="" className="h-24 w-full object-cover" />
++                <button
++                  type="button"
++                  onClick={() => setImages((v) => v.filter((i) => i !== src))}
++                  className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
++                >
++                  ✕
++                </button>
++              </div>
++            ))}
++            {videos.map((src) => (
++              <div key={src} className="group relative overflow-hidden rounded-lg border border-[var(--border-subtle)]">
++                <video src={src} className="h-24 w-full object-cover" muted />
++                <button
++                  type="button"
++                  onClick={() => setVideos((v) => v.filter((i) => i !== src))}
++                  className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
++                >
++                  ✕
++                </button>
++              </div>
++            ))}
++          </div>
++        )}
++      </div>
++
++      {message && (
++        <p className={`mt-4 text-sm ${message.type === "success" ? "text-[var(--accent)]" : "text-[var(--danger)]"}`}>
++          {message.text}
++        </p>
++      )}
++
++      <div className="mt-5 flex flex-wrap items-center gap-3">
++        <button
++          type="button"
++          disabled={saving !== null}
++          onClick={() => save("pending")}
++          className="btn btn-secondary disabled:opacity-50"
++        >
++          {saving === "draft" ? "Saving…" : "Save Draft"}
++        </button>
++        <button
++          type="button"
++          disabled={saving !== null}
++          onClick={() => save("published")}
++          className="btn btn-primary disabled:opacity-50"
++        >
++          {saving === "publish" ? "Publishing…" : "Publish"}
++        </button>
++        <button
++          type="button"
++          disabled={saving !== null}
++          onClick={handleDelete}
++          className="ml-auto text-sm text-[var(--danger)] hover:underline disabled:opacity-50"
++        >
++          {saving === "delete" ? "Deleting…" : "Delete"}
++        </button>
++      </div>
++    </div>
++  );
++}
+diff --git a/src/app/admin/(dashboard)/questions/loading.tsx b/src/app/admin/(dashboard)/questions/loading.tsx
+new file mode 100644
+index 0000000..79b249f
+--- /dev/null
++++ b/src/app/admin/(dashboard)/questions/loading.tsx
+@@ -0,0 +1,9 @@
++export default function AdminQuestionsLoading() {
++  return (
++    <div className="animate-pulse">
++      <div className="h-7 w-40 rounded bg-[var(--border-subtle)]" />
++      <div className="mt-5 h-10 rounded-lg bg-[var(--border-subtle)]" />
++      <div className="mt-5 h-64 rounded-xl bg-[var(--border-subtle)]" />
++    </div>
++  );
++}
+diff --git a/src/app/admin/(dashboard)/questions/page.tsx b/src/app/admin/(dashboard)/questions/page.tsx
+new file mode 100644
+index 0000000..2e2d67c
+--- /dev/null
++++ b/src/app/admin/(dashboard)/questions/page.tsx
+@@ -0,0 +1,199 @@
++"use client";
++
++import { useCallback, useEffect, useState } from "react";
++import Link from "next/link";
++import { QUESTION_STATUS_LABELS } from "@/lib/constants";
++import type { QuestionStatusValue } from "@/lib/constants";
++
++interface QuestionRow {
++  id: string;
++  username: string;
++  question: string;
++  slug: string | null;
++  status: string;
++  category: string | null;
++  createdAt: string;
++  publishedAt: string | null;
++}
++
++const TABS: { value: "" | QuestionStatusValue; label: string }[] = [
++  { value: "", label: "All" },
++  { value: "pending", label: "Pending" },
++  { value: "published", label: "Published" },
++];
++
++export default function AdminQuestionsPage() {
++  const [questions, setQuestions] = useState<QuestionRow[]>([]);
++  const [total, setTotal] = useState(0);
++  const [loading, setLoading] = useState(true);
++  const [status, setStatus] = useState<"" | QuestionStatusValue>("pending");
++  const [search, setSearch] = useState("");
++  const [page, setPage] = useState(1);
++  const pageSize = 25;
++  const [deletingId, setDeletingId] = useState<string | null>(null);
++  const [actionMessage, setActionMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
++
++  const load = useCallback(async () => {
++    setLoading(true);
++    const params = new URLSearchParams({ status, search, page: String(page), pageSize: String(pageSize) });
++    const res = await fetch(`/api/admin/questions?${params.toString()}`);
++    if (res.ok) {
++      const data = await res.json();
++      setQuestions(data.questions);
++      setTotal(data.total);
++    }
++    setLoading(false);
++  }, [status, search, page]);
++
++  useEffect(() => {
++    const timeout = setTimeout(load, 250);
++    return () => clearTimeout(timeout);
++  }, [load]);
++
++  async function handleDelete(row: QuestionRow) {
++    if (!window.confirm(`Delete this question from ${row.username}? This cannot be undone.`)) return;
++    setDeletingId(row.id);
++    setActionMessage(null);
++    try {
++      const res = await fetch(`/api/admin/questions/${row.id}`, { method: "DELETE" });
++      if (res.ok) {
++        setActionMessage({ type: "success", text: "Question deleted." });
++        await load();
++      } else {
++        const data = await res.json().catch(() => ({}));
++        setActionMessage({ type: "error", text: data.error || "Unable to delete this question." });
++      }
++    } catch {
++      setActionMessage({ type: "error", text: "Unable to delete this question." });
++    } finally {
++      setDeletingId(null);
++    }
++  }
++
++  const totalPages = Math.max(1, Math.ceil(total / pageSize));
++
++  return (
++    <div>
++      <div className="flex flex-wrap items-center justify-between gap-4">
++        <h1 className="font-display text-2xl tracking-tight">Questions</h1>
++        <p className="text-sm text-[var(--ink-muted)]">{total} total</p>
++      </div>
++
++      <div className="mt-5 flex items-center gap-2 border-b border-[var(--border-subtle)]">
++        {TABS.map((tab) => (
++          <button
++            key={tab.value}
++            onClick={() => {
++              setStatus(tab.value);
++              setPage(1);
++            }}
++            className={`-mb-px border-b-2 px-3 py-2.5 text-sm font-medium transition-colors ${
++              status === tab.value
++                ? "border-[var(--accent)] text-[var(--foreground)]"
++                : "border-transparent text-[var(--ink-muted)] hover:text-[var(--foreground)]"
++            }`}
++          >
++            {tab.label}
++          </button>
++        ))}
++      </div>
++
++      <div className="card mt-5 flex flex-wrap gap-3 p-4">
++        <input
++          className="input max-w-xs flex-1"
++          placeholder="Search username or question…"
++          value={search}
++          onChange={(e) => {
++            setPage(1);
++            setSearch(e.target.value);
++          }}
++        />
++      </div>
++
++      {actionMessage && (
++        <p className={`mt-3 text-sm ${actionMessage.type === "success" ? "text-[var(--accent)]" : "text-[var(--danger)]"}`}>
++          {actionMessage.text}
++        </p>
++      )}
++
++      <div className="card-flush mt-5 overflow-x-auto">
++        <table className="w-full min-w-[800px] text-left text-sm">
++          <thead className="table-head text-xs uppercase tracking-wide text-[var(--ink-muted)]">
++            <tr>
++              <th className="px-4 py-3 font-medium">Question</th>
++              <th className="px-4 py-3 font-medium">Username</th>
++              <th className="px-4 py-3 font-medium">Category</th>
++              <th className="px-4 py-3 font-medium">Status</th>
++              <th className="px-4 py-3 font-medium">Submitted</th>
++              <th className="px-4 py-3 font-medium">Actions</th>
++            </tr>
++          </thead>
++          <tbody className="divide-y divide-[var(--border-subtle)]">
++            {loading && (
++              <tr>
++                <td colSpan={6} className="px-4 py-10 text-center text-[var(--ink-muted)]">
++                  Loading…
++                </td>
++              </tr>
++            )}
++            {!loading && questions.length === 0 && (
++              <tr>
++                <td colSpan={6} className="p-0">
++                  <div className="empty-state">
++                    <p className="text-sm">No questions match these filters.</p>
++                  </div>
++                </td>
++              </tr>
++            )}
++            {!loading &&
++              questions.map((row) => (
++                <tr key={row.id} className="table-row">
++                  <td className="max-w-sm px-4 py-3">
++                    <Link href={`/admin/questions/${row.id}`} className="font-medium text-[var(--foreground)] hover:underline">
++                      {row.question}
++                    </Link>
++                  </td>
++                  <td className="px-4 py-3 text-[var(--ink-muted)]">{row.username}</td>
++                  <td className="px-4 py-3 text-[var(--ink-muted)]">{row.category || "—"}</td>
++                  <td className="px-4 py-3">
++                    <span className={`badge ${row.status === "published" ? "badge-accent" : "badge-neutral"}`}>
++                      {QUESTION_STATUS_LABELS[row.status as QuestionStatusValue] ?? row.status}
++                    </span>
++                  </td>
++                  <td className="px-4 py-3 text-[var(--ink-muted)]">{new Date(row.createdAt).toLocaleDateString()}</td>
++                  <td className="px-4 py-3">
++                    <div className="flex items-center gap-3 whitespace-nowrap text-sm">
++                      <Link href={`/admin/questions/${row.id}`} className="text-[var(--accent)] hover:underline">
++                        {row.status === "pending" ? "Answer" : "Edit"}
++                      </Link>
++                      <button
++                        onClick={() => handleDelete(row)}
++                        disabled={deletingId === row.id}
++                        className="text-[var(--danger)] hover:underline disabled:opacity-50"
++                      >
++                        {deletingId === row.id ? "Deleting…" : "Delete"}
++                      </button>
++                    </div>
++                  </td>
++                </tr>
++              ))}
++          </tbody>
++        </table>
++      </div>
++
++      {totalPages > 1 && (
++        <div className="mt-5 flex items-center justify-center gap-3 text-sm">
++          <button className="btn btn-ghost disabled:opacity-40" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
++            ← Previous
++          </button>
++          <span className="text-[var(--ink-muted)]">
++            Page {page} of {totalPages}
++          </span>
++          <button className="btn btn-ghost disabled:opacity-40" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
++            Next →
++          </button>
++        </div>
++      )}
++    </div>
++  );
++}
+diff --git a/src/app/api/admin/questions/[id]/route.ts b/src/app/api/admin/questions/[id]/route.ts
+new file mode 100644
+index 0000000..41d322f
+--- /dev/null
++++ b/src/app/api/admin/questions/[id]/route.ts
+@@ -0,0 +1,126 @@
++import { NextRequest, NextResponse } from "next/server";
++import { prisma } from "@/lib/prisma";
++import { requireAdmin } from "@/lib/require-admin";
++import { serializeQuestion } from "@/lib/serialize-question";
++import { questionAnswerSchema } from "@/lib/validation";
++import { verifySameOrigin } from "@/lib/verify-origin";
++import { logAdminAction } from "@/lib/audit-log";
++import { logger } from "@/lib/logger";
++import { generateUniqueSlug } from "@/lib/slug";
++
++export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
++  const { response } = await requireAdmin();
++  if (response) return response;
++
++  const { id } = await params;
++  const question = await prisma.question.findUnique({ where: { id } });
++  if (!question) {
++    return NextResponse.json({ error: "Question not found" }, { status: 404 });
++  }
++
++  return NextResponse.json({ question: serializeQuestion(question) });
++}
++
++export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
++  const originCheck = verifySameOrigin(request);
++  if (originCheck) return originCheck;
++
++  const { session, response } = await requireAdmin();
++  if (response) return response;
++
++  const { id } = await params;
++
++  let body: unknown;
++  try {
++    body = await request.json();
++  } catch {
++    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
++  }
++
++  const parsed = questionAnswerSchema.safeParse(body);
++  if (!parsed.success) {
++    return NextResponse.json({ error: "Validation failed", issues: parsed.error.flatten() }, { status: 400 });
++  }
++
++  const existing = await prisma.question.findUnique({ where: { id } });
++  if (!existing) {
++    return NextResponse.json({ error: "Question not found" }, { status: 404 });
++  }
++
++  const nextStatus = parsed.data.status ?? existing.status;
++  const isPublishing = nextStatus === "published";
++
++  // Publishing (whether for the first time, or re-publishing after an
++  // edit) requires actual answer content and a slug. A slug, once
++  // assigned, is kept stable across edits so the public URL never changes.
++  if (isPublishing) {
++    const answerText = parsed.data.answer ?? existing.answer;
++    if (!answerText || !answerText.trim()) {
++      return NextResponse.json(
++        { error: "Write an answer before publishing." },
++        { status: 400 }
++      );
++    }
++  }
++
++  let slug = existing.slug;
++  if (isPublishing && !slug) {
++    slug = await generateUniqueSlug(existing.question, async (candidate) => {
++      const clash = await prisma.question.findUnique({ where: { slug: candidate } });
++      return Boolean(clash && clash.id !== id);
++    });
++  }
++
++  const question = await prisma.question.update({
++    where: { id },
++    data: {
++      ...(parsed.data.answer !== undefined ? { answer: parsed.data.answer } : {}),
++      ...(parsed.data.answerImages !== undefined
++        ? { answerImages: JSON.stringify(parsed.data.answerImages) }
++        : {}),
++      ...(parsed.data.answerVideos !== undefined
++        ? { answerVideos: JSON.stringify(parsed.data.answerVideos) }
++        : {}),
++      ...(parsed.data.category !== undefined ? { category: parsed.data.category } : {}),
++      status: nextStatus,
++      slug,
++      ...(isPublishing && !existing.publishedAt ? { publishedAt: new Date() } : {}),
++    },
++  });
++
++  logAdminAction({
++    action: isPublishing ? "question.publish" : "question.update",
++    actor: session.email,
++    questionId: id,
++    metadata: { status: nextStatus },
++  });
++
++  return NextResponse.json({ question: serializeQuestion(question) });
++}
++
++export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
++  const originCheck = verifySameOrigin(request);
++  if (originCheck) return originCheck;
++
++  const { session, response } = await requireAdmin();
++  if (response) return response;
++
++  const { id } = await params;
++  if (!id || typeof id !== "string") {
++    return NextResponse.json({ error: "Invalid question id" }, { status: 400 });
++  }
++
++  try {
++    await prisma.question.delete({ where: { id } });
++  } catch (err) {
++    if (typeof err === "object" && err !== null && "code" in err && err.code === "P2025") {
++      return NextResponse.json({ error: "Question not found" }, { status: 404 });
++    }
++    logger.error("questions: delete failed", { scope: "admin-questions-delete", questionId: id, err });
++    return NextResponse.json({ error: "Unable to delete this question. Please try again." }, { status: 500 });
++  }
++
++  logAdminAction({ action: "question.delete", actor: session.email, questionId: id });
++
++  return NextResponse.json({ success: true });
++}
+diff --git a/src/app/api/admin/questions/route.ts b/src/app/api/admin/questions/route.ts
+new file mode 100644
+index 0000000..0331390
+--- /dev/null
++++ b/src/app/api/admin/questions/route.ts
+@@ -0,0 +1,44 @@
++import { NextRequest, NextResponse } from "next/server";
++import { prisma } from "@/lib/prisma";
++import { requireAdmin } from "@/lib/require-admin";
++import { serializeQuestion } from "@/lib/serialize-question";
++import { QUESTION_STATUSES } from "@/lib/constants";
++import type { Prisma } from "@prisma/client";
++
++export async function GET(request: NextRequest) {
++  const { response } = await requireAdmin();
++  if (response) return response;
++
++  const { searchParams } = new URL(request.url);
++  const search = searchParams.get("search")?.trim() || "";
++  const status = searchParams.get("status") || "";
++  const sort = searchParams.get("sort") === "asc" ? "asc" : "desc";
++  const page = Math.max(1, Number(searchParams.get("page") || 1));
++  const pageSize = Math.min(100, Math.max(1, Number(searchParams.get("pageSize") || 25)));
++
++  const where: Prisma.QuestionWhereInput = {};
++
++  if (status && (QUESTION_STATUSES as readonly string[]).includes(status)) {
++    where.status = status;
++  }
++
++  if (search) {
++    where.OR = [
++      { question: { contains: search, mode: "insensitive" } },
++      { username: { contains: search, mode: "insensitive" } },
++      { answer: { contains: search, mode: "insensitive" } },
++    ];
++  }
++
++  const [total, questions] = await Promise.all([
++    prisma.question.count({ where }),
++    prisma.question.findMany({
++      where,
++      orderBy: { createdAt: sort },
++      skip: (page - 1) * pageSize,
++      take: pageSize,
++    }),
++  ]);
++
++  return NextResponse.json({ total, page, pageSize, questions: questions.map(serializeQuestion) });
++}
+diff --git a/src/app/api/admin/questions/upload/route.ts b/src/app/api/admin/questions/upload/route.ts
+new file mode 100644
+index 0000000..ab98a7b
+--- /dev/null
++++ b/src/app/api/admin/questions/upload/route.ts
+@@ -0,0 +1,36 @@
++import { NextRequest, NextResponse } from "next/server";
++import { requireAdmin } from "@/lib/require-admin";
++import { verifySameOrigin } from "@/lib/verify-origin";
++import { saveUploadedMedia, MediaUploadError } from "@/lib/media-upload";
++import { logger } from "@/lib/logger";
++
++export async function POST(request: NextRequest) {
++  const originCheck = verifySameOrigin(request);
++  if (originCheck) return originCheck;
++
++  const { response } = await requireAdmin();
++  if (response) return response;
++
++  let formData: FormData;
++  try {
++    formData = await request.formData();
++  } catch {
++    return NextResponse.json({ error: "Invalid form data" }, { status: 400 });
++  }
++
++  const file = formData.get("file");
++  if (!(file instanceof File)) {
++    return NextResponse.json({ error: "No file provided" }, { status: 400 });
++  }
++
++  try {
++    const { url, kind } = await saveUploadedMedia(file);
++    return NextResponse.json({ url, kind }, { status: 201 });
++  } catch (err) {
++    if (err instanceof MediaUploadError) {
++      return NextResponse.json({ error: err.message }, { status: err.status });
++    }
++    logger.error("questions: media upload failed", { scope: "admin-questions-upload", err });
++    return NextResponse.json({ error: "Upload failed. Please try again." }, { status: 500 });
++  }
++}
+diff --git a/src/app/api/questions/route.ts b/src/app/api/questions/route.ts
+new file mode 100644
+index 0000000..c6c8c28
+--- /dev/null
++++ b/src/app/api/questions/route.ts
+@@ -0,0 +1,143 @@
++import { NextRequest, NextResponse } from "next/server";
++import { prisma } from "@/lib/prisma";
++import { askQuestionSchema } from "@/lib/validation";
++import { rateLimit, getClientIp } from "@/lib/rate-limit";
++import { verifySameOrigin } from "@/lib/verify-origin";
++import { serializeQuestion } from "@/lib/serialize-question";
++import { logger } from "@/lib/logger";
++import { reportIncident } from "@/lib/monitoring";
++import { QUESTION_CATEGORIES } from "@/lib/constants";
++import type { Prisma } from "@prisma/client";
++
++const SORTABLE_FIELDS = ["latest", "recently_answered"] as const;
++
++export async function GET(request: NextRequest) {
++  const { searchParams } = new URL(request.url);
++  const search = searchParams.get("search")?.trim() || "";
++  const category = searchParams.get("category") || "";
++  const sortParam = searchParams.get("sort") || "latest";
++  const sort: (typeof SORTABLE_FIELDS)[number] = (SORTABLE_FIELDS as readonly string[]).includes(
++    sortParam
++  )
++    ? (sortParam as (typeof SORTABLE_FIELDS)[number])
++    : "latest";
++  const page = Math.max(1, Number(searchParams.get("page") || 1));
++  const pageSize = Math.min(50, Math.max(1, Number(searchParams.get("pageSize") || 12)));
++
++  const where: Prisma.QuestionWhereInput = { status: "published" };
++
++  if (search) {
++    where.OR = [
++      { question: { contains: search, mode: "insensitive" } },
++      { answer: { contains: search, mode: "insensitive" } },
++      { username: { contains: search, mode: "insensitive" } },
++    ];
++  }
++
++  if (category && (QUESTION_CATEGORIES as readonly string[]).includes(category)) {
++    where.category = category;
++  }
++
++  const orderBy: Prisma.QuestionOrderByWithRelationInput =
++    sort === "recently_answered" ? { publishedAt: "desc" } : { publishedAt: "desc" };
++  // Both sort modes currently order by publishedAt: "latest" questions and
++  // "most recently answered" coincide here since a question is only ever
++  // published at the moment it's answered. Kept as two distinct API values
++  // (rather than collapsing them) so the UI's two tabs stay meaningful and
++  // the backend has a seam to diverge later (e.g. if answers can be edited
++  // after publish without changing publishedAt).
++
++  const [total, questions] = await Promise.all([
++    prisma.question.count({ where }),
++    prisma.question.findMany({
++      where,
++      orderBy,
++      skip: (page - 1) * pageSize,
++      take: pageSize,
++    }),
++  ]);
++
++  return NextResponse.json({
++    total,
++    page,
++    pageSize,
++    questions: questions.map(serializeQuestion),
++  });
++}
++
++export async function POST(request: NextRequest) {
++  const originCheck = verifySameOrigin(request);
++  if (originCheck) return originCheck;
++
++  const ip = getClientIp(request.headers);
++
++  const burst = rateLimit(`ask-question-burst:${ip}`, { limit: 3, windowMs: 30 * 1000 });
++  if (!burst.allowed) {
++    logger.warn("questions: burst rate limit exceeded", { scope: "questions", ip });
++    return NextResponse.json(
++      { error: "Too many submissions. Please try again later." },
++      { status: 429 }
++    );
++  }
++
++  const { allowed } = rateLimit(`ask-question:${ip}`, { limit: 5, windowMs: 10 * 60 * 1000 });
++  if (!allowed) {
++    logger.warn("questions: rate limit exceeded", { scope: "questions", ip });
++    return NextResponse.json(
++      { error: "Too many submissions. Please try again later." },
++      { status: 429 }
++    );
++  }
++
++  let body: unknown;
++  try {
++    body = await request.json();
++  } catch {
++    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
++  }
++
++  // Honeypot field: bots that fill hidden fields are silently accepted
++  // without revealing detection logic to the client.
++  if (typeof body === "object" && body !== null && "website" in body && (body as { website?: string }).website) {
++    logger.warn("questions: rejected — honeypot field filled", { scope: "questions", ip });
++    return NextResponse.json({ ok: true, questionId: "ignored" }, { status: 201 });
++  }
++
++  const MIN_FILL_TIME_MS = 1200;
++  if (typeof body === "object" && body !== null && "formRenderedAt" in body) {
++    const renderedAt = Number((body as { formRenderedAt?: unknown }).formRenderedAt);
++    const elapsed = Date.now() - renderedAt;
++    if (Number.isFinite(renderedAt) && elapsed >= 0 && elapsed < MIN_FILL_TIME_MS) {
++      logger.warn("questions: rejected — filled too fast (likely automated)", {
++        scope: "questions",
++        ip,
++        elapsedMs: elapsed,
++      });
++      return NextResponse.json({ ok: true, questionId: "ignored" }, { status: 201 });
++    }
++  }
++
++  const parsed = askQuestionSchema.safeParse(body);
++  if (!parsed.success) {
++    return NextResponse.json(
++      { error: "Validation failed", issues: parsed.error.flatten() },
++      { status: 400 }
++    );
++  }
++
++  try {
++    const question = await prisma.question.create({
++      data: {
++        username: parsed.data.username,
++        question: parsed.data.question,
++        category: parsed.data.category || null,
++        status: "pending",
++      },
++    });
++
++    return NextResponse.json({ ok: true, questionId: question.id }, { status: 201 });
++  } catch (err) {
++    reportIncident("question_submit_failed", { scope: "questions", ip, err });
++    return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
++  }
++}
+diff --git a/src/app/questions/[slug]/page.tsx b/src/app/questions/[slug]/page.tsx
+new file mode 100644
+index 0000000..12c462e
+--- /dev/null
++++ b/src/app/questions/[slug]/page.tsx
+@@ -0,0 +1,247 @@
++import type { Metadata } from "next";
++import Link from "next/link";
++import { notFound } from "next/navigation";
++import { SiteHeader } from "@/components/site-header";
++import { SiteFooter } from "@/components/site-footer";
++import { prisma } from "@/lib/prisma";
++import { markdownToHtml, markdownToExcerpt } from "@/lib/markdown";
++import { serializeQuestion } from "@/lib/serialize-question";
++import { getSiteUrl } from "@/lib/site-url";
++
++// ISR: published answers rarely change after the fact, but a short window
++// lets edits/corrections roll out without a full redeploy.
++export const revalidate = 3600;
++
++async function getPublishedQuestion(slug: string) {
++  const question = await prisma.question.findFirst({ where: { slug, status: "published" } });
++  return question ? serializeQuestion(question) : null;
++}
++
++export async function generateStaticParams() {
++  const questions = await prisma.question.findMany({
++    where: { status: "published", slug: { not: null } },
++    select: { slug: true },
++  });
++  return questions.filter((q) => q.slug).map((q) => ({ slug: q.slug as string }));
++}
++
++export async function generateMetadata({
++  params,
++}: {
++  params: Promise<{ slug: string }>;
++}): Promise<Metadata> {
++  const { slug } = await params;
++  const question = await getPublishedQuestion(slug);
++  if (!question) return {};
++
++  const description = question.answer
++    ? markdownToExcerpt(question.answer, 160)
++    : `${question.username} asked: ${question.question}`.slice(0, 160);
++
++  const url = `/questions/${question.slug}`;
++
++  return {
++    title: question.question,
++    description,
++    alternates: { canonical: url },
++    openGraph: {
++      title: question.question,
++      description,
++      url,
++      type: "article",
++      publishedTime: question.publishedAt?.toISOString(),
++    },
++    twitter: {
++      card: "summary",
++      title: question.question,
++      description,
++    },
++  };
++}
++
++export default async function QuestionDetailPage({
++  params,
++}: {
++  params: Promise<{ slug: string }>;
++}) {
++  const { slug } = await params;
++  const question = await getPublishedQuestion(slug);
++  if (!question) notFound();
++
++  const related = await prisma.question.findMany({
++    where: {
++      status: "published",
++      slug: { not: null, notIn: [question.slug as string] },
++      ...(question.category ? { category: question.category } : {}),
++    },
++    orderBy: { publishedAt: "desc" },
++    take: 4,
++  });
++
++  const siteUrl = getSiteUrl();
++  const pageUrl = `${siteUrl}/questions/${question.slug}`;
++  const answerHtml = question.answer ? markdownToHtml(question.answer) : null;
++  const publishedDate = question.publishedAt ? new Date(question.publishedAt) : null;
++
++  const structuredData = {
++    "@context": "https://schema.org",
++    "@type": "QAPage",
++    mainEntity: {
++      "@type": "Question",
++      name: question.question,
++      text: question.question,
++      answerCount: answerHtml ? 1 : 0,
++      dateCreated: question.createdAt.toISOString(),
++      author: { "@type": "Person", name: question.username },
++      ...(answerHtml
++        ? {
++            acceptedAnswer: {
++              "@type": "Answer",
++              text: markdownToExcerpt(question.answer as string, 5000),
++              dateCreated: (publishedDate ?? question.createdAt).toISOString(),
++              url: pageUrl,
++              author: { "@type": "Organization", name: "CreatorOS" },
++            },
++          }
++        : {}),
++    },
++  };
++
++  const breadcrumbData = {
++    "@context": "https://schema.org",
++    "@type": "BreadcrumbList",
++    itemListElement: [
++      { "@type": "ListItem", position: 1, name: "Questions", item: `${siteUrl}/questions` },
++      { "@type": "ListItem", position: 2, name: question.question, item: pageUrl },
++    ],
++  };
++
++  return (
++    <>
++      <SiteHeader />
++      <main className="flex-1 bg-bg">
++        <script
++          type="application/ld+json"
++          // Built entirely from admin-authored, sanitized-at-render content
++          // (see lib/markdown.ts) — no raw user HTML reaches this script tag.
++          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
++        />
++        <script
++          type="application/ld+json"
++          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
++        />
++
++        <section className="px-6 pb-16 pt-16 sm:px-10 sm:pt-24">
++          <div className="mx-auto max-w-3xl">
++            <nav aria-label="Breadcrumb" className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">
++              <Link href="/questions" className="text-text-muted transition-colors hover:text-text">
++                Questions
++              </Link>
++              <span className="mx-2">/</span>
++              <span className="text-text-faint">{question.category || "Answer"}</span>
++            </nav>
++
++            <h1 className="mt-6 text-balance font-display text-[clamp(1.75rem,4.5vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] text-text">
++              {question.question}
++            </h1>
++
++            <div className="mt-5 flex flex-wrap items-center gap-3 font-mono-ui text-xs uppercase tracking-[0.1em] text-text-faint">
++              <span>
++                Asked by <span className="text-text-muted">{question.username}</span>
++              </span>
++              {publishedDate && (
++                <>
++                  <span aria-hidden="true">·</span>
++                  <time dateTime={publishedDate.toISOString()}>
++                    {publishedDate.toLocaleDateString(undefined, {
++                      year: "numeric",
++                      month: "long",
++                      day: "numeric",
++                    })}
++                  </time>
++                </>
++              )}
++              {question.category && (
++                <>
++                  <span aria-hidden="true">·</span>
++                  <span className="text-accent">{question.category}</span>
++                </>
++              )}
++            </div>
++
++            <div className="mt-10 border-t border-border pt-10">
++              <h2 className="font-mono-ui text-xs uppercase tracking-[0.2em] text-accent">Answer</h2>
++              {answerHtml ? (
++                <div
++                  className="prose-answer mt-4 max-w-none text-base leading-relaxed text-text-muted [&_a]:text-accent [&_a]:underline [&_h2]:mt-8 [&_h2]:font-display [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-text [&_h3]:mt-6 [&_h3]:font-display [&_h3]:text-lg [&_h3]:font-bold [&_h3]:text-text [&_li]:ml-5 [&_ol]:list-decimal [&_p]:mt-4 [&_p:first-child]:mt-0 [&_strong]:text-text [&_ul]:list-disc"
++                  dangerouslySetInnerHTML={{ __html: answerHtml }}
++                />
++              ) : (
++                <p className="mt-4 text-sm text-text-muted">This question hasn&apos;t been answered yet.</p>
++              )}
++            </div>
++
++            {question.answerImages.length > 0 && (
++              <div className="mt-10 border-t border-border pt-10">
++                <h2 className="font-mono-ui text-xs uppercase tracking-[0.2em] text-accent">Images</h2>
++                <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
++                  {question.answerImages.map((src) => (
++                    // eslint-disable-next-line @next/next/no-img-element
++                    <img
++                      key={src}
++                      src={src}
++                      alt={question.question}
++                      className="w-full rounded-xl border border-border object-cover"
++                      loading="lazy"
++                    />
++                  ))}
++                </div>
++              </div>
++            )}
++
++            {question.answerVideos.length > 0 && (
++              <div className="mt-10 border-t border-border pt-10">
++                <h2 className="font-mono-ui text-xs uppercase tracking-[0.2em] text-accent">Videos</h2>
++                <div className="mt-4 flex flex-col gap-4">
++                  {question.answerVideos.map((src) => (
++                <video key={src} src={src} controls className="w-full rounded-xl border border-border" />
++                  ))}
++                </div>
++              </div>
++            )}
++
++            <div className="mt-14 border-t border-border pt-8">
++              <Link
++                href="/questions"
++                className="inline-flex items-center gap-2 font-mono-ui text-xs uppercase tracking-[0.15em] text-text-muted transition-colors hover:text-text"
++              >
++                ← Back to Questions
++              </Link>
++            </div>
++
++            {related.length > 0 && (
++              <div className="mt-14 border-t border-border pt-10">
++                <h2 className="font-mono-ui text-xs uppercase tracking-[0.2em] text-text-faint">
++                  Related questions
++                </h2>
++                <ul className="mt-4 flex flex-col gap-3">
++                  {related.map((r) => (
++                    <li key={r.id}>
++                      <Link
++                        href={`/questions/${r.slug}`}
++                        className="text-sm text-text-muted transition-colors hover:text-accent"
++                      >
++                        {r.question}
++                      </Link>
++                    </li>
++                  ))}
++                </ul>
++              </div>
++            )}
++          </div>
++        </section>
++      </main>
++      <SiteFooter />
++    </>
++  );
++}
+diff --git a/src/app/questions/page.tsx b/src/app/questions/page.tsx
+new file mode 100644
+index 0000000..0d248ae
+--- /dev/null
++++ b/src/app/questions/page.tsx
+@@ -0,0 +1,78 @@
++import type { Metadata } from "next";
++import { SiteHeader } from "@/components/site-header";
++import { SiteFooter } from "@/components/site-footer";
++import { Reveal } from "@/components/landing/reveal";
++import { Eyebrow } from "@/components/landing/eyebrow";
++import { QuestionsExplorer, type QuestionListItem } from "@/components/questions/questions-explorer";
++import { prisma } from "@/lib/prisma";
++import { markdownToExcerpt } from "@/lib/markdown";
++
++export const metadata: Metadata = {
++  title: "Questions & Answers",
++  description:
++    "Ask CreatorOS anything and browse answers from the team — pricing, platform support, analytics, brand deals, and more. No account required to ask.",
++  alternates: { canonical: "/questions" },
++  openGraph: {
++    title: "Questions & Answers | CreatorOS",
++    description:
++      "Ask CreatorOS anything and browse answers from the team — pricing, platform support, analytics, brand deals, and more.",
++    url: "/questions",
++    type: "website",
++  },
++  twitter: {
++    card: "summary",
++    title: "Questions & Answers | CreatorOS",
++    description: "Ask CreatorOS anything and browse answers from the team.",
++  },
++};
++
++// ISR: the list is search/filter driven client-side after the first paint,
++// so a moderate revalidate window keeps this cheap while staying fresh.
++export const revalidate = 300;
++
++export default async function QuestionsPage() {
++  const questions = await prisma.question.findMany({
++    where: { status: "published" },
++    orderBy: { publishedAt: "desc" },
++    take: 12,
++  });
++
++  const initialQuestions: QuestionListItem[] = questions.map((q) => ({
++    id: q.id,
++    username: q.username,
++    question: q.question,
++    slug: q.slug ?? "",
++    category: q.category,
++    publishedAt: q.publishedAt ? q.publishedAt.toISOString() : null,
++    excerpt: q.answer ? markdownToExcerpt(q.answer) : "",
++  }));
++
++  return (
++    <>
++      <SiteHeader />
++      <main className="flex-1 bg-bg">
++        <section className="px-6 pb-12 pt-20 sm:px-10 sm:pt-28">
++          <div className="mx-auto max-w-6xl">
++            <Reveal>
++              <Eyebrow>Questions &amp; Answers</Eyebrow>
++              <h1 className="mt-6 max-w-2xl text-balance font-display text-[clamp(2.25rem,6vw,4.5rem)] font-bold leading-[0.98] tracking-[-0.03em] text-text">
++                Ask us anything.
++              </h1>
++              <p className="mt-8 max-w-xl text-balance border-t border-border pt-8 text-lg leading-relaxed text-text-muted">
++                No account needed — just a username. Every question is reviewed and answered by the
++                CreatorOS team.
++              </p>
++            </Reveal>
++          </div>
++        </section>
++
++        <section className="border-t border-border px-6 py-16 sm:px-10 sm:py-20">
++          <div className="mx-auto max-w-6xl">
++            <QuestionsExplorer initialQuestions={initialQuestions} />
++          </div>
++        </section>
++      </main>
++      <SiteFooter />
++    </>
++  );
++}
+diff --git a/src/app/sitemap.ts b/src/app/sitemap.ts
+index e9be7e7..99d27b5 100644
+--- a/src/app/sitemap.ts
++++ b/src/app/sitemap.ts
+@@ -1,14 +1,31 @@
+ import type { MetadataRoute } from "next";
+ import { getSiteUrl } from "@/lib/site-url";
++import { prisma } from "@/lib/prisma";
+ 
+-export default function sitemap(): MetadataRoute.Sitemap {
++export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+   const siteUrl = getSiteUrl();
+-  const routes = ["", "/early-access", "/updates", "/about", "/contact", "/privacy", "/terms"];
++  const routes = ["", "/early-access", "/questions", "/updates", "/about", "/contact", "/privacy", "/terms"];
+ 
+-  return routes.map((route) => ({
++  const staticEntries: MetadataRoute.Sitemap = routes.map((route) => ({
+     url: `${siteUrl}${route}`,
+     lastModified: new Date(),
+     changeFrequency: "weekly",
+     priority: route === "" ? 1 : 0.7,
+   }));
++
++  const questions = await prisma.question.findMany({
++    where: { status: "published", slug: { not: null } },
++    select: { slug: true, updatedAt: true },
++  });
++
++  const questionEntries: MetadataRoute.Sitemap = questions
++    .filter((q) => q.slug)
++    .map((q) => ({
++      url: `${siteUrl}/questions/${q.slug}`,
++      lastModified: q.updatedAt,
++      changeFrequency: "monthly",
++      priority: 0.6,
++    }));
++
++  return [...staticEntries, ...questionEntries];
+ }
+diff --git a/src/components/admin/admin-nav.tsx b/src/components/admin/admin-nav.tsx
+index 78fd2d2..91ca8c5 100644
+--- a/src/components/admin/admin-nav.tsx
++++ b/src/components/admin/admin-nav.tsx
+@@ -4,11 +4,20 @@ import Link from "next/link";
+ import { usePathname } from "next/navigation";
+ import { useState } from "react";
+ import { LogoutButton } from "./logout-button";
+-import { DashboardIcon, CreatorsIcon, AnalyticsIcon, AnnouncementsIcon, MenuIcon, CloseIcon } from "./nav-icons";
++import {
++  DashboardIcon,
++  CreatorsIcon,
++  AnalyticsIcon,
++  AnnouncementsIcon,
++  QuestionsIcon,
++  MenuIcon,
++  CloseIcon,
++} from "./nav-icons";
+ 
+ const NAV_ITEMS = [
+   { href: "/admin", label: "Dashboard", icon: DashboardIcon, exact: true },
+   { href: "/admin/creators", label: "Creators", icon: CreatorsIcon },
++  { href: "/admin/questions", label: "Questions", icon: QuestionsIcon },
+   { href: "/admin/analytics", label: "Analytics", icon: AnalyticsIcon },
+   { href: "/admin/announcements", label: "Annunci", icon: AnnouncementsIcon },
+ ] as const;
+diff --git a/src/components/admin/nav-icons.tsx b/src/components/admin/nav-icons.tsx
+index 93571a2..ff0b7d1 100644
+--- a/src/components/admin/nav-icons.tsx
++++ b/src/components/admin/nav-icons.tsx
+@@ -45,6 +45,17 @@ export function AnnouncementsIcon({ className = "" }: IconProps) {
+   );
+ }
+ 
++export function QuestionsIcon({ className = "" }: IconProps) {
++  return (
++    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className={`${base} ${className}`}>
++      <path d="M12 16.5v.01" />
++      <path d="M9.5 9.25a2.5 2.5 0 1 1 3.7 2.2c-.85.5-1.2 1-1.2 1.8v.25" />
++      <rect x="3.5" y="3.5" width="17" height="14" rx="2.5" />
++      <path d="M8 21.5 12 17.5" />
++    </svg>
++  );
++}
++
+ export function MenuIcon({ className = "" }: IconProps) {
+   return (
+     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className={`${base} ${className}`}>
+diff --git a/src/components/questions/ask-question-modal.tsx b/src/components/questions/ask-question-modal.tsx
+new file mode 100644
+index 0000000..0b5f0d5
+--- /dev/null
++++ b/src/components/questions/ask-question-modal.tsx
+@@ -0,0 +1,210 @@
++"use client";
++
++import { useEffect, useState } from "react";
++import { askQuestionSchema } from "@/lib/validation";
++import { QUESTION_CATEGORIES } from "@/lib/constants";
++import { trackEvent } from "@/lib/analytics";
++
++const inputClass =
++  "w-full rounded-lg border border-border bg-bg-elevated px-4 py-2.5 text-sm text-text placeholder:text-text-faint transition-colors focus:border-accent focus:outline-none focus-visible:outline-none";
++
++interface Props {
++  open: boolean;
++  onClose: () => void;
++  onSubmitted?: () => void;
++}
++
++const initialState = { username: "", question: "", category: "", website: "" };
++
++export function AskQuestionModal({ open, onClose, onSubmitted }: Props) {
++  const [form, setForm] = useState(initialState);
++  const [errors, setErrors] = useState<Record<string, string>>({});
++  const [submitting, setSubmitting] = useState(false);
++  const [serverError, setServerError] = useState<string | null>(null);
++  const [success, setSuccess] = useState(false);
++  // Captured once per mount. The parent remounts this component (via a
++  // changing `key`) each time the modal opens, so this timestamp — and all
++  // the state above — is naturally fresh without an effect-driven reset.
++  const [renderedAt] = useState(() => Date.now());
++
++  useEffect(() => {
++    if (!open) return;
++    function handleKey(e: KeyboardEvent) {
++      if (e.key === "Escape") onClose();
++    }
++    document.addEventListener("keydown", handleKey);
++    return () => document.removeEventListener("keydown", handleKey);
++  }, [open, onClose]);
++
++  if (!open) return null;
++
++  async function handleSubmit(e: React.FormEvent) {
++    e.preventDefault();
++    setServerError(null);
++
++    const parsed = askQuestionSchema.safeParse({
++      username: form.username,
++      question: form.question,
++      category: form.category || undefined,
++      website: form.website,
++      formRenderedAt: renderedAt ?? undefined,
++    });
++
++    if (!parsed.success) {
++      const fieldErrors: Record<string, string> = {};
++      for (const issue of parsed.error.issues) {
++        const key = String(issue.path[0]);
++        if (!fieldErrors[key]) fieldErrors[key] = issue.message;
++      }
++      setErrors(fieldErrors);
++      return;
++    }
++    setErrors({});
++    setSubmitting(true);
++
++    try {
++      const res = await fetch("/api/questions", {
++        method: "POST",
++        headers: { "Content-Type": "application/json" },
++        body: JSON.stringify(parsed.data),
++      });
++
++      if (res.ok) {
++        trackEvent("question_ask_submit", { category: form.category || "none" });
++        setSuccess(true);
++        onSubmitted?.();
++      } else {
++        const data = await res.json().catch(() => ({}));
++        setServerError(data.error || "Something went wrong. Please try again.");
++      }
++    } catch {
++      setServerError("Something went wrong. Please try again.");
++    } finally {
++      setSubmitting(false);
++    }
++  }
++
++  return (
++    <div className="fixed inset-0 z-[60] flex items-center justify-center px-4 py-10">
++      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
++      <div
++        role="dialog"
++        aria-modal="true"
++        aria-labelledby="ask-question-title"
++        className="relative w-full max-w-lg rounded-2xl border border-border bg-bg-elevated p-6 shadow-2xl sm:p-8"
++      >
++        <button
++          type="button"
++          onClick={onClose}
++          aria-label="Close"
++          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-elevated-2 hover:text-text"
++        >
++          ✕
++        </button>
++
++        {success ? (
++          <div className="py-6 text-center">
++            <p className="font-mono-ui text-xs uppercase tracking-[0.15em] text-accent">Thanks!</p>
++            <h2 className="mt-3 font-display text-2xl font-bold text-text">Your question is in.</h2>
++            <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-text-muted">
++              We review every question before it goes live. Once it&apos;s answered, it&apos;ll be
++              published on the Questions page.
++            </p>
++            <button
++              type="button"
++              onClick={onClose}
++              className="mt-6 rounded-full bg-accent px-6 py-2.5 font-mono-ui text-xs font-medium uppercase tracking-[0.15em] text-bg transition-transform hover:scale-[1.03]"
++            >
++              Done
++            </button>
++          </div>
++        ) : (
++          <>
++            <h2 id="ask-question-title" className="font-display text-2xl font-bold text-text">
++              Ask a question.
++            </h2>
++            <p className="mt-2 text-sm text-text-muted">
++              No account needed — just a username. We&apos;ll review it before it&apos;s published.
++            </p>
++
++            <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4" noValidate>
++              {/* Honeypot — hidden from real users via CSS, bots often fill every field. */}
++              <div className="absolute -left-[9999px]" aria-hidden="true">
++                <label htmlFor="website">Leave this field empty</label>
++                <input
++                  id="website"
++                  name="website"
++                  type="text"
++                  tabIndex={-1}
++                  autoComplete="off"
++                  value={form.website}
++                  onChange={(e) => setForm((f) => ({ ...f, website: e.target.value }))}
++                />
++              </div>
++
++              <div>
++                <label htmlFor="username" className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-text-faint">
++                  Username
++                </label>
++                <input
++                  id="username"
++                  className={inputClass}
++                  placeholder="e.g. creatorjane"
++                  maxLength={40}
++                  value={form.username}
++                  onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))}
++                />
++                {errors.username && <p className="mt-1 text-xs text-accent">{errors.username}</p>}
++              </div>
++
++              <div>
++                <label htmlFor="category" className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-text-faint">
++                  Category (optional)
++                </label>
++                <select
++                  id="category"
++                  className={inputClass}
++                  value={form.category}
++                  onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
++                >
++                  <option value="">Select a category</option>
++                  {QUESTION_CATEGORIES.map((c) => (
++                    <option key={c} value={c}>
++                      {c}
++                    </option>
++                  ))}
++                </select>
++              </div>
++
++              <div>
++                <label htmlFor="question" className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-text-faint">
++                  Your question
++                </label>
++                <textarea
++                  id="question"
++                  rows={4}
++                  className={inputClass}
++                  placeholder="What do you want to know?"
++                  maxLength={1000}
++                  value={form.question}
++                  onChange={(e) => setForm((f) => ({ ...f, question: e.target.value }))}
++                />
++                {errors.question && <p className="mt-1 text-xs text-accent">{errors.question}</p>}
++              </div>
++
++              {serverError && <p className="text-sm text-accent">{serverError}</p>}
++
++              <button
++                type="submit"
++                disabled={submitting}
++                className="mt-2 rounded-full bg-accent px-6 py-3 font-mono-ui text-xs font-medium uppercase tracking-[0.15em] text-bg transition-transform hover:scale-[1.03] disabled:cursor-not-allowed disabled:opacity-60"
++              >
++                {submitting ? "Submitting…" : "Submit question"}
++              </button>
++            </form>
++          </>
++        )}
++      </div>
++    </div>
++  );
++}
+diff --git a/src/components/questions/questions-explorer.tsx b/src/components/questions/questions-explorer.tsx
+new file mode 100644
+index 0000000..75d12ca
+--- /dev/null
++++ b/src/components/questions/questions-explorer.tsx
+@@ -0,0 +1,236 @@
++"use client";
++
++import { useCallback, useEffect, useState } from "react";
++import Link from "next/link";
++import { QUESTION_CATEGORIES } from "@/lib/constants";
++import { trackEvent } from "@/lib/analytics";
++import { AskQuestionModal } from "./ask-question-modal";
++
++export interface QuestionListItem {
++  id: string;
++  username: string;
++  question: string;
++  slug: string;
++  category: string | null;
++  publishedAt: string | null;
++  excerpt: string;
++}
++
++const TABS = [
++  { value: "latest", label: "Latest Questions" },
++  { value: "recently_answered", label: "Most Recent Answers" },
++] as const;
++
++export function QuestionsExplorer({ initialQuestions }: { initialQuestions: QuestionListItem[] }) {
++  const [questions, setQuestions] = useState<QuestionListItem[]>(initialQuestions);
++  const [total, setTotal] = useState(initialQuestions.length);
++  const [loading, setLoading] = useState(false);
++  const [search, setSearch] = useState("");
++  const [category, setCategory] = useState("");
++  const [tab, setTab] = useState<(typeof TABS)[number]["value"]>("latest");
++  const [page, setPage] = useState(1);
++  const [modalOpen, setModalOpen] = useState(false);
++  const [modalKey, setModalKey] = useState(0);
++  const pageSize = 12;
++
++  const load = useCallback(async () => {
++    setLoading(true);
++    const params = new URLSearchParams({
++      search,
++      category,
++      sort: tab,
++      page: String(page),
++      pageSize: String(pageSize),
++    });
++    try {
++      const res = await fetch(`/api/questions?${params.toString()}`);
++      if (res.ok) {
++        const data = await res.json();
++        setQuestions(
++          data.questions.map((q: { id: string; username: string; question: string; slug: string; category: string | null; publishedAt: string | null; answer: string | null }) => ({
++            id: q.id,
++            username: q.username,
++            question: q.question,
++            slug: q.slug,
++            category: q.category,
++            publishedAt: q.publishedAt,
++            excerpt: q.answer ? q.answer.slice(0, 160) : "",
++          }))
++        );
++        setTotal(data.total);
++      }
++    } finally {
++      setLoading(false);
++    }
++  }, [search, category, tab, page]);
++
++  useEffect(() => {
++    const timeout = setTimeout(() => {
++      load();
++      if (search) trackEvent("questions_search", { query: search });
++    }, 300);
++    return () => clearTimeout(timeout);
++    // eslint-disable-next-line react-hooks/exhaustive-deps
++  }, [search, category, tab, page]);
++
++  const totalPages = Math.max(1, Math.ceil(total / pageSize));
++
++  return (
++    <div>
++      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
++        <div className="relative w-full sm:max-w-sm">
++          <input
++            type="search"
++            value={search}
++            onChange={(e) => {
++              setSearch(e.target.value);
++              setPage(1);
++            }}
++            placeholder="Search questions…"
++            className="w-full rounded-lg border border-border bg-bg-elevated px-4 py-2.5 text-sm text-text placeholder:text-text-faint transition-colors focus:border-accent focus:outline-none"
++          />
++        </div>
++        <button
++          type="button"
++          onClick={() => {
++            trackEvent("question_ask_open", { location: "questions_page" });
++            setModalKey((k) => k + 1);
++            setModalOpen(true);
++          }}
++          className="shrink-0 rounded-full bg-accent px-6 py-2.5 font-mono-ui text-xs font-medium uppercase tracking-[0.15em] text-bg transition-transform hover:scale-[1.03]"
++        >
++          Ask a Question
++        </button>
++      </div>
++
++      <div className="mt-6 flex flex-wrap items-center gap-2">
++        <button
++          type="button"
++          onClick={() => {
++            setCategory("");
++            setPage(1);
++          }}
++          className={`rounded-full border px-3.5 py-1.5 font-mono-ui text-[11px] uppercase tracking-[0.1em] transition-colors ${
++            category === ""
++              ? "border-accent text-accent"
++              : "border-border text-text-muted hover:border-border-strong hover:text-text"
++          }`}
++        >
++          All
++        </button>
++        {QUESTION_CATEGORIES.map((c) => (
++          <button
++            key={c}
++            type="button"
++            onClick={() => {
++              setCategory(c);
++              setPage(1);
++            }}
++            className={`rounded-full border px-3.5 py-1.5 font-mono-ui text-[11px] uppercase tracking-[0.1em] transition-colors ${
++              category === c
++                ? "border-accent text-accent"
++                : "border-border text-text-muted hover:border-border-strong hover:text-text"
++            }`}
++          >
++            {c}
++          </button>
++        ))}
++      </div>
++
++      <div className="mt-8 flex items-center gap-6 border-b border-border">
++        {TABS.map((t) => (
++          <button
++            key={t.value}
++            type="button"
++            onClick={() => {
++              setTab(t.value);
++              setPage(1);
++            }}
++            className={`-mb-px border-b-2 px-1 pb-3 font-mono-ui text-xs uppercase tracking-[0.15em] transition-colors ${
++              tab === t.value ? "border-accent text-text" : "border-transparent text-text-faint hover:text-text-muted"
++            }`}
++          >
++            {t.label}
++          </button>
++        ))}
++      </div>
++
++      <div className="mt-8">
++        {loading && questions.length === 0 ? (
++          <p className="py-12 text-center text-sm text-text-muted">Loading…</p>
++        ) : questions.length === 0 ? (
++          <div className="py-16 text-center">
++            <p className="text-sm text-text-muted">No questions found yet.</p>
++            <button
++              type="button"
++              onClick={() => {
++                setModalKey((k) => k + 1);
++                setModalOpen(true);
++              }}
++              className="mt-4 rounded-full border border-border-strong px-5 py-2 font-mono-ui text-xs uppercase tracking-[0.15em] text-text transition-colors hover:border-accent hover:text-accent"
++            >
++              Be the first to ask
++            </button>
++          </div>
++        ) : (
++          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
++            {questions.map((q) => (
++              <Link
++                key={q.id}
++                href={`/questions/${q.slug}`}
++                className="group rounded-xl border border-border bg-bg-elevated p-5 transition-colors hover:border-border-strong"
++              >
++                {q.category && (
++                  <span className="font-mono-ui text-[10px] uppercase tracking-[0.15em] text-accent">
++                    {q.category}
++                  </span>
++                )}
++                <h3 className="mt-2 font-display text-lg font-bold leading-snug text-text group-hover:text-accent">
++                  {q.question}
++                </h3>
++                {q.excerpt && <p className="mt-2 line-clamp-2 text-sm text-text-muted">{q.excerpt}</p>}
++                <div className="mt-4 flex items-center justify-between font-mono-ui text-[11px] uppercase tracking-[0.1em] text-text-faint">
++                  <span>Asked by {q.username}</span>
++                  {q.publishedAt && <span>{new Date(q.publishedAt).toLocaleDateString()}</span>}
++                </div>
++              </Link>
++            ))}
++          </div>
++        )}
++      </div>
++
++      {totalPages > 1 && (
++        <div className="mt-10 flex items-center justify-center gap-3">
++          <button
++            type="button"
++            disabled={page <= 1}
++            onClick={() => setPage((p) => Math.max(1, p - 1))}
++            className="rounded-full border border-border px-4 py-2 font-mono-ui text-xs uppercase tracking-[0.1em] text-text-muted transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-40"
++          >
++            Previous
++          </button>
++          <span className="font-mono-ui text-xs text-text-faint">
++            Page {page} of {totalPages}
++          </span>
++          <button
++            type="button"
++            disabled={page >= totalPages}
++            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
++            className="rounded-full border border-border px-4 py-2 font-mono-ui text-xs uppercase tracking-[0.1em] text-text-muted transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-40"
++          >
++            Next
++          </button>
++        </div>
++      )}
++
++      <AskQuestionModal
++        key={modalKey}
++        open={modalOpen}
++        onClose={() => setModalOpen(false)}
++        onSubmitted={() => {
++          setPage(1);
++        }}
++      />
++    </div>
++  );
++}
+diff --git a/src/components/site-footer.tsx b/src/components/site-footer.tsx
+index a521648..2264c9a 100644
+--- a/src/components/site-footer.tsx
++++ b/src/components/site-footer.tsx
+@@ -23,6 +23,7 @@ export function SiteFooter() {
+               links={[
+                 { href: "/", label: "CreatorOS" },
+                 { href: "/early-access", label: "Early Access" },
++                { href: "/questions", label: "Questions" },
+                 { href: "/updates", label: "Updates" },
+               ]}
+             />
+diff --git a/src/components/site-header.tsx b/src/components/site-header.tsx
+index fc469d2..22ec6c5 100644
+--- a/src/components/site-header.tsx
++++ b/src/components/site-header.tsx
+@@ -6,6 +6,7 @@ import { TrackedLink } from "@/components/analytics/tracked-link";
+ 
+ const NAV_LINKS = [
+   { href: "/#problem", label: "Why CreatorOS" },
++  { href: "/questions", label: "Questions" },
+   { href: "/updates", label: "Updates" },
+   { href: "/about", label: "About" },
+   { href: "/contact", label: "Contact" },
+diff --git a/src/lib/__tests__/markdown.test.ts b/src/lib/__tests__/markdown.test.ts
+new file mode 100644
+index 0000000..3afed9b
+--- /dev/null
++++ b/src/lib/__tests__/markdown.test.ts
+@@ -0,0 +1,48 @@
++import { describe, it, expect } from "vitest";
++import { markdownToHtml, markdownToExcerpt } from "../markdown";
++
++describe("markdownToHtml", () => {
++  it("renders paragraphs, bold, italic", () => {
++    const html = markdownToHtml("Hello **world**, this is *great*.");
++    expect(html).toBe("<p>Hello <strong>world</strong>, this is <em>great</em>.</p>");
++  });
++
++  it("renders headings", () => {
++    expect(markdownToHtml("## Section title")).toBe("<h2>Section title</h2>");
++    expect(markdownToHtml("### Sub title")).toBe("<h3>Sub title</h3>");
++  });
++
++  it("renders bullet and numbered lists", () => {
++    expect(markdownToHtml("- one\n- two")).toBe("<ul><li>one</li><li>two</li></ul>");
++    expect(markdownToHtml("1. one\n2. two")).toBe("<ol><li>one</li><li>two</li></ol>");
++  });
++
++  it("renders safe links only for http(s)", () => {
++    expect(markdownToHtml("[docs](https://example.com)")).toContain(
++      '<a href="https://example.com" rel="noopener noreferrer nofollow">docs</a>'
++    );
++    // javascript: URIs are not recognized as links and pass through as plain (escaped) text.
++    expect(markdownToHtml("[x](javascript:alert(1))")).not.toContain("<a");
++  });
++
++  it("never emits raw HTML from input — script tags are escaped, not executed", () => {
++    const html = markdownToHtml("<script>alert(1)</script>");
++    expect(html).not.toContain("<script>");
++    expect(html).toContain("&lt;script&gt;");
++  });
++});
++
++describe("markdownToExcerpt", () => {
++  it("strips markdown syntax and truncates", () => {
++    expect(markdownToExcerpt("## Title\n\nSome **bold** text here.")).toBe(
++      "Title Some bold text here."
++    );
++  });
++
++  it("truncates with an ellipsis past maxLength", () => {
++    const long = "a".repeat(200);
++    const excerpt = markdownToExcerpt(long, 50);
++    expect(excerpt.length).toBe(50);
++    expect(excerpt.endsWith("…")).toBe(true);
++  });
++});
+diff --git a/src/lib/__tests__/slug.test.ts b/src/lib/__tests__/slug.test.ts
+new file mode 100644
+index 0000000..5d2361c
+--- /dev/null
++++ b/src/lib/__tests__/slug.test.ts
+@@ -0,0 +1,34 @@
++import { describe, it, expect } from "vitest";
++import { slugify, generateUniqueSlug } from "../slug";
++
++describe("slugify", () => {
++  it("lowercases and hyphenates", () => {
++    expect(slugify("How Does CreatorOS Work?")).toBe("how-does-creatoros-work");
++  });
++
++  it("strips accents and punctuation", () => {
++    expect(slugify("Café's Été Guide!!")).toBe("cafes-ete-guide");
++  });
++
++  it("falls back to a default for empty input", () => {
++    expect(slugify("???")).toBe("question");
++  });
++
++  it("truncates very long titles", () => {
++    const long = "word ".repeat(40);
++    expect(slugify(long).length).toBeLessThanOrEqual(80);
++  });
++});
++
++describe("generateUniqueSlug", () => {
++  it("returns the base slug when free", async () => {
++    const slug = await generateUniqueSlug("Hello world", async () => false);
++    expect(slug).toBe("hello-world");
++  });
++
++  it("appends a numeric suffix until free", async () => {
++    const taken = new Set(["hello-world", "hello-world-2"]);
++    const slug = await generateUniqueSlug("Hello world", async (candidate) => taken.has(candidate));
++    expect(slug).toBe("hello-world-3");
++  });
++});
+diff --git a/src/lib/analytics.ts b/src/lib/analytics.ts
+index baca4e0..677967f 100644
+--- a/src/lib/analytics.ts
++++ b/src/lib/analytics.ts
+@@ -20,7 +20,11 @@ export type AnalyticsEvent =
+   | "early_access_form_start"
+   | "early_access_form_submit"
+   | "early_access_signup"
+-  | "email_verified";
++  | "email_verified"
++  | "question_ask_open"
++  | "question_ask_submit"
++  | "question_view"
++  | "questions_search";
+ 
+ export type AnalyticsProps = Record<string, string | number | boolean | null | undefined>;
+ 
+diff --git a/src/lib/audit-log.ts b/src/lib/audit-log.ts
+index 4fc3109..ff9027f 100644
+--- a/src/lib/audit-log.ts
++++ b/src/lib/audit-log.ts
+@@ -8,7 +8,13 @@
+  * (Vercel logs, journald, etc.) without a schema change.
+  */
+ 
+-export type AuditAction = "creator.delete" | "creator.update" | "announcement.send";
++export type AuditAction =
++  | "creator.delete"
++  | "creator.update"
++  | "announcement.send"
++  | "question.update"
++  | "question.publish"
++  | "question.delete";
+ 
+ interface AuditLogInput {
+   action: AuditAction;
+@@ -16,17 +22,20 @@ interface AuditLogInput {
+   actor: string;
+   /** Creator affected by this action, if any. */
+   creatorId?: string;
++  /** Question affected by this action, if any. */
++  questionId?: string;
+   /** Small, non-sensitive extra context (e.g. changed fields, send counts). */
+   metadata?: Record<string, string | number | boolean | null>;
+ }
+ 
+-export function logAdminAction({ action, actor, creatorId, metadata }: AuditLogInput): void {
++export function logAdminAction({ action, actor, creatorId, questionId, metadata }: AuditLogInput): void {
+   const record = {
+     type: "admin_audit",
+     timestamp: new Date().toISOString(),
+     action,
+     actor,
+     ...(creatorId ? { creatorId } : {}),
++    ...(questionId ? { questionId } : {}),
+     ...(metadata ? { metadata } : {}),
+   };
+   // Kept as a plain console.log (not console.error) so it doesn't get mixed
+diff --git a/src/lib/constants.ts b/src/lib/constants.ts
+index 77829aa..eccf1ca 100644
+--- a/src/lib/constants.ts
++++ b/src/lib/constants.ts
+@@ -96,6 +96,30 @@ export const STATUS_COLORS: Record<CreatorStatusValue, string> = {
+   REJECTED: "badge-danger",
+ };
+ 
++// --- Public Q&A -----------------------------------------------------------
++
++export const QUESTION_STATUSES = ["pending", "published"] as const;
++export type QuestionStatusValue = (typeof QUESTION_STATUSES)[number];
++
++export const QUESTION_STATUS_LABELS: Record<QuestionStatusValue, string> = {
++  pending: "Pending",
++  published: "Published",
++};
++
++// Free-text but constrained to a known set in the ask form, so /questions
++// can offer a meaningful category filter without moderation overhead.
++export const QUESTION_CATEGORIES = [
++  "General",
++  "Getting Started",
++  "Pricing & Plans",
++  "Platforms & Integrations",
++  "Analytics",
++  "Brand Deals",
++  "Account & Billing",
++  "Other",
++] as const;
++export type QuestionCategoryValue = (typeof QUESTION_CATEGORIES)[number];
++
+ // Bumped whenever the Privacy Policy content changes materially. Stored on
+ // each Creator record at signup time so we always know which version of the
+ // policy a given consent was given under (GDPR accountability requirement).
+diff --git a/src/lib/markdown.ts b/src/lib/markdown.ts
+new file mode 100644
+index 0000000..517637e
+--- /dev/null
++++ b/src/lib/markdown.ts
+@@ -0,0 +1,127 @@
++/**
++ * Minimal Markdown -> HTML renderer for the answer editor.
++ *
++ * Deliberately not a general-purpose Markdown library: it supports the
++ * small subset the answer editor's toolbar produces (bold, italic,
++ * headings, links, bullet/numbered lists, paragraphs) and nothing else.
++ *
++ * Safety model: the input is HTML-escaped up front, so every tag in the
++ * output is one this file explicitly emits. There is no path from admin
++ * input to an arbitrary/raw HTML tag, which avoids needing a full HTML
++ * sanitizer dependency for content that is later rendered on public pages.
++ */
++
++function escapeHtml(input: string): string {
++  return input
++    .replace(/&/g, "&amp;")
++    .replace(/</g, "&lt;")
++    .replace(/>/g, "&gt;")
++    .replace(/"/g, "&quot;")
++    .replace(/'/g, "&#39;");
++}
++
++// Applied after escaping, so `&lt;` etc. from the escape step are inert —
++// only these specific patterns can introduce tags.
++function applyInlineFormatting(escaped: string): string {
++  let text = escaped;
++
++  // Links: [label](https://example.com) — http(s) only, to rule out
++  // javascript:/data: URIs.
++  text = text.replace(
++    /\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g,
++    (_m, label: string, url: string) => `<a href="${url}" rel="noopener noreferrer nofollow">${label}</a>`
++  );
++
++  // Bold then italic, so **a** isn't partially consumed by the italic rule.
++  text = text.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
++  text = text.replace(/\*([^*\n]+)\*/g, "<em>$1</em>");
++
++  return text;
++}
++
++export function markdownToHtml(markdown: string): string {
++  const escaped = escapeHtml(markdown.replace(/\r\n/g, "\n").trim());
++  const lines = escaped.split("\n");
++
++  const blocks: string[] = [];
++  let paragraph: string[] = [];
++  let list: { type: "ul" | "ol"; items: string[] } | null = null;
++
++  function flushParagraph() {
++    if (paragraph.length) {
++      blocks.push(`<p>${applyInlineFormatting(paragraph.join(" "))}</p>`);
++      paragraph = [];
++    }
++  }
++
++  function flushList() {
++    if (list) {
++      const items = list.items.map((item) => `<li>${applyInlineFormatting(item)}</li>`).join("");
++      blocks.push(`<${list.type}>${items}</${list.type}>`);
++      list = null;
++    }
++  }
++
++  for (const rawLine of lines) {
++    const line = rawLine.trim();
++
++    if (!line) {
++      flushParagraph();
++      flushList();
++      continue;
++    }
++
++    const heading = /^(#{2,3})\s+(.*)$/.exec(line);
++    if (heading) {
++      flushParagraph();
++      flushList();
++      const level = heading[1].length; // 2 or 3
++      blocks.push(`<h${level}>${applyInlineFormatting(heading[2])}</h${level}>`);
++      continue;
++    }
++
++    const bullet = /^[-*]\s+(.*)$/.exec(line);
++    if (bullet) {
++      flushParagraph();
++      if (!list || list.type !== "ul") {
++        flushList();
++        list = { type: "ul", items: [] };
++      }
++      list.items.push(bullet[1]);
++      continue;
++    }
++
++    const numbered = /^\d+\.\s+(.*)$/.exec(line);
++    if (numbered) {
++      flushParagraph();
++      if (!list || list.type !== "ol") {
++        flushList();
++        list = { type: "ol", items: [] };
++      }
++      list.items.push(numbered[1]);
++      continue;
++    }
++
++    flushList();
++    paragraph.push(line);
++  }
++
++  flushParagraph();
++  flushList();
++
++  return blocks.join("\n");
++}
++
++/** Plain-text excerpt for meta descriptions / card previews. */
++export function markdownToExcerpt(markdown: string, maxLength = 160): string {
++  const plain = markdown
++    .replace(/\r\n/g, "\n")
++    .replace(/^#{1,6}\s+/gm, "")
++    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
++    .replace(/[*_`>-]/g, "")
++    .replace(/\n+/g, " ")
++    .trim();
++
++  if (plain.length <= maxLength) return plain;
++  return `${plain.slice(0, maxLength - 1).trimEnd()}…`;
++}
+diff --git a/src/lib/media-upload.ts b/src/lib/media-upload.ts
+new file mode 100644
+index 0000000..4b3d679
+--- /dev/null
++++ b/src/lib/media-upload.ts
+@@ -0,0 +1,75 @@
++import { mkdir, writeFile } from "fs/promises";
++import path from "path";
++import { randomUUID } from "crypto";
++
++/**
++ * Stores an uploaded answer image/video under `public/uploads/questions`
++ * and returns the public URL to save on the Question record.
++ *
++ * NOTE: this writes to the local filesystem, which works for any
++ * traditional/persistent-disk deployment (a VM, a container with a mounted
++ * volume, `next start` behind a process manager, etc.) but NOT for
++ * serverless platforms with an ephemeral filesystem (e.g. Vercel), where
++ * files written here won't survive past the request. If this app is
++ * deployed serverless, swap this function's body for an object-storage
++ * provider (S3, Vercel Blob, Cloudinary, ...) — every call site in this
++ * codebase only depends on the `{ url }` return shape, so that's a
++ * same-signature swap.
++ */
++
++const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads", "questions");
++const PUBLIC_PREFIX = "/uploads/questions";
++
++const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
++const ALLOWED_VIDEO_TYPES = new Set(["video/mp4", "video/webm", "video/quicktime"]);
++
++const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8MB
++const MAX_VIDEO_BYTES = 100 * 1024 * 1024; // 100MB
++
++const EXTENSION_BY_TYPE: Record<string, string> = {
++  "image/jpeg": "jpg",
++  "image/png": "png",
++  "image/webp": "webp",
++  "image/gif": "gif",
++  "video/mp4": "mp4",
++  "video/webm": "webm",
++  "video/quicktime": "mov",
++};
++
++export class MediaUploadError extends Error {
++  constructor(
++    message: string,
++    public status: number
++  ) {
++    super(message);
++  }
++}
++
++export async function saveUploadedMedia(file: File): Promise<{ url: string; kind: "image" | "video" }> {
++  const isImage = ALLOWED_IMAGE_TYPES.has(file.type);
++  const isVideo = ALLOWED_VIDEO_TYPES.has(file.type);
++
++  if (!isImage && !isVideo) {
++    throw new MediaUploadError(
++      "Unsupported file type. Allowed: JPEG, PNG, WEBP, GIF, MP4, WEBM, MOV.",
++      415
++    );
++  }
++
++  const maxBytes = isImage ? MAX_IMAGE_BYTES : MAX_VIDEO_BYTES;
++  if (file.size > maxBytes) {
++    throw new MediaUploadError(
++      `File too large. Max size is ${Math.round(maxBytes / (1024 * 1024))}MB.`,
++      413
++    );
++  }
++
++  const extension = EXTENSION_BY_TYPE[file.type];
++  const filename = `${randomUUID()}.${extension}`;
++
++  await mkdir(UPLOAD_DIR, { recursive: true });
++  const buffer = Buffer.from(await file.arrayBuffer());
++  await writeFile(path.join(UPLOAD_DIR, filename), buffer);
++
++  return { url: `${PUBLIC_PREFIX}/${filename}`, kind: isImage ? "image" : "video" };
++}
+diff --git a/src/lib/monitoring.ts b/src/lib/monitoring.ts
+index 6978805..d83eef2 100644
+--- a/src/lib/monitoring.ts
++++ b/src/lib/monitoring.ts
+@@ -17,7 +17,8 @@ export type MonitoringEvent =
+   | "health_check_degraded"
+   | "signup_failed"
+   | "signup_email_failed"
+-  | "signup_cookie_failed";
++  | "signup_cookie_failed"
++  | "question_submit_failed";
+ 
+ export type MonitoringDetails = Record<string, unknown>;
+ 
+diff --git a/src/lib/serialize-question.ts b/src/lib/serialize-question.ts
+new file mode 100644
+index 0000000..fbf3815
+--- /dev/null
++++ b/src/lib/serialize-question.ts
+@@ -0,0 +1,20 @@
++import type { Question } from "@prisma/client";
++
++function safeParseArray(value: string): string[] {
++  try {
++    const parsed = JSON.parse(value);
++    return Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === "string") : [];
++  } catch {
++    return [];
++  }
++}
++
++export function serializeQuestion(question: Question) {
++  return {
++    ...question,
++    answerImages: safeParseArray(question.answerImages),
++    answerVideos: safeParseArray(question.answerVideos),
++  };
++}
++
++export type SerializedQuestion = ReturnType<typeof serializeQuestion>;
+diff --git a/src/lib/slug.ts b/src/lib/slug.ts
+new file mode 100644
+index 0000000..6a125fd
+--- /dev/null
++++ b/src/lib/slug.ts
+@@ -0,0 +1,39 @@
++/**
++ * URL slug generation for published questions (e.g.
++ * /questions/how-does-creatoros-work).
++ */
++
++const MAX_SLUG_LENGTH = 80;
++
++export function slugify(input: string): string {
++  const base = input
++    .normalize("NFKD")
++    .replace(/[\u0300-\u036f]/g, "") // strip accents
++    .toLowerCase()
++    .replace(/['"]/g, "")
++    .replace(/[^a-z0-9]+/g, "-")
++    .replace(/^-+|-+$/g, "")
++    .slice(0, MAX_SLUG_LENGTH)
++    .replace(/-+$/g, "");
++
++  return base || "question";
++}
++
++/**
++ * Appends a short numeric suffix (-2, -3, ...) until `isTaken` reports the
++ * candidate slug is free. `isTaken` is expected to exclude the record being
++ * (re)published itself, if any.
++ */
++export async function generateUniqueSlug(
++  title: string,
++  isTaken: (candidate: string) => Promise<boolean>
++): Promise<string> {
++  const base = slugify(title);
++  let candidate = base;
++  let suffix = 2;
++  while (await isTaken(candidate)) {
++    candidate = `${base}-${suffix}`;
++    suffix += 1;
++  }
++  return candidate;
++}
+diff --git a/src/lib/validation.ts b/src/lib/validation.ts
+index fd0db51..d278a1a 100644
+--- a/src/lib/validation.ts
++++ b/src/lib/validation.ts
+@@ -6,6 +6,8 @@ import {
+   CREATOR_EXPERIENCE,
+   PRODUCT_INTERESTS,
+   CREATOR_STATUSES,
++  QUESTION_STATUSES,
++  QUESTION_CATEGORIES,
+ } from "./constants";
+ 
+ const platformValues = PLATFORMS.map((p) => p.value) as [string, ...string[]];
+@@ -67,3 +69,41 @@ export const statusUpdateSchema = z.object({
+ export const internalNoteSchema = z.object({
+   internalNotes: z.string().max(10000),
+ });
++
++// --- Public Q&A -------------------------------------------------------
++
++const usernamePattern = /^[\p{L}\p{N} ._-]+$/u;
++
++export const askQuestionSchema = z.object({
++  username: z
++    .string()
++    .trim()
++    .min(2, "Enter a username (at least 2 characters)")
++    .max(40, "Username must be 40 characters or fewer")
++    .regex(usernamePattern, "Username can only contain letters, numbers, spaces, . _ -"),
++  question: z
++    .string()
++    .trim()
++    .min(10, "Your question must be at least 10 characters")
++    .max(1000, "Your question must be 1000 characters or fewer"),
++  category: z.enum(QUESTION_CATEGORIES).optional(),
++  // Honeypot — real users never fill this (hidden via CSS).
++  website: z.string().max(200).optional(),
++  formRenderedAt: z.number().optional(),
++});
++export type AskQuestionInput = z.infer<typeof askQuestionSchema>;
++
++const mediaUrlSchema = z.string().trim().url().max(2000);
++
++export const questionAnswerSchema = z.object({
++  answer: z.string().max(20000).optional(),
++  answerImages: z.array(mediaUrlSchema).max(12).optional(),
++  answerVideos: z.array(mediaUrlSchema).max(6).optional(),
++  category: z.enum(QUESTION_CATEGORIES).optional().nullable(),
++  status: z.enum(QUESTION_STATUSES).optional(),
++});
++export type QuestionAnswerInput = z.infer<typeof questionAnswerSchema>;
++
++export const questionStatusSchema = z.object({
++  status: z.enum(QUESTION_STATUSES),
++});

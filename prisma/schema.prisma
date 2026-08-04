@@ -65,6 +65,45 @@ model Creator {
   @@index([referredBy])
 }
 
+// Public Q&A. Anyone can submit a question with a username (no account,
+// no email/password). Questions start "pending" and are only shown on the
+// public site once an admin answers and publishes them.
+model Question {
+  id       String @id @default(cuid())
+  username String
+
+  question String
+
+  // URL slug, e.g. "how-does-creatoros-work". Generated from the question
+  // text once it's first published; null while pending since the slug is
+  // only meaningful for a page that actually exists publicly.
+  slug String? @unique
+
+  // Answer content (Markdown, rendered to sanitized HTML at render time).
+  // Null until an admin writes an answer.
+  answer String?
+
+  // JSON-encoded string arrays of media URLs, kept as-is with the rest of
+  // this codebase's convention for list fields (see Creator.platforms).
+  answerImages String @default("[]")
+  answerVideos String @default("[]")
+
+  // Optional free-text category/topic, shown as a filter chip on /questions.
+  category String?
+
+  // pending | published — enforced in application code (see
+  // src/lib/constants.ts), kept as a validated string rather than a native
+  // enum for the same reasons documented on Creator.status.
+  status String @default("pending")
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  publishedAt DateTime?
+
+  @@index([status, createdAt])
+  @@index([status, publishedAt])
+}
+
 model EmailVerificationToken {
   id        String    @id @default(cuid())
   creatorId String

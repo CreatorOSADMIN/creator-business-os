@@ -8,7 +8,13 @@
  * (Vercel logs, journald, etc.) without a schema change.
  */
 
-export type AuditAction = "creator.delete" | "creator.update" | "announcement.send";
+export type AuditAction =
+  | "creator.delete"
+  | "creator.update"
+  | "announcement.send"
+  | "question.update"
+  | "question.publish"
+  | "question.delete";
 
 interface AuditLogInput {
   action: AuditAction;
@@ -16,17 +22,20 @@ interface AuditLogInput {
   actor: string;
   /** Creator affected by this action, if any. */
   creatorId?: string;
+  /** Question affected by this action, if any. */
+  questionId?: string;
   /** Small, non-sensitive extra context (e.g. changed fields, send counts). */
   metadata?: Record<string, string | number | boolean | null>;
 }
 
-export function logAdminAction({ action, actor, creatorId, metadata }: AuditLogInput): void {
+export function logAdminAction({ action, actor, creatorId, questionId, metadata }: AuditLogInput): void {
   const record = {
     type: "admin_audit",
     timestamp: new Date().toISOString(),
     action,
     actor,
     ...(creatorId ? { creatorId } : {}),
+    ...(questionId ? { questionId } : {}),
     ...(metadata ? { metadata } : {}),
   };
   // Kept as a plain console.log (not console.error) so it doesn't get mixed

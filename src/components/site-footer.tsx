@@ -23,6 +23,7 @@ export function SiteFooter() {
               links={[
                 { href: "/", label: "CreatorOS" },
                 { href: "/early-access", label: "Early Access" },
+                { href: "/questions", label: "Questions" },
                 { href: "/updates", label: "Updates" },
               ]}
             />

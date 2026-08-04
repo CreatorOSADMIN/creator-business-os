@@ -96,6 +96,30 @@ export const STATUS_COLORS: Record<CreatorStatusValue, string> = {
   REJECTED: "badge-danger",
 };
 
+// --- Public Q&A -----------------------------------------------------------
+
+export const QUESTION_STATUSES = ["pending", "published"] as const;
+export type QuestionStatusValue = (typeof QUESTION_STATUSES)[number];
+
+export const QUESTION_STATUS_LABELS: Record<QuestionStatusValue, string> = {
+  pending: "Pending",
+  published: "Published",
+};
+
+// Free-text but constrained to a known set in the ask form, so /questions
+// can offer a meaningful category filter without moderation overhead.
+export const QUESTION_CATEGORIES = [
+  "General",
+  "Getting Started",
+  "Pricing & Plans",
+  "Platforms & Integrations",
+  "Analytics",
+  "Brand Deals",
+  "Account & Billing",
+  "Other",
+] as const;
+export type QuestionCategoryValue = (typeof QUESTION_CATEGORIES)[number];
+
 // Bumped whenever the Privacy Policy content changes materially. Stored on
 // each Creator record at signup time so we always know which version of the
 // policy a given consent was given under (GDPR accountability requirement).

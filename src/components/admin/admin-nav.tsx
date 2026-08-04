@@ -4,11 +4,20 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { LogoutButton } from "./logout-button";
-import { DashboardIcon, CreatorsIcon, AnalyticsIcon, AnnouncementsIcon, MenuIcon, CloseIcon } from "./nav-icons";
+import {
+  DashboardIcon,
+  CreatorsIcon,
+  AnalyticsIcon,
+  AnnouncementsIcon,
+  QuestionsIcon,
+  MenuIcon,
+  CloseIcon,
+} from "./nav-icons";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "Dashboard", icon: DashboardIcon, exact: true },
   { href: "/admin/creators", label: "Creators", icon: CreatorsIcon },
+  { href: "/admin/questions", label: "Questions", icon: QuestionsIcon },
   { href: "/admin/analytics", label: "Analytics", icon: AnalyticsIcon },
   { href: "/admin/announcements", label: "Annunci", icon: AnnouncementsIcon },
 ] as const;
