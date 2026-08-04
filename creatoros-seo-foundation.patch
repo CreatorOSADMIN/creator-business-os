@@ -1,0 +1,40 @@
+diff --git a/src/app/layout.tsx b/src/app/layout.tsx
+index 2afc391..5da2fb8 100644
+--- a/src/app/layout.tsx
++++ b/src/app/layout.tsx
+@@ -50,6 +50,8 @@ export const metadata: Metadata = {
+     "creator business dashboard",
+     "influencer business tools",
+   ],
++  applicationName: "CreatorOS",
++  category: "business",
+   alternates: {
+     canonical: siteUrl,
+   },
+@@ -61,12 +63,25 @@ export const metadata: Metadata = {
+     siteName: "CreatorOS",
+     type: "website",
+     locale: "en_US",
++    // TODO(design): /public/og-default.png does not exist yet in the repo.
++    // Add a real 1200x630 social preview image at that path — this
++    // reference is metadata-only and safe to ship ahead of the asset.
++    images: [
++      {
++        url: "/og-default.png",
++        width: 1200,
++        height: 630,
++        alt: "CreatorOS — Creator Business Management Platform",
++      },
++    ],
+   },
+   twitter: {
+-    card: "summary",
++    card: "summary_large_image",
+     title: "CreatorOS — Creator Business Management Platform",
+     description:
+       "One dashboard for your creator business: unified analytics, brand deals, and revenue across every platform you publish to. Free early access, freemium at launch.",
++    // Same placeholder asset as openGraph.images above — see TODO there.
++    images: ["/og-default.png"],
+   },
+   icons: {
+     icon: "/favicon.ico",
