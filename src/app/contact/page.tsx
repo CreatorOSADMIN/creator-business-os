@@ -3,6 +3,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Reveal } from "@/components/landing/reveal";
 import { Eyebrow } from "@/components/landing/eyebrow";
+import { SocialLinks } from "@/components/contact/social-links";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -35,11 +36,20 @@ export default function ContactPage() {
                   Email
                 </p>
                 <a
-                  href="mailto:ferrettiwilliam68@gmail.com"
+                  href="mailto:creator.os.communications@gmail.com"
                   className="mt-3 inline-block font-display text-xl font-bold text-text transition-colors hover:text-accent sm:text-2xl"
                 >
-                  ferrettiwilliam68@gmail.com
+                  creator.os.communications@gmail.com
                 </a>
+              </div>
+            </Reveal>
+
+            <Reveal delay={200}>
+              <div className="mt-10 rounded-2xl border border-border bg-bg-elevated p-8 sm:p-10">
+                <p className="text-center font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">
+                  Follow CreatorOS
+                </p>
+                <SocialLinks />
               </div>
             </Reveal>
           </div>
