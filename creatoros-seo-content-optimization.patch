@@ -1,0 +1,268 @@
+diff --git a/src/app/early-access/page.tsx b/src/app/early-access/page.tsx
+index c607695..fc5ef0c 100644
+--- a/src/app/early-access/page.tsx
++++ b/src/app/early-access/page.tsx
+@@ -5,16 +5,40 @@ import { SiteFooter } from "@/components/site-footer";
+ import { Reveal } from "@/components/landing/reveal";
+ import { Eyebrow } from "@/components/landing/eyebrow";
+ import { EarlyAccessForm } from "@/components/early-access-form";
++import { TrackedLink } from "@/components/analytics/tracked-link";
+ import { getRegisteredCreatorIdFromCookie } from "@/lib/creator-session";
+ import { prisma } from "@/lib/prisma";
+ 
+ export const metadata: Metadata = {
+   title: "Join Free Early Access",
+   description:
+-    "CreatorOS is an upcoming creator business dashboard for YouTube, Instagram, TikTok, Twitch, X, and more. Join the free early access waitlist and help shape a freemium platform built for creator analytics, brand deals, and revenue.",
++    "Join CreatorOS free early access — no account required to start, just two minutes to reserve your spot. Early members help shape a freemium platform built for creator analytics, brand deals, and revenue.",
+   alternates: { canonical: "/early-access" },
+ };
+ 
++const EARLY_ACCESS_HIGHLIGHTS = [
++  {
++    title: "Always free to join",
++    body: "Reserving your spot in early access costs nothing today and won't cost anything later.",
++  },
++  {
++    title: "No account required upfront",
++    body: "Tell us about your creator business first — there's no mandatory account creation just to get in line.",
++  },
++  {
++    title: "First in line, first to test",
++    body: "Early access means hands-on time with CreatorOS before it opens to the public, while it's still taking shape.",
++  },
++  {
++    title: "Freemium at public launch",
++    body: "CreatorOS will launch on a freemium model. Founding members who join now lock in early-adopter benefits ahead of that.",
++  },
++  {
++    title: "Help shape what gets built",
++    body: "Early members' feedback directly influences the roadmap — see what's planned on the Updates page.",
++  },
++];
++
+ export default async function EarlyAccessPage({
+   searchParams,
+ }: {
+@@ -54,11 +78,53 @@ export default async function EarlyAccessPage({
+                 Join Free Early Access
+               </h1>
+               <p className="mt-6 max-w-xl text-balance border-t border-border pt-6 text-lg leading-relaxed text-text-muted">
+-                Tell us a bit about your creator business. Takes about two minutes.
++                Tell us a bit about your creator business. Takes about two minutes, it&apos;s
++                free, and there&apos;s no account to create just to get started.
++              </p>
++            </Reveal>
++
++            <Reveal delay={120} className="mt-12">
++              <ul className="grid grid-cols-1 gap-x-8 gap-y-6 border-t border-border pt-8 sm:grid-cols-2">
++                {EARLY_ACCESS_HIGHLIGHTS.map((item) => (
++                  <li key={item.title}>
++                    <p className="font-display text-sm font-bold text-text">{item.title}</p>
++                    <p className="mt-1.5 text-sm leading-relaxed text-text-muted">{item.body}</p>
++                  </li>
++                ))}
++              </ul>
++              <p className="mt-8 text-sm leading-relaxed text-text-muted">
++                Curious what&apos;s planned next? See the{" "}
++                <TrackedLink
++                  href="/updates"
++                  event="cta_click"
++                  eventProps={{ location: "early_access_intro" }}
++                  className="text-accent underline underline-offset-2"
++                >
++                  product roadmap
++                </TrackedLink>
++                , read more{" "}
++                <TrackedLink
++                  href="/about"
++                  event="cta_click"
++                  eventProps={{ location: "early_access_intro" }}
++                  className="text-accent underline underline-offset-2"
++                >
++                  about CreatorOS
++                </TrackedLink>
++                , or browse{" "}
++                <TrackedLink
++                  href="/questions"
++                  event="cta_click"
++                  eventProps={{ location: "early_access_intro" }}
++                  className="text-accent underline underline-offset-2"
++                >
++                  answers to common questions
++                </TrackedLink>
++                .
+               </p>
+             </Reveal>
+ 
+-            <Reveal delay={80} className="mt-14">
++            <Reveal delay={200} className="mt-14">
+               <EarlyAccessForm
+                 initialReferralCode={first(params.ref)}
+                 initialUtmSource={first(params.utm_source)}
+diff --git a/src/app/page.tsx b/src/app/page.tsx
+index 89c4de7..94e4dcd 100644
+--- a/src/app/page.tsx
++++ b/src/app/page.tsx
+@@ -42,6 +42,37 @@ const PROBLEMS = [
+   },
+ ];
+ 
++const FAQS = [
++  {
++    q: "Cos'è CreatorOS?",
++    a: "CreatorOS è una dashboard per il business dei creator in arrivo, che unifica analytics, brand deal e revenue di più piattaforme social in un unico posto — così puoi far crescere il tuo business su dati reali, non a intuito.",
++  },
++  {
++    q: "CreatorOS è gratuito?",
++    a: "Sì. L'iscrizione all'early access è gratuita e senza costi nascosti. Al lancio pubblico CreatorOS adotterà un modello freemium, e i membri dell'early access sbloccano vantaggi da founding member.",
++  },
++  {
++    q: "Come funziona l'early access?",
++    a: "Bastano un paio di minuti: ti iscrivi con i dati della tua attività da creator e ottieni un posto tra i primi utenti. I membri dell'early access possono anche contribuire a plasmare il prodotto prima del lancio pubblico.",
++  },
++  {
++    q: "Quali piattaforme social supporta CreatorOS?",
++    a: `CreatorOS collega e unifica ${PLATFORMS.join(", ")} in un'unica dashboard, con altre piattaforme in arrivo.`,
++  },
++  {
++    q: "CreatorOS supporta YouTube, Instagram, TikTok, Twitch, X, LinkedIn, Facebook, Reddit e Patreon?",
++    a: `Al momento CreatorOS supporta ${PLATFORMS.join(", ")}. Reddit non è ancora tra le piattaforme integrate, ma l'elenco delle piattaforme supportate continuerà a crescere in base al feedback della community.`,
++  },
++  {
++    q: "Per chi è pensato CreatorOS?",
++    a: "Per creator, streamer e influencer che trattano la propria audience come un vero business: chi pubblica su più piattaforme e vuole vedere analytics, brand deal e revenue in un solo posto invece che in una dozzina di tab diverse.",
++  },
++  {
++    q: "Quando sarà disponibile CreatorOS?",
++    a: "CreatorOS è attualmente in sviluppo e non ancora disponibile al pubblico. L'early access gratuita è aperta ora: iscrivendoti ottieni un posto tra i primi a provarlo e resti aggiornato sulla roadmap nella pagina Updates.",
++  },
++];
++
+ const STEPS = [
+   {
+     n: "01",
+@@ -71,10 +102,26 @@ export default async function HomePage() {
+     { value: "1", label: "Dashboard for the whole business" },
+   ];
+ 
++  const faqStructuredData = {
++    "@context": "https://schema.org",
++    "@type": "FAQPage",
++    mainEntity: FAQS.map((item) => ({
++      "@type": "Question",
++      name: item.q,
++      acceptedAnswer: { "@type": "Answer", text: item.a },
++    })),
++  };
++
+   return (
+     <>
+       <SiteHeader />
+       <TrackEventOnMount event="homepage_view" />
++      <script
++        type="application/ld+json"
++        // Mirrors the FAQ section rendered below verbatim — same questions,
++        // same answers, nothing hidden from users.
++        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqStructuredData) }}
++      />
+       <main className="flex-1 bg-bg">
+         {/* Hero */}
+         <section className="px-6 pb-16 pt-20 sm:px-10 sm:pt-28">
+@@ -242,6 +289,46 @@ export default async function HomePage() {
+           </div>
+         </section>
+ 
++        {/* FAQ — server rendered, no client-side dependency, mirrors the
++            FAQPage JSON-LD below so crawlers see the exact same copy. */}
++        <section id="faq" className="border-t border-border px-6 py-24 sm:px-10 sm:py-32">
++          <div className="mx-auto max-w-4xl">
++            <Reveal>
++              <Eyebrow>FAQ</Eyebrow>
++              <h2 className="mt-5 max-w-2xl text-balance font-display text-3xl font-bold leading-tight tracking-[-0.02em] text-text sm:text-5xl">
++                Domande frequenti su CreatorOS.
++              </h2>
++              <p className="mt-6 max-w-xl text-balance text-sm leading-relaxed text-text-muted">
++                Altre domande? Sfoglia la{" "}
++                <TrackedLink
++                  href="/questions"
++                  event="cta_click"
++                  eventProps={{ location: "faq" }}
++                  className="text-accent underline underline-offset-2"
++                >
++                  knowledge base delle Questions
++                </TrackedLink>{" "}
++                oppure chiedi direttamente al team.
++              </p>
++            </Reveal>
++
++            <div className="mt-14 border-t border-border">
++              {FAQS.map((item, i) => (
++                <Reveal key={item.q} delay={Math.min(i, 4) * 60}>
++                  <div className="border-b border-border py-8">
++                    <h3 className="font-display text-lg font-bold text-text sm:text-xl">
++                      {item.q}
++                    </h3>
++                    <p className="mt-3 text-sm leading-relaxed text-text-muted sm:text-base">
++                      {item.a}
++                    </p>
++                  </div>
++                </Reveal>
++              ))}
++            </div>
++          </div>
++        </section>
++
+         {/* Final CTA */}
+         <section className="border-t border-border px-6 py-24 sm:px-10 sm:py-32">
+           <div className="mx-auto max-w-4xl text-center">
+diff --git a/src/app/questions/page.tsx b/src/app/questions/page.tsx
+index 0d248ae..cc583dc 100644
+--- a/src/app/questions/page.tsx
++++ b/src/app/questions/page.tsx
+@@ -8,9 +8,9 @@ import { prisma } from "@/lib/prisma";
+ import { markdownToExcerpt } from "@/lib/markdown";
+ 
+ export const metadata: Metadata = {
+-  title: "Questions & Answers",
++  title: "Questions & Answers — CreatorOS Knowledge Base",
+   description:
+-    "Ask CreatorOS anything and browse answers from the team — pricing, platform support, analytics, brand deals, and more. No account required to ask.",
++    "Ask CreatorOS anything and browse a growing, publicly indexable knowledge base of answers from the team — pricing, platform support, analytics, brand deals, and more. No account required to ask.",
+   alternates: { canonical: "/questions" },
+   openGraph: {
+     title: "Questions & Answers | CreatorOS",
+@@ -59,8 +59,9 @@ export default async function QuestionsPage() {
+                 Ask us anything.
+               </h1>
+               <p className="mt-8 max-w-xl text-balance border-t border-border pt-8 text-lg leading-relaxed text-text-muted">
+-                No account needed — just a username. Every question is reviewed and answered by the
+-                CreatorOS team.
++                No account needed — just a username. Every question is reviewed and answered by
++                the CreatorOS team, and every published answer gets its own indexable page —
++                together they form a public CreatorOS knowledge base anyone can search.
+               </p>
+             </Reveal>
+           </div>
+diff --git a/src/components/site-header.tsx b/src/components/site-header.tsx
+index 22ec6c5..415de42 100644
+--- a/src/components/site-header.tsx
++++ b/src/components/site-header.tsx
+@@ -26,7 +26,7 @@ export function SiteHeader() {
+           Creator<span className="text-accent">OS</span>
+         </Link>
+ 
+-        <nav className="hidden items-center gap-10 md:flex">
++        <nav aria-label="Primary" className="hidden items-center gap-10 md:flex">
+           {NAV_LINKS.map((link) => (
+             <Link
+               key={link.href}
+@@ -67,6 +67,8 @@ export function SiteHeader() {
+ 
+       <nav
+         id="mobile-nav"
++        aria-label="Primary mobile"
++        aria-hidden={!open}
+         className={`overflow-hidden border-t border-border/80 bg-bg transition-[max-height] duration-300 ease-out md:hidden ${
+           open ? "max-h-96" : "max-h-0 border-t-0"
+         }`}

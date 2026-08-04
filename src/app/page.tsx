@@ -42,6 +42,37 @@ const PROBLEMS = [
   },
 ];
 
+const FAQS = [
+  {
+    q: "Cos'è CreatorOS?",
+    a: "CreatorOS è una dashboard per il business dei creator in arrivo, che unifica analytics, brand deal e revenue di più piattaforme social in un unico posto — così puoi far crescere il tuo business su dati reali, non a intuito.",
+  },
+  {
+    q: "CreatorOS è gratuito?",
+    a: "Sì. L'iscrizione all'early access è gratuita e senza costi nascosti. Al lancio pubblico CreatorOS adotterà un modello freemium, e i membri dell'early access sbloccano vantaggi da founding member.",
+  },
+  {
+    q: "Come funziona l'early access?",
+    a: "Bastano un paio di minuti: ti iscrivi con i dati della tua attività da creator e ottieni un posto tra i primi utenti. I membri dell'early access possono anche contribuire a plasmare il prodotto prima del lancio pubblico.",
+  },
+  {
+    q: "Quali piattaforme social supporta CreatorOS?",
+    a: `CreatorOS collega e unifica ${PLATFORMS.join(", ")} in un'unica dashboard, con altre piattaforme in arrivo.`,
+  },
+  {
+    q: "CreatorOS supporta YouTube, Instagram, TikTok, Twitch, X, LinkedIn, Facebook, Reddit e Patreon?",
+    a: `Al momento CreatorOS supporta ${PLATFORMS.join(", ")}. Reddit non è ancora tra le piattaforme integrate, ma l'elenco delle piattaforme supportate continuerà a crescere in base al feedback della community.`,
+  },
+  {
+    q: "Per chi è pensato CreatorOS?",
+    a: "Per creator, streamer e influencer che trattano la propria audience come un vero business: chi pubblica su più piattaforme e vuole vedere analytics, brand deal e revenue in un solo posto invece che in una dozzina di tab diverse.",
+  },
+  {
+    q: "Quando sarà disponibile CreatorOS?",
+    a: "CreatorOS è attualmente in sviluppo e non ancora disponibile al pubblico. L'early access gratuita è aperta ora: iscrivendoti ottieni un posto tra i primi a provarlo e resti aggiornato sulla roadmap nella pagina Updates.",
+  },
+];
+
 const STEPS = [
   {
     n: "01",
@@ -71,10 +102,26 @@ export default async function HomePage() {
     { value: "1", label: "Dashboard for the whole business" },
   ];
 
+  const faqStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: FAQS.map((item) => ({
+      "@type": "Question",
+      name: item.q,
+      acceptedAnswer: { "@type": "Answer", text: item.a },
+    })),
+  };
+
   return (
     <>
       <SiteHeader />
       <TrackEventOnMount event="homepage_view" />
+      <script
+        type="application/ld+json"
+        // Mirrors the FAQ section rendered below verbatim — same questions,
+        // same answers, nothing hidden from users.
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqStructuredData) }}
+      />
       <main className="flex-1 bg-bg">
         {/* Hero */}
         <section className="px-6 pb-16 pt-20 sm:px-10 sm:pt-28">
@@ -236,6 +283,46 @@ export default async function HomePage() {
                     {stat.value}
                   </p>
                   <p className="mt-3 text-sm leading-snug text-text-muted">{stat.label}</p>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ — server rendered, no client-side dependency, mirrors the
+            FAQPage JSON-LD below so crawlers see the exact same copy. */}
+        <section id="faq" className="border-t border-border px-6 py-24 sm:px-10 sm:py-32">
+          <div className="mx-auto max-w-4xl">
+            <Reveal>
+              <Eyebrow>FAQ</Eyebrow>
+              <h2 className="mt-5 max-w-2xl text-balance font-display text-3xl font-bold leading-tight tracking-[-0.02em] text-text sm:text-5xl">
+                Domande frequenti su CreatorOS.
+              </h2>
+              <p className="mt-6 max-w-xl text-balance text-sm leading-relaxed text-text-muted">
+                Altre domande? Sfoglia la{" "}
+                <TrackedLink
+                  href="/questions"
+                  event="cta_click"
+                  eventProps={{ location: "faq" }}
+                  className="text-accent underline underline-offset-2"
+                >
+                  knowledge base delle Questions
+                </TrackedLink>{" "}
+                oppure chiedi direttamente al team.
+              </p>
+            </Reveal>
+
+            <div className="mt-14 border-t border-border">
+              {FAQS.map((item, i) => (
+                <Reveal key={item.q} delay={Math.min(i, 4) * 60}>
+                  <div className="border-b border-border py-8">
+                    <h3 className="font-display text-lg font-bold text-text sm:text-xl">
+                      {item.q}
+                    </h3>
+                    <p className="mt-3 text-sm leading-relaxed text-text-muted sm:text-base">
+                      {item.a}
+                    </p>
+                  </div>
                 </Reveal>
               ))}
             </div>

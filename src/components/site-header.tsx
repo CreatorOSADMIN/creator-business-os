@@ -26,7 +26,7 @@ export function SiteHeader() {
           Creator<span className="text-accent">OS</span>
         </Link>
 
-        <nav className="hidden items-center gap-10 md:flex">
+        <nav aria-label="Primary" className="hidden items-center gap-10 md:flex">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
@@ -67,6 +67,8 @@ export function SiteHeader() {
 
       <nav
         id="mobile-nav"
+        aria-label="Primary mobile"
+        aria-hidden={!open}
         className={`overflow-hidden border-t border-border/80 bg-bg transition-[max-height] duration-300 ease-out md:hidden ${
           open ? "max-h-96" : "max-h-0 border-t-0"
         }`}

@@ -8,9 +8,9 @@ import { prisma } from "@/lib/prisma";
 import { markdownToExcerpt } from "@/lib/markdown";
 
 export const metadata: Metadata = {
-  title: "Questions & Answers",
+  title: "Questions & Answers — CreatorOS Knowledge Base",
   description:
-    "Ask CreatorOS anything and browse answers from the team — pricing, platform support, analytics, brand deals, and more. No account required to ask.",
+    "Ask CreatorOS anything and browse a growing, publicly indexable knowledge base of answers from the team — pricing, platform support, analytics, brand deals, and more. No account required to ask.",
   alternates: { canonical: "/questions" },
   openGraph: {
     title: "Questions & Answers | CreatorOS",
@@ -59,8 +59,9 @@ export default async function QuestionsPage() {
                 Ask us anything.
               </h1>
               <p className="mt-8 max-w-xl text-balance border-t border-border pt-8 text-lg leading-relaxed text-text-muted">
-                No account needed — just a username. Every question is reviewed and answered by the
-                CreatorOS team.
+                No account needed — just a username. Every question is reviewed and answered by
+                the CreatorOS team, and every published answer gets its own indexable page —
+                together they form a public CreatorOS knowledge base anyone can search.
               </p>
             </Reveal>
           </div>

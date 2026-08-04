@@ -5,15 +5,39 @@ import { SiteFooter } from "@/components/site-footer";
 import { Reveal } from "@/components/landing/reveal";
 import { Eyebrow } from "@/components/landing/eyebrow";
 import { EarlyAccessForm } from "@/components/early-access-form";
+import { TrackedLink } from "@/components/analytics/tracked-link";
 import { getRegisteredCreatorIdFromCookie } from "@/lib/creator-session";
 import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
   title: "Join Free Early Access",
   description:
-    "CreatorOS is an upcoming creator business dashboard for YouTube, Instagram, TikTok, Twitch, X, and more. Join the free early access waitlist and help shape a freemium platform built for creator analytics, brand deals, and revenue.",
+    "Join CreatorOS free early access — no account required to start, just two minutes to reserve your spot. Early members help shape a freemium platform built for creator analytics, brand deals, and revenue.",
   alternates: { canonical: "/early-access" },
 };
+
+const EARLY_ACCESS_HIGHLIGHTS = [
+  {
+    title: "Always free to join",
+    body: "Reserving your spot in early access costs nothing today and won't cost anything later.",
+  },
+  {
+    title: "No account required upfront",
+    body: "Tell us about your creator business first — there's no mandatory account creation just to get in line.",
+  },
+  {
+    title: "First in line, first to test",
+    body: "Early access means hands-on time with CreatorOS before it opens to the public, while it's still taking shape.",
+  },
+  {
+    title: "Freemium at public launch",
+    body: "CreatorOS will launch on a freemium model. Founding members who join now lock in early-adopter benefits ahead of that.",
+  },
+  {
+    title: "Help shape what gets built",
+    body: "Early members' feedback directly influences the roadmap — see what's planned on the Updates page.",
+  },
+];
 
 export default async function EarlyAccessPage({
   searchParams,
@@ -54,11 +78,53 @@ export default async function EarlyAccessPage({
                 Join Free Early Access
               </h1>
               <p className="mt-6 max-w-xl text-balance border-t border-border pt-6 text-lg leading-relaxed text-text-muted">
-                Tell us a bit about your creator business. Takes about two minutes.
+                Tell us a bit about your creator business. Takes about two minutes, it&apos;s
+                free, and there&apos;s no account to create just to get started.
               </p>
             </Reveal>
 
-            <Reveal delay={80} className="mt-14">
+            <Reveal delay={120} className="mt-12">
+              <ul className="grid grid-cols-1 gap-x-8 gap-y-6 border-t border-border pt-8 sm:grid-cols-2">
+                {EARLY_ACCESS_HIGHLIGHTS.map((item) => (
+                  <li key={item.title}>
+                    <p className="font-display text-sm font-bold text-text">{item.title}</p>
+                    <p className="mt-1.5 text-sm leading-relaxed text-text-muted">{item.body}</p>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-8 text-sm leading-relaxed text-text-muted">
+                Curious what&apos;s planned next? See the{" "}
+                <TrackedLink
+                  href="/updates"
+                  event="cta_click"
+                  eventProps={{ location: "early_access_intro" }}
+                  className="text-accent underline underline-offset-2"
+                >
+                  product roadmap
+                </TrackedLink>
+                , read more{" "}
+                <TrackedLink
+                  href="/about"
+                  event="cta_click"
+                  eventProps={{ location: "early_access_intro" }}
+                  className="text-accent underline underline-offset-2"
+                >
+                  about CreatorOS
+                </TrackedLink>
+                , or browse{" "}
+                <TrackedLink
+                  href="/questions"
+                  event="cta_click"
+                  eventProps={{ location: "early_access_intro" }}
+                  className="text-accent underline underline-offset-2"
+                >
+                  answers to common questions
+                </TrackedLink>
+                .
+              </p>
+            </Reveal>
+
+            <Reveal delay={200} className="mt-14">
               <EarlyAccessForm
                 initialReferralCode={first(params.ref)}
                 initialUtmSource={first(params.utm_source)}
