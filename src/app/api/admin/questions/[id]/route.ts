@@ -84,7 +84,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       ...(parsed.data.category !== undefined ? { category: parsed.data.category } : {}),
       status: nextStatus,
       slug,
-      ...(isPublishing && !existing.publishedAt ? { publishedAt: new Date() } : {}),
+      // Explicit admin-provided publication date always wins. Otherwise,
+      // fall back to the previous default of stamping "now" the first time
+      // a question is published.
+      ...(parsed.data.publishedAt !== undefined
+        ? { publishedAt: parsed.data.publishedAt }
+        : isPublishing && !existing.publishedAt
+          ? { publishedAt: new Date() }
+          : {}),
     },
   });
 

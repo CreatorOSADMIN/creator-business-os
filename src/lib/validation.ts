@@ -101,6 +101,10 @@ export const questionAnswerSchema = z.object({
   answerVideos: z.array(mediaUrlSchema).max(6).optional(),
   category: z.enum(QUESTION_CATEGORIES).optional().nullable(),
   status: z.enum(QUESTION_STATUSES).optional(),
+  // Manually-editable publication date/time for the Questions admin panel.
+  // Defaults client-side to "now" but can be moved to any valid date before
+  // (or after) publishing; always re-validated here regardless of status.
+  publishedAt: z.coerce.date().optional(),
 });
 export type QuestionAnswerInput = z.infer<typeof questionAnswerSchema>;
 

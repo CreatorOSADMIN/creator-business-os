@@ -24,6 +24,14 @@ const TOOLBAR = [
   { label: "I", title: "Italic", wrap: "*" },
 ] as const;
 
+// Formats a Date as the "yyyy-MM-ddTHH:mm" string a <input type="datetime-local">
+// expects, using local time components (not UTC/toISOString) so the value
+// displayed matches what the admin actually picked.
+function toDatetimeLocal(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 export default function AdminQuestionEditorPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -33,6 +41,10 @@ export default function AdminQuestionEditorPage() {
   const [question, setQuestion] = useState<QuestionDetail | null>(null);
   const [answer, setAnswer] = useState("");
   const [category, setCategory] = useState("");
+  // Publication date shown/edited in the admin panel. Defaults to "now" for
+  // a question that hasn't been published yet, and is otherwise editable
+  // before publishing (see save()).
+  const [publishedAt, setPublishedAt] = useState(() => toDatetimeLocal(new Date()));
   const [images, setImages] = useState<string[]>([]);
   const [videos, setVideos] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,6 +64,7 @@ export default function AdminQuestionEditorPage() {
         setCategory(q.category || "");
         setImages(q.answerImages || []);
         setVideos(q.answerVideos || []);
+        setPublishedAt(toDatetimeLocal(q.publishedAt ? new Date(q.publishedAt) : new Date()));
       }
       if (!cancelled) setLoading(false);
     }
@@ -133,6 +146,7 @@ export default function AdminQuestionEditorPage() {
           answerVideos: videos,
           category: category || null,
           status,
+          publishedAt: publishedAt ? new Date(publishedAt).toISOString() : undefined,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -220,6 +234,19 @@ export default function AdminQuestionEditorPage() {
             </option>
           ))}
         </select>
+
+        <label className="mb-1.5 mt-5 block text-xs font-medium uppercase tracking-wide text-[var(--ink-muted)]">
+          Publication date
+        </label>
+        <input
+          type="datetime-local"
+          className="input w-full max-w-xs"
+          value={publishedAt}
+          onChange={(e) => setPublishedAt(e.target.value)}
+        />
+        <p className="mt-1 text-xs text-[var(--ink-muted)]">
+          Defaults to now. Adjust before publishing to backdate or schedule the displayed date.
+        </p>
 
         <label className="mb-1.5 mt-5 block text-xs font-medium uppercase tracking-wide text-[var(--ink-muted)]">
           Answer

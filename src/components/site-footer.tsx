@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CookiePreferencesLink } from "@/components/consent/cookie-preferences-link";
+import { QUESTION_CATEGORIES, QUESTION_CATEGORY_SLUGS } from "@/lib/constants";
 
 export function SiteFooter() {
   return (
@@ -45,7 +46,28 @@ export function SiteFooter() {
           </nav>
         </div>
 
-        <div className="mt-16 flex flex-col gap-3 border-t border-border pt-8 font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint sm:flex-row sm:items-center sm:justify-between">
+        {/* Plain server-rendered <a> links (via next/link) to each Questions
+            category page, for internal PageRank distribution — no client
+            component or JS-driven navigation involved. */}
+        <div className="mt-12 border-t border-border pt-8">
+          <p className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">
+            Explore Questions
+          </p>
+          <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-2">
+            {QUESTION_CATEGORIES.map((category) => (
+              <li key={category}>
+                <Link
+                  href={`/questions/category/${QUESTION_CATEGORY_SLUGS[category]}`}
+                  className="text-sm text-text-muted transition-colors hover:text-text"
+                >
+                  {category}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="mt-8 flex flex-col gap-3 border-t border-border pt-8 font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} CreatorOS. All rights reserved.</p>
           <p>Built for creators, by creators</p>
         </div>

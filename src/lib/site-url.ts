@@ -1,4 +1,4 @@
-const PRODUCTION_SITE_URL = "https://www.creatoroslaunch.site";
+const PRODUCTION_SITE_URL = "https://.creatoroslaunch.site";
 
 /**
  * Resolves the canonical site URL for building absolute links (metadata,

@@ -20,8 +20,10 @@ const monoUiFont = IBM_Plex_Mono({
 
 const siteUrl = getSiteUrl();
 // Canonical brand domain per organization records — used for structured
-// data only, independent of the deployment's NEXT_PUBLIC_SITE_URL.
-const ORGANIZATION_URL = "https://creatoroslaunch.site";
+// data only, independent of the deployment's NEXT_PUBLIC_SITE_URL. Must
+// match the canonical www host used by getSiteUrl()/siteUrl above so
+// structured data and metadata never disagree on www vs apex.
+const ORGANIZATION_URL = "https://www.creatoroslaunch.site";
 // NOTE: these are the brand's assumed handles based on the "creatoros"
 // naming used across the codebase (email domain, site domain). Verify and
 // update if the real handles differ.
@@ -95,13 +97,23 @@ const structuredData = [
     "@type": "Organization",
     name: "CreatorOS",
     url: ORGANIZATION_URL,
-    logo: `${ORGANIZATION_URL}/favicon.ico`,
+    logo: `${ORGANIZATION_URL}/logo.png`,
     sameAs: SOCIAL_PROFILES,
   },
   {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "CreatorOS",
+    url: siteUrl,
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "CreatorOS",
+    description:
+      "CreatorOS is an upcoming creator business dashboard unifying analytics, brand deals, and revenue across YouTube, Instagram, TikTok, Twitch, X, LinkedIn, Facebook, Patreon, and Substack.",
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web",
     url: siteUrl,
   },
 ];

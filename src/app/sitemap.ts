@@ -5,20 +5,32 @@ import { QUESTION_CATEGORIES, QUESTION_CATEGORY_SLUGS } from "@/lib/constants";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = getSiteUrl();
-  const routes = ["", "/early-access", "/questions", "/updates", "/about", "/contact", "/privacy", "/terms"];
+  // SEO priority per route, reflecting relative importance in the site
+  // hierarchy (homepage highest, legal pages lowest).
+  const ROUTE_PRIORITIES: Record<string, number> = {
+    "": 1,
+    "/early-access": 0.9,
+    "/questions": 0.8,
+    "/about": 0.5,
+    "/updates": 0.5,
+    "/contact": 0.5,
+    "/privacy": 0.3,
+    "/terms": 0.3,
+  };
+  const routes = Object.keys(ROUTE_PRIORITIES);
 
   const staticEntries: MetadataRoute.Sitemap = routes.map((route) => ({
     url: `${siteUrl}${route}`,
     lastModified: new Date(),
     changeFrequency: "weekly",
-    priority: route === "" ? 1 : 0.7,
+    priority: ROUTE_PRIORITIES[route],
   }));
 
   const categoryEntries: MetadataRoute.Sitemap = QUESTION_CATEGORIES.map((category) => ({
     url: `${siteUrl}/questions/category/${QUESTION_CATEGORY_SLUGS[category]}`,
     lastModified: new Date(),
     changeFrequency: "weekly",
-    priority: 0.6,
+    priority: 0.7,
   }));
 
   const questions = await prisma.question.findMany({

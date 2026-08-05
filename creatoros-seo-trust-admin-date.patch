@@ -1,0 +1,225 @@
+diff --git a/src/app/admin/(dashboard)/questions/[id]/page.tsx b/src/app/admin/(dashboard)/questions/[id]/page.tsx
+index e059ffc..a080d30 100644
+--- a/src/app/admin/(dashboard)/questions/[id]/page.tsx
++++ b/src/app/admin/(dashboard)/questions/[id]/page.tsx
+@@ -24,6 +24,14 @@ const TOOLBAR = [
+   { label: "I", title: "Italic", wrap: "*" },
+ ] as const;
+ 
++// Formats a Date as the "yyyy-MM-ddTHH:mm" string a <input type="datetime-local">
++// expects, using local time components (not UTC/toISOString) so the value
++// displayed matches what the admin actually picked.
++function toDatetimeLocal(date: Date): string {
++  const pad = (n: number) => String(n).padStart(2, "0");
++  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
++}
++
+ export default function AdminQuestionEditorPage() {
+   const params = useParams<{ id: string }>();
+   const router = useRouter();
+@@ -33,6 +41,10 @@ export default function AdminQuestionEditorPage() {
+   const [question, setQuestion] = useState<QuestionDetail | null>(null);
+   const [answer, setAnswer] = useState("");
+   const [category, setCategory] = useState("");
++  // Publication date shown/edited in the admin panel. Defaults to "now" for
++  // a question that hasn't been published yet, and is otherwise editable
++  // before publishing (see save()).
++  const [publishedAt, setPublishedAt] = useState(() => toDatetimeLocal(new Date()));
+   const [images, setImages] = useState<string[]>([]);
+   const [videos, setVideos] = useState<string[]>([]);
+   const [loading, setLoading] = useState(true);
+@@ -52,6 +64,7 @@ export default function AdminQuestionEditorPage() {
+         setCategory(q.category || "");
+         setImages(q.answerImages || []);
+         setVideos(q.answerVideos || []);
++        setPublishedAt(toDatetimeLocal(q.publishedAt ? new Date(q.publishedAt) : new Date()));
+       }
+       if (!cancelled) setLoading(false);
+     }
+@@ -133,6 +146,7 @@ export default function AdminQuestionEditorPage() {
+           answerVideos: videos,
+           category: category || null,
+           status,
++          publishedAt: publishedAt ? new Date(publishedAt).toISOString() : undefined,
+         }),
+       });
+       const data = await res.json().catch(() => ({}));
+@@ -221,6 +235,19 @@ export default function AdminQuestionEditorPage() {
+           ))}
+         </select>
+ 
++        <label className="mb-1.5 mt-5 block text-xs font-medium uppercase tracking-wide text-[var(--ink-muted)]">
++          Publication date
++        </label>
++        <input
++          type="datetime-local"
++          className="input w-full max-w-xs"
++          value={publishedAt}
++          onChange={(e) => setPublishedAt(e.target.value)}
++        />
++        <p className="mt-1 text-xs text-[var(--ink-muted)]">
++          Defaults to now. Adjust before publishing to backdate or schedule the displayed date.
++        </p>
++
+         <label className="mb-1.5 mt-5 block text-xs font-medium uppercase tracking-wide text-[var(--ink-muted)]">
+           Answer
+         </label>
+diff --git a/src/app/api/admin/questions/[id]/route.ts b/src/app/api/admin/questions/[id]/route.ts
+index 41d322f..9bb99a7 100644
+--- a/src/app/api/admin/questions/[id]/route.ts
++++ b/src/app/api/admin/questions/[id]/route.ts
+@@ -84,7 +84,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
+       ...(parsed.data.category !== undefined ? { category: parsed.data.category } : {}),
+       status: nextStatus,
+       slug,
+-      ...(isPublishing && !existing.publishedAt ? { publishedAt: new Date() } : {}),
++      // Explicit admin-provided publication date always wins. Otherwise,
++      // fall back to the previous default of stamping "now" the first time
++      // a question is published.
++      ...(parsed.data.publishedAt !== undefined
++        ? { publishedAt: parsed.data.publishedAt }
++        : isPublishing && !existing.publishedAt
++          ? { publishedAt: new Date() }
++          : {}),
+     },
+   });
+ 
+diff --git a/src/app/layout.tsx b/src/app/layout.tsx
+index 5da2fb8..656c52b 100644
+--- a/src/app/layout.tsx
++++ b/src/app/layout.tsx
+@@ -20,8 +20,10 @@ const monoUiFont = IBM_Plex_Mono({
+ 
+ const siteUrl = getSiteUrl();
+ // Canonical brand domain per organization records — used for structured
+-// data only, independent of the deployment's NEXT_PUBLIC_SITE_URL.
+-const ORGANIZATION_URL = "https://creatoroslaunch.site";
++// data only, independent of the deployment's NEXT_PUBLIC_SITE_URL. Must
++// match the canonical www host used by getSiteUrl()/siteUrl above so
++// structured data and metadata never disagree on www vs apex.
++const ORGANIZATION_URL = "https://www.creatoroslaunch.site";
+ // NOTE: these are the brand's assumed handles based on the "creatoros"
+ // naming used across the codebase (email domain, site domain). Verify and
+ // update if the real handles differ.
+@@ -95,7 +97,7 @@ const structuredData = [
+     "@type": "Organization",
+     name: "CreatorOS",
+     url: ORGANIZATION_URL,
+-    logo: `${ORGANIZATION_URL}/favicon.ico`,
++    logo: `${ORGANIZATION_URL}/logo.png`,
+     sameAs: SOCIAL_PROFILES,
+   },
+   {
+@@ -104,6 +106,16 @@ const structuredData = [
+     name: "CreatorOS",
+     url: siteUrl,
+   },
++  {
++    "@context": "https://schema.org",
++    "@type": "SoftwareApplication",
++    name: "CreatorOS",
++    description:
++      "CreatorOS is an upcoming creator business dashboard unifying analytics, brand deals, and revenue across YouTube, Instagram, TikTok, Twitch, X, LinkedIn, Facebook, Patreon, and Substack.",
++    applicationCategory: "BusinessApplication",
++    operatingSystem: "Web",
++    url: siteUrl,
++  },
+ ];
+ 
+ export default function RootLayout({
+diff --git a/src/app/sitemap.ts b/src/app/sitemap.ts
+index 13892f7..a38815b 100644
+--- a/src/app/sitemap.ts
++++ b/src/app/sitemap.ts
+@@ -5,20 +5,32 @@ import { QUESTION_CATEGORIES, QUESTION_CATEGORY_SLUGS } from "@/lib/constants";
+ 
+ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+   const siteUrl = getSiteUrl();
+-  const routes = ["", "/early-access", "/questions", "/updates", "/about", "/contact", "/privacy", "/terms"];
++  // SEO priority per route, reflecting relative importance in the site
++  // hierarchy (homepage highest, legal pages lowest).
++  const ROUTE_PRIORITIES: Record<string, number> = {
++    "": 1,
++    "/early-access": 0.9,
++    "/questions": 0.8,
++    "/about": 0.5,
++    "/updates": 0.5,
++    "/contact": 0.5,
++    "/privacy": 0.3,
++    "/terms": 0.3,
++  };
++  const routes = Object.keys(ROUTE_PRIORITIES);
+ 
+   const staticEntries: MetadataRoute.Sitemap = routes.map((route) => ({
+     url: `${siteUrl}${route}`,
+     lastModified: new Date(),
+     changeFrequency: "weekly",
+-    priority: route === "" ? 1 : 0.7,
++    priority: ROUTE_PRIORITIES[route],
+   }));
+ 
+   const categoryEntries: MetadataRoute.Sitemap = QUESTION_CATEGORIES.map((category) => ({
+     url: `${siteUrl}/questions/category/${QUESTION_CATEGORY_SLUGS[category]}`,
+     lastModified: new Date(),
+     changeFrequency: "weekly",
+-    priority: 0.6,
++    priority: 0.7,
+   }));
+ 
+   const questions = await prisma.question.findMany({
+diff --git a/src/components/site-footer.tsx b/src/components/site-footer.tsx
+index 2264c9a..f277739 100644
+--- a/src/components/site-footer.tsx
++++ b/src/components/site-footer.tsx
+@@ -1,5 +1,6 @@
+ import Link from "next/link";
+ import { CookiePreferencesLink } from "@/components/consent/cookie-preferences-link";
++import { QUESTION_CATEGORIES, QUESTION_CATEGORY_SLUGS } from "@/lib/constants";
+ 
+ export function SiteFooter() {
+   return (
+@@ -45,7 +46,28 @@ export function SiteFooter() {
+           </nav>
+         </div>
+ 
+-        <div className="mt-16 flex flex-col gap-3 border-t border-border pt-8 font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint sm:flex-row sm:items-center sm:justify-between">
++        {/* Plain server-rendered <a> links (via next/link) to each Questions
++            category page, for internal PageRank distribution — no client
++            component or JS-driven navigation involved. */}
++        <div className="mt-12 border-t border-border pt-8">
++          <p className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">
++            Explore Questions
++          </p>
++          <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-2">
++            {QUESTION_CATEGORIES.map((category) => (
++              <li key={category}>
++                <Link
++                  href={`/questions/category/${QUESTION_CATEGORY_SLUGS[category]}`}
++                  className="text-sm text-text-muted transition-colors hover:text-text"
++                >
++                  {category}
++                </Link>
++              </li>
++            ))}
++          </ul>
++        </div>
++
++        <div className="mt-8 flex flex-col gap-3 border-t border-border pt-8 font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint sm:flex-row sm:items-center sm:justify-between">
+           <p>© {new Date().getFullYear()} CreatorOS. All rights reserved.</p>
+           <p>Built for creators, by creators</p>
+         </div>
+diff --git a/src/lib/validation.ts b/src/lib/validation.ts
+index d278a1a..0ffe013 100644
+--- a/src/lib/validation.ts
++++ b/src/lib/validation.ts
+@@ -101,6 +101,10 @@ export const questionAnswerSchema = z.object({
+   answerVideos: z.array(mediaUrlSchema).max(6).optional(),
+   category: z.enum(QUESTION_CATEGORIES).optional().nullable(),
+   status: z.enum(QUESTION_STATUSES).optional(),
++  // Manually-editable publication date/time for the Questions admin panel.
++  // Defaults client-side to "now" but can be moved to any valid date before
++  // (or after) publishing; always re-validated here regardless of status.
++  publishedAt: z.coerce.date().optional(),
+ });
+ export type QuestionAnswerInput = z.infer<typeof questionAnswerSchema>;
+ 
