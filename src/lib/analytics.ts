@@ -24,6 +24,7 @@ export type AnalyticsEvent =
   | "question_ask_open"
   | "question_ask_submit"
   | "question_view"
+  | "question_upvote"
   | "questions_search";
 
 export type AnalyticsProps = Record<string, string | number | boolean | null | undefined>;

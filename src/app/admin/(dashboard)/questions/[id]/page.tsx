@@ -17,6 +17,9 @@ interface QuestionDetail {
   status: string;
   createdAt: string;
   publishedAt: string | null;
+  realUpvotes: number;
+  manualUpvotes: number;
+  totalUpvotes: number;
 }
 
 const TOOLBAR = [
@@ -47,6 +50,8 @@ export default function AdminQuestionEditorPage() {
   const [publishedAt, setPublishedAt] = useState(() => toDatetimeLocal(new Date()));
   const [images, setImages] = useState<string[]>([]);
   const [videos, setVideos] = useState<string[]>([]);
+  const [manualUpvotes, setManualUpvotes] = useState("0");
+  const [savingUpvotes, setSavingUpvotes] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<"draft" | "publish" | "delete" | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -64,6 +69,7 @@ export default function AdminQuestionEditorPage() {
         setCategory(q.category || "");
         setImages(q.answerImages || []);
         setVideos(q.answerVideos || []);
+        setManualUpvotes(String(q.manualUpvotes ?? 0));
         setPublishedAt(toDatetimeLocal(q.publishedAt ? new Date(q.publishedAt) : new Date()));
       }
       if (!cancelled) setLoading(false);
@@ -166,6 +172,31 @@ export default function AdminQuestionEditorPage() {
     }
   }
 
+  async function saveManualUpvotes() {
+    const value = Math.max(0, Math.trunc(Number(manualUpvotes) || 0));
+    setSavingUpvotes(true);
+    setMessage(null);
+    try {
+      const res = await fetch(`/api/admin/questions/${params.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ manualUpvotes: value }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setQuestion(data.question);
+        setManualUpvotes(String(data.question.manualUpvotes));
+        setMessage({ type: "success", text: "Upvotes updated." });
+      } else {
+        setMessage({ type: "error", text: data.error || "Unable to update upvotes." });
+      }
+    } catch {
+      setMessage({ type: "error", text: "Unable to update upvotes." });
+    } finally {
+      setSavingUpvotes(false);
+    }
+  }
+
   async function handleDelete() {
     if (!question) return;
     if (!window.confirm(`Delete this question from ${question.username}? This cannot be undone.`)) return;
@@ -220,6 +251,42 @@ export default function AdminQuestionEditorPage() {
             Public URL: <span className="font-mono">/questions/{question.slug}</span>
           </p>
         )}
+      </div>
+
+      <div className="card mt-5 p-5">
+        <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[var(--ink-muted)]">
+          Upvotes
+        </label>
+        <p className="text-sm text-[var(--ink-muted)]">
+          Current upvotes: <span className="font-medium text-[var(--foreground)]">{question.totalUpvotes}</span>{" "}
+          <span className="text-xs">
+            ({question.realUpvotes} from users, {question.manualUpvotes} manual)
+          </span>
+        </p>
+        <div className="mt-2 flex items-center gap-2">
+          <label className="text-xs text-[var(--ink-muted)]" htmlFor="manual-upvotes">
+            Set custom upvotes
+          </label>
+          <input
+            id="manual-upvotes"
+            type="number"
+            min={0}
+            className="input w-28"
+            value={manualUpvotes}
+            onChange={(e) => setManualUpvotes(e.target.value)}
+          />
+          <button
+            type="button"
+            disabled={savingUpvotes}
+            onClick={saveManualUpvotes}
+            className="btn btn-secondary disabled:opacity-50"
+          >
+            {savingUpvotes ? "Saving…" : "Save"}
+          </button>
+        </div>
+        <p className="mt-1 text-xs text-[var(--ink-muted)]">
+          Added on top of real user votes — the public page always shows real + manual.
+        </p>
       </div>
 
       <div className="card mt-5 p-5">

@@ -1,0 +1,529 @@
+diff --git a/prisma/migrations/20260805000000_add_question_upvotes/migration.sql b/prisma/migrations/20260805000000_add_question_upvotes/migration.sql
+new file mode 100644
+index 0000000..fdc063b
+--- /dev/null
++++ b/prisma/migrations/20260805000000_add_question_upvotes/migration.sql
+@@ -0,0 +1,20 @@
++-- Question upvotes: admin-adjustable manual count, plus a real per-IP vote
++-- ledger enforced unique at the database level to prevent duplicate votes.
++
++ALTER TABLE "Question" ADD COLUMN "realUpvotes" INTEGER NOT NULL DEFAULT 0;
++ALTER TABLE "Question" ADD COLUMN "manualUpvotes" INTEGER NOT NULL DEFAULT 0;
++
++CREATE TABLE "QuestionUpvote" (
++    "id" TEXT NOT NULL,
++    "questionId" TEXT NOT NULL,
++    "ipHash" TEXT NOT NULL,
++    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
++
++    CONSTRAINT "QuestionUpvote_pkey" PRIMARY KEY ("id")
++);
++
++CREATE INDEX "QuestionUpvote_questionId_idx" ON "QuestionUpvote"("questionId");
++
++CREATE UNIQUE INDEX "QuestionUpvote_questionId_ipHash_key" ON "QuestionUpvote"("questionId", "ipHash");
++
++ALTER TABLE "QuestionUpvote" ADD CONSTRAINT "QuestionUpvote_questionId_fkey" FOREIGN KEY ("questionId") REFERENCES "Question"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+diff --git a/prisma/schema.prisma b/prisma/schema.prisma
+index cf05c46..c5ced13 100644
+--- a/prisma/schema.prisma
++++ b/prisma/schema.prisma
+@@ -100,10 +100,37 @@ model Question {
+   updatedAt   DateTime  @updatedAt
+   publishedAt DateTime?
+ 
++  // Denormalized count of real per-IP votes (see QuestionUpvote), kept in
++  // sync transactionally alongside each QuestionUpvote insert so reads never
++  // need a join/count. Separate from manualUpvotes so an admin override can
++  // never clobber real user votes — the publicly displayed total is always
++  // realUpvotes + manualUpvotes.
++  realUpvotes   Int @default(0)
++  manualUpvotes Int @default(0)
++
++  upvoteRecords QuestionUpvote[]
++
+   @@index([status, createdAt])
+   @@index([status, publishedAt])
+ }
+ 
++// One row per (question, voter) — enforced by the unique index below, which
++// is what actually stops duplicate votes even if application-level checks
++// are ever bypassed. The voter is identified by a salted hash of their IP
++// (see src/lib/ip-hash.ts), never the raw address, so a database leak alone
++// doesn't expose who voted from where.
++model QuestionUpvote {
++  id         String   @id @default(cuid())
++  questionId String
++  ipHash     String
++  createdAt  DateTime @default(now())
++
++  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
++
++  @@unique([questionId, ipHash])
++  @@index([questionId])
++}
++
+ model EmailVerificationToken {
+   id        String    @id @default(cuid())
+   creatorId String
+diff --git a/src/app/admin/(dashboard)/questions/[id]/page.tsx b/src/app/admin/(dashboard)/questions/[id]/page.tsx
+index a080d30..95709b9 100644
+--- a/src/app/admin/(dashboard)/questions/[id]/page.tsx
++++ b/src/app/admin/(dashboard)/questions/[id]/page.tsx
+@@ -17,6 +17,9 @@ interface QuestionDetail {
+   status: string;
+   createdAt: string;
+   publishedAt: string | null;
++  realUpvotes: number;
++  manualUpvotes: number;
++  totalUpvotes: number;
+ }
+ 
+ const TOOLBAR = [
+@@ -47,6 +50,8 @@ export default function AdminQuestionEditorPage() {
+   const [publishedAt, setPublishedAt] = useState(() => toDatetimeLocal(new Date()));
+   const [images, setImages] = useState<string[]>([]);
+   const [videos, setVideos] = useState<string[]>([]);
++  const [manualUpvotes, setManualUpvotes] = useState("0");
++  const [savingUpvotes, setSavingUpvotes] = useState(false);
+   const [loading, setLoading] = useState(true);
+   const [saving, setSaving] = useState<"draft" | "publish" | "delete" | null>(null);
+   const [uploading, setUploading] = useState(false);
+@@ -64,6 +69,7 @@ export default function AdminQuestionEditorPage() {
+         setCategory(q.category || "");
+         setImages(q.answerImages || []);
+         setVideos(q.answerVideos || []);
++        setManualUpvotes(String(q.manualUpvotes ?? 0));
+         setPublishedAt(toDatetimeLocal(q.publishedAt ? new Date(q.publishedAt) : new Date()));
+       }
+       if (!cancelled) setLoading(false);
+@@ -166,6 +172,31 @@ export default function AdminQuestionEditorPage() {
+     }
+   }
+ 
++  async function saveManualUpvotes() {
++    const value = Math.max(0, Math.trunc(Number(manualUpvotes) || 0));
++    setSavingUpvotes(true);
++    setMessage(null);
++    try {
++      const res = await fetch(`/api/admin/questions/${params.id}`, {
++        method: "PATCH",
++        headers: { "Content-Type": "application/json" },
++        body: JSON.stringify({ manualUpvotes: value }),
++      });
++      const data = await res.json().catch(() => ({}));
++      if (res.ok) {
++        setQuestion(data.question);
++        setManualUpvotes(String(data.question.manualUpvotes));
++        setMessage({ type: "success", text: "Upvotes updated." });
++      } else {
++        setMessage({ type: "error", text: data.error || "Unable to update upvotes." });
++      }
++    } catch {
++      setMessage({ type: "error", text: "Unable to update upvotes." });
++    } finally {
++      setSavingUpvotes(false);
++    }
++  }
++
+   async function handleDelete() {
+     if (!question) return;
+     if (!window.confirm(`Delete this question from ${question.username}? This cannot be undone.`)) return;
+@@ -222,6 +253,42 @@ export default function AdminQuestionEditorPage() {
+         )}
+       </div>
+ 
++      <div className="card mt-5 p-5">
++        <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[var(--ink-muted)]">
++          Upvotes
++        </label>
++        <p className="text-sm text-[var(--ink-muted)]">
++          Current upvotes: <span className="font-medium text-[var(--foreground)]">{question.totalUpvotes}</span>{" "}
++          <span className="text-xs">
++            ({question.realUpvotes} from users, {question.manualUpvotes} manual)
++          </span>
++        </p>
++        <div className="mt-2 flex items-center gap-2">
++          <label className="text-xs text-[var(--ink-muted)]" htmlFor="manual-upvotes">
++            Set custom upvotes
++          </label>
++          <input
++            id="manual-upvotes"
++            type="number"
++            min={0}
++            className="input w-28"
++            value={manualUpvotes}
++            onChange={(e) => setManualUpvotes(e.target.value)}
++          />
++          <button
++            type="button"
++            disabled={savingUpvotes}
++            onClick={saveManualUpvotes}
++            className="btn btn-secondary disabled:opacity-50"
++          >
++            {savingUpvotes ? "Saving…" : "Save"}
++          </button>
++        </div>
++        <p className="mt-1 text-xs text-[var(--ink-muted)]">
++          Added on top of real user votes — the public page always shows real + manual.
++        </p>
++      </div>
++
+       <div className="card mt-5 p-5">
+         <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[var(--ink-muted)]">
+           Category
+diff --git a/src/app/api/admin/questions/[id]/route.ts b/src/app/api/admin/questions/[id]/route.ts
+index 970ce4d..3fc93f3 100644
+--- a/src/app/api/admin/questions/[id]/route.ts
++++ b/src/app/api/admin/questions/[id]/route.ts
+@@ -100,6 +100,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
+         ? { answerVideos: JSON.stringify(parsed.data.answerVideos) }
+         : {}),
+       ...(parsed.data.category !== undefined ? { category: parsed.data.category } : {}),
++      ...(parsed.data.manualUpvotes !== undefined ? { manualUpvotes: parsed.data.manualUpvotes } : {}),
+       status: nextStatus,
+       slug,
+       // Explicit admin-provided publication date always wins. Otherwise,
+@@ -117,7 +118,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
+     action: isPublishing ? "question.publish" : "question.update",
+     actor: session.email,
+     questionId: id,
+-    metadata: { status: nextStatus },
++    metadata: {
++      status: nextStatus,
++      ...(parsed.data.manualUpvotes !== undefined ? { manualUpvotes: parsed.data.manualUpvotes } : {}),
++    },
+   });
+ 
+   // Cover both the pre- and post-update slug/category so an edit that
+diff --git a/src/app/api/questions/[slug]/upvote/route.ts b/src/app/api/questions/[slug]/upvote/route.ts
+new file mode 100644
+index 0000000..1768a54
+--- /dev/null
++++ b/src/app/api/questions/[slug]/upvote/route.ts
+@@ -0,0 +1,102 @@
++import { NextRequest, NextResponse } from "next/server";
++import { revalidatePath } from "next/cache";
++import { prisma } from "@/lib/prisma";
++import { getClientIp, rateLimit } from "@/lib/rate-limit";
++import { hashIp } from "@/lib/ip-hash";
++import { verifySameOrigin } from "@/lib/verify-origin";
++import { serializeQuestion } from "@/lib/serialize-question";
++import { logger } from "@/lib/logger";
++import { QUESTION_CATEGORY_SLUGS } from "@/lib/constants";
++
++async function findPublishedQuestion(slug: string) {
++  return prisma.question.findFirst({ where: { slug, status: "published" } });
++}
++
++function revalidateQuestionPaths(question: { slug: string | null; category: string | null }) {
++  revalidatePath("/questions");
++  if (question.slug) revalidatePath(`/questions/${question.slug}`);
++  if (question.category && question.category in QUESTION_CATEGORY_SLUGS) {
++    revalidatePath(`/questions/category/${QUESTION_CATEGORY_SLUGS[question.category as keyof typeof QUESTION_CATEGORY_SLUGS]}`);
++  }
++}
++
++// Current total + whether this visitor (by hashed IP) has already voted.
++// Called client-side on mount so the (cached/ISR) page itself never needs
++// to be personalized per-visitor.
++export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
++  const { slug } = await params;
++  const question = await findPublishedQuestion(slug);
++  if (!question) {
++    return NextResponse.json({ error: "Question not found" }, { status: 404 });
++  }
++
++  const ipHash = hashIp(getClientIp(request.headers));
++  const existingVote = await prisma.questionUpvote.findUnique({
++    where: { questionId_ipHash: { questionId: question.id, ipHash } },
++    select: { id: true },
++  });
++
++  return NextResponse.json({
++    totalUpvotes: serializeQuestion(question).totalUpvotes,
++    hasVoted: Boolean(existingVote),
++  });
++}
++
++export async function POST(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
++  const originCheck = verifySameOrigin(request);
++  if (originCheck) return originCheck;
++
++  const { slug } = await params;
++  const question = await findPublishedQuestion(slug);
++  if (!question) {
++    return NextResponse.json({ error: "Question not found" }, { status: 404 });
++  }
++
++  const ip = getClientIp(request.headers);
++
++  // Defense-in-depth against a single IP hammering the endpoint (e.g. a
++  // script retrying past a network hiccup). The real duplicate-vote
++  // prevention is the (questionId, ipHash) unique index below, not this.
++  const burst = rateLimit(`question-upvote:${ip}`, { limit: 10, windowMs: 60 * 1000 });
++  if (!burst.allowed) {
++    return NextResponse.json({ error: "Too many requests. Please try again shortly." }, { status: 429 });
++  }
++
++  const ipHash = hashIp(ip);
++
++  try {
++    // A single nested write: Prisma runs the Question update and the
++    // QuestionUpvote insert in one transaction, so a mid-way failure (e.g.
++    // the unique constraint below) can never leave the count incremented
++    // without a matching vote row, or vice versa.
++    const updated = await prisma.question.update({
++      where: { id: question.id },
++      data: {
++        realUpvotes: { increment: 1 },
++        upvoteRecords: { create: { ipHash } },
++      },
++    });
++
++    revalidateQuestionPaths(updated);
++
++    return NextResponse.json({
++      totalUpvotes: serializeQuestion(updated).totalUpvotes,
++      hasVoted: true,
++    });
++  } catch (err) {
++    // P2002 = unique constraint violation on (questionId, ipHash) — this IP
++    // already voted for this question. Not an error from the user's point
++    // of view: report the current, unchanged state as an already-voted
++    // success rather than a failure.
++    if (typeof err === "object" && err !== null && "code" in err && err.code === "P2002") {
++      const current = await prisma.question.findUnique({ where: { id: question.id } });
++      return NextResponse.json({
++        totalUpvotes: current ? serializeQuestion(current).totalUpvotes : serializeQuestion(question).totalUpvotes,
++        hasVoted: true,
++      });
++    }
++
++    logger.error("questions: upvote failed", { scope: "questions-upvote", questionId: question.id, err });
++    return NextResponse.json({ error: "Unable to record your upvote. Please try again." }, { status: 500 });
++  }
++}
+diff --git a/src/app/questions/[slug]/page.tsx b/src/app/questions/[slug]/page.tsx
+index d529d89..b9596bb 100644
+--- a/src/app/questions/[slug]/page.tsx
++++ b/src/app/questions/[slug]/page.tsx
+@@ -6,6 +6,7 @@ import { SiteFooter } from "@/components/site-footer";
+ import { prisma } from "@/lib/prisma";
+ import { markdownToHtml, markdownToExcerpt } from "@/lib/markdown";
+ import { serializeQuestion } from "@/lib/serialize-question";
++import { UpvoteButton } from "@/components/questions/upvote-button";
+ import { getSiteUrl } from "@/lib/site-url";
+ import { QUESTION_CATEGORY_SLUGS, type QuestionCategoryValue } from "@/lib/constants";
+ 
+@@ -179,6 +180,10 @@ export default async function QuestionDetailPage({
+               )}
+             </div>
+ 
++            <div className="mt-6">
++              <UpvoteButton slug={question.slug as string} initialUpvotes={question.totalUpvotes} />
++            </div>
++
+             <div className="mt-10 border-t border-border pt-10">
+               <h2 className="font-mono-ui text-xs uppercase tracking-[0.2em] text-accent">Answer</h2>
+               {answerHtml ? (
+diff --git a/src/components/questions/upvote-button.tsx b/src/components/questions/upvote-button.tsx
+new file mode 100644
+index 0000000..e58b5ff
+--- /dev/null
++++ b/src/components/questions/upvote-button.tsx
+@@ -0,0 +1,77 @@
++"use client";
++
++import { useEffect, useState } from "react";
++import { trackEvent } from "@/lib/analytics";
++
++export function UpvoteButton({ slug, initialUpvotes }: { slug: string; initialUpvotes: number }) {
++  const [totalUpvotes, setTotalUpvotes] = useState(initialUpvotes);
++  const [hasVoted, setHasVoted] = useState(false);
++  const [pending, setPending] = useState(false);
++  // Distinguishes "haven't checked yet" from "checked, not voted" so the
++  // button doesn't briefly flash as clickable before the status check lands.
++  const [checked, setChecked] = useState(false);
++
++  useEffect(() => {
++    let cancelled = false;
++    fetch(`/api/questions/${slug}/upvote`)
++      .then((res) => (res.ok ? res.json() : null))
++      .then((data) => {
++        if (cancelled || !data) return;
++        setTotalUpvotes(data.totalUpvotes);
++        setHasVoted(data.hasVoted);
++      })
++      .finally(() => {
++        if (!cancelled) setChecked(true);
++      });
++    return () => {
++      cancelled = true;
++    };
++  }, [slug]);
++
++  async function handleUpvote() {
++    if (pending || hasVoted) return;
++    setPending(true);
++    // Optimistic update, rolled back on failure — the server response
++    // (or the 409-as-success already-voted case) is still the source of
++    // truth once it lands.
++    setTotalUpvotes((n) => n + 1);
++    setHasVoted(true);
++    try {
++      const res = await fetch(`/api/questions/${slug}/upvote`, { method: "POST" });
++      const data = await res.json().catch(() => null);
++      if (res.ok && data) {
++        setTotalUpvotes(data.totalUpvotes);
++        setHasVoted(data.hasVoted);
++        trackEvent("question_upvote", { slug });
++      } else {
++        setTotalUpvotes((n) => n - 1);
++        setHasVoted(false);
++      }
++    } catch {
++      setTotalUpvotes((n) => n - 1);
++      setHasVoted(false);
++    } finally {
++      setPending(false);
++    }
++  }
++
++  return (
++    <button
++      type="button"
++      onClick={handleUpvote}
++      disabled={pending || hasVoted || !checked}
++      aria-pressed={hasVoted}
++      title={hasVoted ? "You've upvoted this question" : "Upvote this question"}
++      className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 font-mono-ui text-xs uppercase tracking-[0.1em] transition-colors disabled:cursor-not-allowed ${
++        hasVoted
++          ? "border-accent text-accent"
++          : "border-border text-text-muted hover:border-accent hover:text-accent"
++      } ${pending ? "opacity-70" : ""}`}
++    >
++      <span aria-hidden="true">▲</span>
++      <span>
++        {totalUpvotes} {totalUpvotes === 1 ? "Upvote" : "Upvotes"}
++      </span>
++    </button>
++  );
++}
+diff --git a/src/lib/__tests__/ip-hash.test.ts b/src/lib/__tests__/ip-hash.test.ts
+new file mode 100644
+index 0000000..18ddfad
+--- /dev/null
++++ b/src/lib/__tests__/ip-hash.test.ts
+@@ -0,0 +1,45 @@
++import { describe, it, expect, beforeEach } from "vitest";
++import { createHmac } from "crypto";
++
++const REQUIRED_ENV = {
++  DATABASE_URL: "postgres://user:pass@localhost:5432/db",
++  SESSION_SECRET: "a-secret-that-is-long-enough",
++  ADMIN_EMAIL: "admin@example.com",
++  ADMIN_PASSWORD: "hunter2",
++  NEXT_PUBLIC_SITE_URL: "https://example.com",
++};
++
++describe("hashIp", () => {
++  const originalEnv = { ...process.env };
++
++  beforeEach(() => {
++    process.env = { ...originalEnv, ...REQUIRED_ENV };
++  });
++
++  it("produces a deterministic HMAC-SHA256 hex digest keyed with SESSION_SECRET", async () => {
++    const { hashIp } = await import("@/lib/ip-hash");
++    expect(hashIp("203.0.113.7")).toBe(
++      createHmac("sha256", REQUIRED_ENV.SESSION_SECRET).update("203.0.113.7").digest("hex")
++    );
++  });
++
++  it("hashes the same IPv4 address the same way twice", async () => {
++    const { hashIp } = await import("@/lib/ip-hash");
++    expect(hashIp("198.51.100.23")).toBe(hashIp("198.51.100.23"));
++  });
++
++  it("hashes different IPs to different values", async () => {
++    const { hashIp } = await import("@/lib/ip-hash");
++    expect(hashIp("198.51.100.23")).not.toBe(hashIp("198.51.100.24"));
++  });
++
++  it("normalizes IPv6 case and zone id so equivalent addresses match", async () => {
++    const { hashIp } = await import("@/lib/ip-hash");
++    expect(hashIp("FE80::1FF:FE23:4567:890A%eth0")).toBe(hashIp("fe80::1ff:fe23:4567:890a"));
++  });
++
++  it("hashes a full IPv6 address without error", async () => {
++    const { hashIp } = await import("@/lib/ip-hash");
++    expect(hashIp("2001:0db8:85a3:0000:0000:8a2e:0370:7334")).toHaveLength(64);
++  });
++});
+diff --git a/src/lib/analytics.ts b/src/lib/analytics.ts
+index 677967f..85d5d02 100644
+--- a/src/lib/analytics.ts
++++ b/src/lib/analytics.ts
+@@ -24,6 +24,7 @@ export type AnalyticsEvent =
+   | "question_ask_open"
+   | "question_ask_submit"
+   | "question_view"
++  | "question_upvote"
+   | "questions_search";
+ 
+ export type AnalyticsProps = Record<string, string | number | boolean | null | undefined>;
+diff --git a/src/lib/ip-hash.ts b/src/lib/ip-hash.ts
+new file mode 100644
+index 0000000..fc1b78d
+--- /dev/null
++++ b/src/lib/ip-hash.ts
+@@ -0,0 +1,19 @@
++import { createHmac } from "crypto";
++import { getServerEnv } from "@/lib/env";
++
++/**
++ * Salted, one-way hash of a client IP address for anti-abuse dedup (e.g.
++ * QuestionUpvote.ipHash). Never store the raw IP: HMAC-SHA256 keyed with
++ * SESSION_SECRET (already a required, long, secret env var — no new secret
++ * to provision) means the hash can't be reversed or rainbow-tabled back to
++ * the address, while still deterministically colliding for the same IP so
++ * duplicate votes are caught.
++ *
++ * Handles IPv4 and IPv6 alike (raw byte pattern differs, but both are just
++ * strings here) and normalizes IPv6 zone/scope + case so the same address
++ * quoted slightly differently by different proxies still hashes the same.
++ */
++export function hashIp(ip: string): string {
++  const normalized = ip.trim().toLowerCase().split("%")[0];
++  return createHmac("sha256", getServerEnv().SESSION_SECRET).update(normalized).digest("hex");
++}
+diff --git a/src/lib/serialize-question.ts b/src/lib/serialize-question.ts
+index fbf3815..49516a6 100644
+--- a/src/lib/serialize-question.ts
++++ b/src/lib/serialize-question.ts
+@@ -14,6 +14,10 @@ export function serializeQuestion(question: Question) {
+     ...question,
+     answerImages: safeParseArray(question.answerImages),
+     answerVideos: safeParseArray(question.answerVideos),
++    // Publicly displayed total is always real user votes + the admin's
++    // manual adjustment — never one or the other alone (see
++    // Question.manualUpvotes in schema.prisma).
++    totalUpvotes: question.realUpvotes + question.manualUpvotes,
+   };
+ }
+ 
+diff --git a/src/lib/validation.ts b/src/lib/validation.ts
+index 0ffe013..15ecd7f 100644
+--- a/src/lib/validation.ts
++++ b/src/lib/validation.ts
+@@ -105,6 +105,9 @@ export const questionAnswerSchema = z.object({
+   // Defaults client-side to "now" but can be moved to any valid date before
+   // (or after) publishing; always re-validated here regardless of status.
+   publishedAt: z.coerce.date().optional(),
++  // Admin manual-upvote override, added on top of real per-IP votes —
++  // never replaces them (see Question.manualUpvotes in schema.prisma).
++  manualUpvotes: z.coerce.number().int().min(0).max(1_000_000).optional(),
+ });
+ export type QuestionAnswerInput = z.infer<typeof questionAnswerSchema>;
+ 

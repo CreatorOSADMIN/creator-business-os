@@ -14,6 +14,10 @@ export function serializeQuestion(question: Question) {
     ...question,
     answerImages: safeParseArray(question.answerImages),
     answerVideos: safeParseArray(question.answerVideos),
+    // Publicly displayed total is always real user votes + the admin's
+    // manual adjustment — never one or the other alone (see
+    // Question.manualUpvotes in schema.prisma).
+    totalUpvotes: question.realUpvotes + question.manualUpvotes,
   };
 }
 

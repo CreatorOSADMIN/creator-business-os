@@ -100,8 +100,35 @@ model Question {
   updatedAt   DateTime  @updatedAt
   publishedAt DateTime?
 
+  // Denormalized count of real per-IP votes (see QuestionUpvote), kept in
+  // sync transactionally alongside each QuestionUpvote insert so reads never
+  // need a join/count. Separate from manualUpvotes so an admin override can
+  // never clobber real user votes — the publicly displayed total is always
+  // realUpvotes + manualUpvotes.
+  realUpvotes   Int @default(0)
+  manualUpvotes Int @default(0)
+
+  upvoteRecords QuestionUpvote[]
+
   @@index([status, createdAt])
   @@index([status, publishedAt])
+}
+
+// One row per (question, voter) — enforced by the unique index below, which
+// is what actually stops duplicate votes even if application-level checks
+// are ever bypassed. The voter is identified by a salted hash of their IP
+// (see src/lib/ip-hash.ts), never the raw address, so a database leak alone
+// doesn't expose who voted from where.
+model QuestionUpvote {
+  id         String   @id @default(cuid())
+  questionId String
+  ipHash     String
+  createdAt  DateTime @default(now())
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([questionId, ipHash])
+  @@index([questionId])
 }
 
 model EmailVerificationToken {

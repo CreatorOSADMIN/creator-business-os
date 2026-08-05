@@ -6,6 +6,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { prisma } from "@/lib/prisma";
 import { markdownToHtml, markdownToExcerpt } from "@/lib/markdown";
 import { serializeQuestion } from "@/lib/serialize-question";
+import { UpvoteButton } from "@/components/questions/upvote-button";
 import { getSiteUrl } from "@/lib/site-url";
 import { QUESTION_CATEGORY_SLUGS, type QuestionCategoryValue } from "@/lib/constants";
 
@@ -177,6 +178,10 @@ export default async function QuestionDetailPage({
                   )}
                 </>
               )}
+            </div>
+
+            <div className="mt-6">
+              <UpvoteButton slug={question.slug as string} initialUpvotes={question.totalUpvotes} />
             </div>
 
             <div className="mt-10 border-t border-border pt-10">

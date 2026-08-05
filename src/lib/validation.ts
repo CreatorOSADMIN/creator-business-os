@@ -105,6 +105,9 @@ export const questionAnswerSchema = z.object({
   // Defaults client-side to "now" but can be moved to any valid date before
   // (or after) publishing; always re-validated here regardless of status.
   publishedAt: z.coerce.date().optional(),
+  // Admin manual-upvote override, added on top of real per-IP votes —
+  // never replaces them (see Question.manualUpvotes in schema.prisma).
+  manualUpvotes: z.coerce.number().int().min(0).max(1_000_000).optional(),
 });
 export type QuestionAnswerInput = z.infer<typeof questionAnswerSchema>;
 

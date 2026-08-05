@@ -100,6 +100,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         ? { answerVideos: JSON.stringify(parsed.data.answerVideos) }
         : {}),
       ...(parsed.data.category !== undefined ? { category: parsed.data.category } : {}),
+      ...(parsed.data.manualUpvotes !== undefined ? { manualUpvotes: parsed.data.manualUpvotes } : {}),
       status: nextStatus,
       slug,
       // Explicit admin-provided publication date always wins. Otherwise,
@@ -117,7 +118,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     action: isPublishing ? "question.publish" : "question.update",
     actor: session.email,
     questionId: id,
-    metadata: { status: nextStatus },
+    metadata: {
+      status: nextStatus,
+      ...(parsed.data.manualUpvotes !== undefined ? { manualUpvotes: parsed.data.manualUpvotes } : {}),
+    },
   });
 
   // Cover both the pre- and post-update slug/category so an edit that
