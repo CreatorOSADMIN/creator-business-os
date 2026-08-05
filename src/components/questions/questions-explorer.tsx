@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { QUESTION_CATEGORIES } from "@/lib/constants";
 import { trackEvent } from "@/lib/analytics";
@@ -32,6 +32,12 @@ export function QuestionsExplorer({ initialQuestions }: { initialQuestions: Ques
   const [modalOpen, setModalOpen] = useState(false);
   const [modalKey, setModalKey] = useState(0);
   const pageSize = 12;
+  // The server component already fetched the default (unfiltered, page 1)
+  // list for this render. Re-issuing that same request on mount served no
+  // purpose other than briefly replacing correct SSR data with itself —
+  // and, worse, racing it against a stale response if the admin API cache
+  // hadn't caught up yet. Only fetch once the user actually changes a filter.
+  const isFirstRun = useRef(true);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -65,6 +71,10 @@ export function QuestionsExplorer({ initialQuestions }: { initialQuestions: Ques
   }, [search, category, tab, page]);
 
   useEffect(() => {
+    if (isFirstRun.current) {
+      isFirstRun.current = false;
+      return;
+    }
     const timeout = setTimeout(() => {
       load();
       if (search) trackEvent("questions_search", { query: search });

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
 import { serializeQuestion } from "@/lib/serialize-question";
@@ -7,6 +8,23 @@ import { verifySameOrigin } from "@/lib/verify-origin";
 import { logAdminAction } from "@/lib/audit-log";
 import { logger } from "@/lib/logger";
 import { generateUniqueSlug } from "@/lib/slug";
+import { QUESTION_CATEGORY_SLUGS } from "@/lib/constants";
+
+// Revalidates every public route that could be showing stale data for a
+// question after an admin create/update/publish/delete. Cheap no-ops if a
+// given path was never statically generated.
+function revalidateQuestionPaths(question: {
+  slug: string | null;
+  category: string | null;
+}) {
+  revalidatePath("/questions");
+  if (question.slug) {
+    revalidatePath(`/questions/${question.slug}`);
+  }
+  if (question.category && question.category in QUESTION_CATEGORY_SLUGS) {
+    revalidatePath(`/questions/category/${QUESTION_CATEGORY_SLUGS[question.category as keyof typeof QUESTION_CATEGORY_SLUGS]}`);
+  }
+}
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { response } = await requireAdmin();
@@ -102,6 +120,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     metadata: { status: nextStatus },
   });
 
+  // Cover both the pre- and post-update slug/category so an edit that
+  // changes category (or an unpublish) also clears the stale page it
+  // moved away from, not just the one it moved to.
+  revalidateQuestionPaths(question);
+  if (existing.slug !== question.slug || existing.category !== question.category) {
+    revalidateQuestionPaths(existing);
+  }
+
   return NextResponse.json({ question: serializeQuestion(question) });
 }
 
@@ -117,8 +143,9 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     return NextResponse.json({ error: "Invalid question id" }, { status: 400 });
   }
 
+  let deleted;
   try {
-    await prisma.question.delete({ where: { id } });
+    deleted = await prisma.question.delete({ where: { id } });
   } catch (err) {
     if (typeof err === "object" && err !== null && "code" in err && err.code === "P2025") {
       return NextResponse.json({ error: "Question not found" }, { status: 404 });
@@ -128,6 +155,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   }
 
   logAdminAction({ action: "question.delete", actor: session.email, questionId: id });
+  revalidateQuestionPaths(deleted);
 
   return NextResponse.json({ success: true });
 }
