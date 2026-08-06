@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useState, type MouseEvent } from "react";
+import { useEffect, useState, type MouseEvent } from "react";
 import { trackEvent } from "@/lib/analytics";
 import { getCachedVote, setCachedVote } from "@/lib/voted-questions-cache";
 
@@ -20,25 +20,26 @@ export function UpvoteButton({
   onVoteChange?: (data: { totalUpvotes: number; hasVoted: boolean }) => void;
 }) {
   const [totalUpvotes, setTotalUpvotes] = useState(initialUpvotes);
-  const [hasVoted, setHasVoted] = useState(false);
+  // Lazy-initialized from the cache so a returning visitor's vote renders
+  // correctly on the very first frame instead of flashing unvoted first.
+  // The background fetch below is still the actual source of truth.
+  const [hasVoted, setHasVoted] = useState(() => getCachedVote(slug) ?? false);
   const [pending, setPending] = useState(false);
   // Distinguishes "haven't checked yet" from "checked, not voted" so the
   // button doesn't briefly flash as clickable before the status check lands.
-  const [checked, setChecked] = useState(false);
+  const [checked, setChecked] = useState(() => getCachedVote(slug) !== null);
 
-  // Runs before the browser paints (unlike useEffect), so if this browser
-  // has voted on this question before, the button renders correctly voted
-  // on its very first visible frame instead of flashing unvoted first. The
-  // background fetch below still runs and is the actual source of truth —
-  // this is purely a same-frame visual shortcut for the common repeat-visit
-  // case, never a substitute for the server check.
-  useLayoutEffect(() => {
+  // Re-derive the cached-vote state when `slug` changes (e.g. this instance
+  // is reused across questions) without an extra effect + re-render commit —
+  // this is React's documented "adjusting state when a prop changes"
+  // pattern, and it keeps the sync work out of an Effect entirely.
+  const [prevSlug, setPrevSlug] = useState(slug);
+  if (slug !== prevSlug) {
+    setPrevSlug(slug);
     const cached = getCachedVote(slug);
-    if (cached !== null) {
-      setHasVoted(cached);
-      setChecked(true);
-    }
-  }, [slug]);
+    setHasVoted(cached ?? false);
+    setChecked(cached !== null);
+  }
 
   useEffect(() => {
     let cancelled = false;
