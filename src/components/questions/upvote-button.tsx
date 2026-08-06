@@ -1,18 +1,23 @@
 "use client";
 
-import { useEffect, useState, type MouseEvent } from "react";
+import { useEffect, useLayoutEffect, useState, type MouseEvent } from "react";
 import { trackEvent } from "@/lib/analytics";
+import { getCachedVote, setCachedVote } from "@/lib/voted-questions-cache";
 
 export function UpvoteButton({
   slug,
   initialUpvotes,
   size = "md",
+  onVoteChange,
 }: {
   slug: string;
   initialUpvotes: number;
   // "sm" is used on the /questions list cards, which are tighter on space
   // than the full question page — same styling language, smaller footprint.
   size?: "sm" | "md";
+  // Lets a parent list (QuestionsExplorer) react to this card's own vote —
+  // e.g. re-rank the list — without owning the vote state itself.
+  onVoteChange?: (data: { totalUpvotes: number; hasVoted: boolean }) => void;
 }) {
   const [totalUpvotes, setTotalUpvotes] = useState(initialUpvotes);
   const [hasVoted, setHasVoted] = useState(false);
@@ -20,6 +25,20 @@ export function UpvoteButton({
   // Distinguishes "haven't checked yet" from "checked, not voted" so the
   // button doesn't briefly flash as clickable before the status check lands.
   const [checked, setChecked] = useState(false);
+
+  // Runs before the browser paints (unlike useEffect), so if this browser
+  // has voted on this question before, the button renders correctly voted
+  // on its very first visible frame instead of flashing unvoted first. The
+  // background fetch below still runs and is the actual source of truth —
+  // this is purely a same-frame visual shortcut for the common repeat-visit
+  // case, never a substitute for the server check.
+  useLayoutEffect(() => {
+    const cached = getCachedVote(slug);
+    if (cached !== null) {
+      setHasVoted(cached);
+      setChecked(true);
+    }
+  }, [slug]);
 
   useEffect(() => {
     let cancelled = false;
@@ -29,6 +48,7 @@ export function UpvoteButton({
         if (cancelled || !data) return;
         setTotalUpvotes(data.totalUpvotes);
         setHasVoted(data.hasVoted);
+        setCachedVote(slug, data.hasVoted);
       })
       .finally(() => {
         if (!cancelled) setChecked(true);
@@ -60,6 +80,8 @@ export function UpvoteButton({
       if (res.ok && data) {
         setTotalUpvotes(data.totalUpvotes);
         setHasVoted(data.hasVoted);
+        setCachedVote(slug, data.hasVoted);
+        onVoteChange?.(data);
         if (!wasVoted) trackEvent("question_upvote", { slug });
       } else {
         setTotalUpvotes((n) => (wasVoted ? n + 1 : n - 1));
@@ -82,7 +104,7 @@ export function UpvoteButton({
       disabled={pending || !checked}
       aria-pressed={hasVoted}
       title={hasVoted ? "Remove your upvote" : "Upvote this question"}
-      className={`inline-flex items-center rounded-full border font-mono-ui uppercase tracking-[0.1em] transition-colors disabled:cursor-not-allowed ${sizeClasses} ${
+      className={`inline-flex items-center rounded-full border font-mono-ui uppercase tracking-[0.1em] transition-colors transition-transform duration-150 active:scale-95 disabled:cursor-not-allowed ${sizeClasses} ${
         hasVoted
           ? "border-accent text-accent"
           : "border-border text-text-muted hover:border-accent hover:text-accent"

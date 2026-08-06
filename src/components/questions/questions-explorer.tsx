@@ -97,6 +97,35 @@ export function QuestionsExplorer({ initialQuestions }: { initialQuestions: Ques
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, category, tab, page]);
 
+  // Mirrors findRankedQuestions' ORDER BY (realUpvotes + manualUpvotes) DESC,
+  // publishedAt DESC — kept in sync by hand since this is a client-side
+  // re-sort of data the server already ranked, not a new ranking rule.
+  const sortByUpvotes = useCallback((items: QuestionListItem[]) => {
+    return [...items].sort((a, b) => {
+      if (b.totalUpvotes !== a.totalUpvotes) return b.totalUpvotes - a.totalUpvotes;
+      const at = a.publishedAt ? Date.parse(a.publishedAt) : 0;
+      const bt = b.publishedAt ? Date.parse(b.publishedAt) : 0;
+      return bt - at;
+    });
+  }, []);
+
+  // A card's own upvote count just changed (optimistically or confirmed) —
+  // reflect it in this list's data and, on the upvote-ranked "latest" tab,
+  // re-rank immediately instead of waiting for the next full reload.
+  // "recently_answered" is a pure date sort, so votes never move position
+  // there.
+  const handleVoteChange = useCallback(
+    (questionId: string, data: { totalUpvotes: number }) => {
+      setQuestions((prev) => {
+        const next = prev.map((q) =>
+          q.id === questionId ? { ...q, totalUpvotes: data.totalUpvotes } : q
+        );
+        return tab === "latest" ? sortByUpvotes(next) : next;
+      });
+    },
+    [tab, sortByUpvotes]
+  );
+
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
@@ -218,7 +247,12 @@ export function QuestionsExplorer({ initialQuestions }: { initialQuestions: Ques
                   {q.publishedAt && <span>{new Date(q.publishedAt).toLocaleDateString()}</span>}
                 </div>
                 <div className="mt-4">
-                  <UpvoteButton slug={q.slug} initialUpvotes={q.totalUpvotes} size="sm" />
+                  <UpvoteButton
+                    slug={q.slug}
+                    initialUpvotes={q.totalUpvotes}
+                    size="sm"
+                    onVoteChange={(data) => handleVoteChange(q.id, data)}
+                  />
                 </div>
               </Link>
             ))}

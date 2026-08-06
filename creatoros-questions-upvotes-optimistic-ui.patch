@@ -1,0 +1,182 @@
+diff --git a/src/components/questions/questions-explorer.tsx b/src/components/questions/questions-explorer.tsx
+index 4919b06..faf735a 100644
+--- a/src/components/questions/questions-explorer.tsx
++++ b/src/components/questions/questions-explorer.tsx
+@@ -97,6 +97,35 @@ export function QuestionsExplorer({ initialQuestions }: { initialQuestions: Ques
+     // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [search, category, tab, page]);
+ 
++  // Mirrors findRankedQuestions' ORDER BY (realUpvotes + manualUpvotes) DESC,
++  // publishedAt DESC — kept in sync by hand since this is a client-side
++  // re-sort of data the server already ranked, not a new ranking rule.
++  const sortByUpvotes = useCallback((items: QuestionListItem[]) => {
++    return [...items].sort((a, b) => {
++      if (b.totalUpvotes !== a.totalUpvotes) return b.totalUpvotes - a.totalUpvotes;
++      const at = a.publishedAt ? Date.parse(a.publishedAt) : 0;
++      const bt = b.publishedAt ? Date.parse(b.publishedAt) : 0;
++      return bt - at;
++    });
++  }, []);
++
++  // A card's own upvote count just changed (optimistically or confirmed) —
++  // reflect it in this list's data and, on the upvote-ranked "latest" tab,
++  // re-rank immediately instead of waiting for the next full reload.
++  // "recently_answered" is a pure date sort, so votes never move position
++  // there.
++  const handleVoteChange = useCallback(
++    (questionId: string, data: { totalUpvotes: number }) => {
++      setQuestions((prev) => {
++        const next = prev.map((q) =>
++          q.id === questionId ? { ...q, totalUpvotes: data.totalUpvotes } : q
++        );
++        return tab === "latest" ? sortByUpvotes(next) : next;
++      });
++    },
++    [tab, sortByUpvotes]
++  );
++
+   const totalPages = Math.max(1, Math.ceil(total / pageSize));
+ 
+   return (
+@@ -218,7 +247,12 @@ export function QuestionsExplorer({ initialQuestions }: { initialQuestions: Ques
+                   {q.publishedAt && <span>{new Date(q.publishedAt).toLocaleDateString()}</span>}
+                 </div>
+                 <div className="mt-4">
+-                  <UpvoteButton slug={q.slug} initialUpvotes={q.totalUpvotes} size="sm" />
++                  <UpvoteButton
++                    slug={q.slug}
++                    initialUpvotes={q.totalUpvotes}
++                    size="sm"
++                    onVoteChange={(data) => handleVoteChange(q.id, data)}
++                  />
+                 </div>
+               </Link>
+             ))}
+diff --git a/src/components/questions/upvote-button.tsx b/src/components/questions/upvote-button.tsx
+index 7024bc5..858f375 100644
+--- a/src/components/questions/upvote-button.tsx
++++ b/src/components/questions/upvote-button.tsx
+@@ -1,18 +1,23 @@
+ "use client";
+ 
+-import { useEffect, useState, type MouseEvent } from "react";
++import { useEffect, useLayoutEffect, useState, type MouseEvent } from "react";
+ import { trackEvent } from "@/lib/analytics";
++import { getCachedVote, setCachedVote } from "@/lib/voted-questions-cache";
+ 
+ export function UpvoteButton({
+   slug,
+   initialUpvotes,
+   size = "md",
++  onVoteChange,
+ }: {
+   slug: string;
+   initialUpvotes: number;
+   // "sm" is used on the /questions list cards, which are tighter on space
+   // than the full question page — same styling language, smaller footprint.
+   size?: "sm" | "md";
++  // Lets a parent list (QuestionsExplorer) react to this card's own vote —
++  // e.g. re-rank the list — without owning the vote state itself.
++  onVoteChange?: (data: { totalUpvotes: number; hasVoted: boolean }) => void;
+ }) {
+   const [totalUpvotes, setTotalUpvotes] = useState(initialUpvotes);
+   const [hasVoted, setHasVoted] = useState(false);
+@@ -21,6 +26,20 @@ export function UpvoteButton({
+   // button doesn't briefly flash as clickable before the status check lands.
+   const [checked, setChecked] = useState(false);
+ 
++  // Runs before the browser paints (unlike useEffect), so if this browser
++  // has voted on this question before, the button renders correctly voted
++  // on its very first visible frame instead of flashing unvoted first. The
++  // background fetch below still runs and is the actual source of truth —
++  // this is purely a same-frame visual shortcut for the common repeat-visit
++  // case, never a substitute for the server check.
++  useLayoutEffect(() => {
++    const cached = getCachedVote(slug);
++    if (cached !== null) {
++      setHasVoted(cached);
++      setChecked(true);
++    }
++  }, [slug]);
++
+   useEffect(() => {
+     let cancelled = false;
+     fetch(`/api/questions/${slug}/upvote`)
+@@ -29,6 +48,7 @@ export function UpvoteButton({
+         if (cancelled || !data) return;
+         setTotalUpvotes(data.totalUpvotes);
+         setHasVoted(data.hasVoted);
++        setCachedVote(slug, data.hasVoted);
+       })
+       .finally(() => {
+         if (!cancelled) setChecked(true);
+@@ -60,6 +80,8 @@ export function UpvoteButton({
+       if (res.ok && data) {
+         setTotalUpvotes(data.totalUpvotes);
+         setHasVoted(data.hasVoted);
++        setCachedVote(slug, data.hasVoted);
++        onVoteChange?.(data);
+         if (!wasVoted) trackEvent("question_upvote", { slug });
+       } else {
+         setTotalUpvotes((n) => (wasVoted ? n + 1 : n - 1));
+@@ -82,7 +104,7 @@ export function UpvoteButton({
+       disabled={pending || !checked}
+       aria-pressed={hasVoted}
+       title={hasVoted ? "Remove your upvote" : "Upvote this question"}
+-      className={`inline-flex items-center rounded-full border font-mono-ui uppercase tracking-[0.1em] transition-colors disabled:cursor-not-allowed ${sizeClasses} ${
++      className={`inline-flex items-center rounded-full border font-mono-ui uppercase tracking-[0.1em] transition-colors transition-transform duration-150 active:scale-95 disabled:cursor-not-allowed ${sizeClasses} ${
+         hasVoted
+           ? "border-accent text-accent"
+           : "border-border text-text-muted hover:border-accent hover:text-accent"
+diff --git a/src/lib/voted-questions-cache.ts b/src/lib/voted-questions-cache.ts
+new file mode 100644
+index 0000000..150278f
+--- /dev/null
++++ b/src/lib/voted-questions-cache.ts
+@@ -0,0 +1,46 @@
++// Client-only cache of "questions this browser has upvoted", used purely to
++// avoid the /questions upvote flash: UpvoteButton always renders unvoted on
++// first paint (SSR/ISR can't know the visitor's vote — see the GET handler
++// in api/questions/[slug]/upvote), then corrects itself once the per-visitor
++// check resolves. For a repeat visit that correction is almost always "yes,
++// still voted", so seeding from this cache in a layout effect (before the
++// browser paints) lets that first frame already be correct instead of
++// flashing unvoted-then-voted.
++//
++// Only "voted" entries are stored. Absence means "unknown", not "not
++// voted" — we never want to optimistically render a false negative, only
++// skip a known-true wait.
++const STORAGE_KEY = "creatoros:voted-questions";
++
++function readCache(): Record<string, true> {
++  if (typeof window === "undefined") return {};
++  try {
++    const raw = window.localStorage.getItem(STORAGE_KEY);
++    if (!raw) return {};
++    const parsed = JSON.parse(raw);
++    return parsed && typeof parsed === "object" ? parsed : {};
++  } catch {
++    return {};
++  }
++}
++
++export function getCachedVote(slug: string): boolean | null {
++  const cache = readCache();
++  return slug in cache ? true : null;
++}
++
++export function setCachedVote(slug: string, voted: boolean): void {
++  if (typeof window === "undefined") return;
++  try {
++    const cache = readCache();
++    if (voted) {
++      cache[slug] = true;
++    } else {
++      delete cache[slug];
++    }
++    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(cache));
++  } catch {
++    // Private browsing / quota exceeded / storage disabled — the button
++    // still works correctly, it just loses the instant-repaint shortcut.
++  }
++}
