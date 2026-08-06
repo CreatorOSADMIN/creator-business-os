@@ -71,6 +71,18 @@ export function SiteFooter() {
           <p>© {new Date().getFullYear()} CreatorOS. All rights reserved.</p>
           <p>Built for creators, by creators</p>
         </div>
+
+        <div className="mt-8 flex justify-start sm:justify-end">
+          <a href="https://launchstag.com" target="_blank" rel="noopener noreferrer">
+            <img
+              src="https://launchstag.com/badge-dark.svg"
+              alt="Featured on Launchstag"
+              width={198}
+              height={62}
+              loading="lazy"
+            />
+          </a>
+        </div>
       </div>
     </footer>
   );
