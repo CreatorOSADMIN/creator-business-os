@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CookiePreferencesLink } from "@/components/consent/cookie-preferences-link";
+import { FeaturedPlatforms } from "@/components/featured-platforms";
 import { QUESTION_CATEGORIES, QUESTION_CATEGORY_SLUGS } from "@/lib/constants";
 
 export function SiteFooter() {
@@ -72,17 +73,7 @@ export function SiteFooter() {
           <p>Built for creators, by creators</p>
         </div>
 
-        <div className="mt-8 flex justify-start sm:justify-end">
-          <a href="https://launchstag.com" target="_blank" rel="noopener noreferrer">
-            <img
-              src="https://launchstag.com/badge-dark.svg"
-              alt="Featured on Launchstag"
-              width={198}
-              height={62}
-              loading="lazy"
-            />
-          </a>
-        </div>
+        <FeaturedPlatforms />
       </div>
     </footer>
   );

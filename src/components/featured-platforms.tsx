@@ -1,0 +1,113 @@
+import type { SVGProps } from "react";
+
+const CARD_CLASSES =
+  "group flex h-20 items-center gap-3 rounded-2xl border border-border bg-bg-elevated px-5 transition-colors hover:border-accent";
+
+const BADGE_CARD_CLASSES =
+  "flex h-20 items-center justify-center rounded-2xl border border-border bg-bg-elevated px-5 transition-colors hover:border-accent";
+
+/**
+ * "Featured on" social-proof strip — Product Hunt, Uneed, LaunchBuff, and
+ * Launchstag. Product Hunt and Uneed don't provide official embeddable
+ * badges, so they're rendered as elegant icon + label cards matching the
+ * site's dark, premium aesthetic. LaunchBuff and Launchstag use their
+ * official badge SVGs.
+ */
+export function FeaturedPlatforms() {
+  return (
+    <div className="mt-8 border-t border-border pt-8">
+      <p className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">Featured on</p>
+      <div className="mt-4 flex flex-wrap items-center gap-4">
+        <a
+          href="https://www.producthunt.com/@creator_os"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Featured on Product Hunt"
+          aria-label="Featured on Product Hunt"
+          className={CARD_CLASSES}
+        >
+          <ProductHuntIcon className="h-8 w-8 shrink-0 text-text-muted transition-colors group-hover:text-accent" />
+          <span className="font-mono-ui text-sm text-text-muted transition-colors group-hover:text-text">
+            Featured on Product Hunt
+          </span>
+        </a>
+
+        <a
+          href="https://www.uneed.best/profile/creatoros"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Featured on Uneed"
+          aria-label="Featured on Uneed"
+          className={CARD_CLASSES}
+        >
+          <UneedIcon className="h-8 w-8 shrink-0 text-text-muted transition-colors group-hover:text-accent" />
+          <span className="font-mono-ui text-sm text-text-muted transition-colors group-hover:text-text">
+            Featured on Uneed
+          </span>
+        </a>
+
+        <a
+          href="https://launchbuff.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Featured on LaunchBuff"
+          aria-label="Featured on LaunchBuff"
+          className={BADGE_CARD_CLASSES}
+        >
+          <img
+            src="https://launchbuff.com/badge-featured-dark.svg"
+            alt="Featured on LaunchBuff"
+            width={256}
+            height={80}
+            loading="lazy"
+            className="h-10 w-auto"
+          />
+        </a>
+
+        <a
+          href="https://launchstag.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Featured on Launchstag"
+          aria-label="Featured on Launchstag"
+          className={BADGE_CARD_CLASSES}
+        >
+          <img
+            src="https://launchstag.com/badge-dark.svg"
+            alt="Featured on Launchstag"
+            width={198}
+            height={62}
+            loading="lazy"
+            className="h-10 w-auto"
+          />
+        </a>
+      </div>
+    </div>
+  );
+}
+
+function ProductHuntIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+      <circle cx="20" cy="20" r="19" stroke="currentColor" strokeWidth="2" />
+      <path
+        d="M22.1 24.2h-4.6V28H14V12h8.1a6.1 6.1 0 010 12.2zm0-8.6h-4.6v5h4.6a2.5 2.5 0 000-5z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+function UneedIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+      <path
+        d="M11 10v11a9 9 0 0018 0V10"
+        stroke="currentColor"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+      />
+      <circle cx="29" cy="30" r="2.2" fill="currentColor" />
+    </svg>
+  );
+}
