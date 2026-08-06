@@ -5,6 +5,7 @@ import Link from "next/link";
 import { QUESTION_CATEGORIES } from "@/lib/constants";
 import { trackEvent } from "@/lib/analytics";
 import { AskQuestionModal } from "./ask-question-modal";
+import { UpvoteButton } from "./upvote-button";
 
 export interface QuestionListItem {
   id: string;
@@ -14,6 +15,7 @@ export interface QuestionListItem {
   category: string | null;
   publishedAt: string | null;
   excerpt: string;
+  totalUpvotes: number;
 }
 
 const TABS = [
@@ -53,15 +55,27 @@ export function QuestionsExplorer({ initialQuestions }: { initialQuestions: Ques
       if (res.ok) {
         const data = await res.json();
         setQuestions(
-          data.questions.map((q: { id: string; username: string; question: string; slug: string; category: string | null; publishedAt: string | null; answer: string | null }) => ({
-            id: q.id,
-            username: q.username,
-            question: q.question,
-            slug: q.slug,
-            category: q.category,
-            publishedAt: q.publishedAt,
-            excerpt: q.answer ? q.answer.slice(0, 160) : "",
-          }))
+          data.questions.map(
+            (q: {
+              id: string;
+              username: string;
+              question: string;
+              slug: string;
+              category: string | null;
+              publishedAt: string | null;
+              answer: string | null;
+              totalUpvotes: number;
+            }) => ({
+              id: q.id,
+              username: q.username,
+              question: q.question,
+              slug: q.slug,
+              category: q.category,
+              publishedAt: q.publishedAt,
+              excerpt: q.answer ? q.answer.slice(0, 160) : "",
+              totalUpvotes: q.totalUpvotes,
+            })
+          )
         );
         setTotal(data.total);
       }
@@ -202,6 +216,9 @@ export function QuestionsExplorer({ initialQuestions }: { initialQuestions: Ques
                 <div className="mt-4 flex items-center justify-between font-mono-ui text-[11px] uppercase tracking-[0.1em] text-text-faint">
                   <span>Asked by {q.username}</span>
                   {q.publishedAt && <span>{new Date(q.publishedAt).toLocaleDateString()}</span>}
+                </div>
+                <div className="mt-4">
+                  <UpvoteButton slug={q.slug} initialUpvotes={q.totalUpvotes} size="sm" />
                 </div>
               </Link>
             ))}

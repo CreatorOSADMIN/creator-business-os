@@ -1,0 +1,427 @@
+diff --git a/src/app/api/questions/[slug]/upvote/route.ts b/src/app/api/questions/[slug]/upvote/route.ts
+index 1768a54..77f606c 100644
+--- a/src/app/api/questions/[slug]/upvote/route.ts
++++ b/src/app/api/questions/[slug]/upvote/route.ts
+@@ -100,3 +100,62 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
+     return NextResponse.json({ error: "Unable to record your upvote. Please try again." }, { status: 500 });
+   }
+ }
++
++// Toggle-off: removes this visitor's own vote. Same (questionId, ipHash)
++// identity as POST — a voter can only ever remove their own vote, never
++// anyone else's, since ipHash is derived from the request, not user input.
++export async function DELETE(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
++  const originCheck = verifySameOrigin(request);
++  if (originCheck) return originCheck;
++
++  const { slug } = await params;
++  const question = await findPublishedQuestion(slug);
++  if (!question) {
++    return NextResponse.json({ error: "Question not found" }, { status: 404 });
++  }
++
++  const ip = getClientIp(request.headers);
++  const burst = rateLimit(`question-upvote:${ip}`, { limit: 10, windowMs: 60 * 1000 });
++  if (!burst.allowed) {
++    return NextResponse.json({ error: "Too many requests. Please try again shortly." }, { status: 429 });
++  }
++
++  const ipHash = hashIp(ip);
++
++  try {
++    const existingVote = await prisma.questionUpvote.findUnique({
++      where: { questionId_ipHash: { questionId: question.id, ipHash } },
++      select: { id: true },
++    });
++
++    if (!existingVote) {
++      // Nothing to remove — report current state as success rather than an
++      // error, mirroring the P2002-as-success branch in POST above.
++      return NextResponse.json({
++        totalUpvotes: serializeQuestion(question).totalUpvotes,
++        hasVoted: false,
++      });
++    }
++
++    // Same transactional pairing as the POST insert: the decrement and the
++    // QuestionUpvote delete happen together, so the denormalized count can
++    // never drift from the underlying vote rows.
++    const [updated] = await prisma.$transaction([
++      prisma.question.update({
++        where: { id: question.id },
++        data: { realUpvotes: { decrement: 1 } },
++      }),
++      prisma.questionUpvote.delete({ where: { id: existingVote.id } }),
++    ]);
++
++    revalidateQuestionPaths(updated);
++
++    return NextResponse.json({
++      totalUpvotes: serializeQuestion(updated).totalUpvotes,
++      hasVoted: false,
++    });
++  } catch (err) {
++    logger.error("questions: remove upvote failed", { scope: "questions-upvote", questionId: question.id, err });
++    return NextResponse.json({ error: "Unable to remove your upvote. Please try again." }, { status: 500 });
++  }
++}
+diff --git a/src/app/api/questions/route.ts b/src/app/api/questions/route.ts
+index c6c8c28..06ca262 100644
+--- a/src/app/api/questions/route.ts
++++ b/src/app/api/questions/route.ts
+@@ -4,6 +4,7 @@ import { askQuestionSchema } from "@/lib/validation";
+ import { rateLimit, getClientIp } from "@/lib/rate-limit";
+ import { verifySameOrigin } from "@/lib/verify-origin";
+ import { serializeQuestion } from "@/lib/serialize-question";
++import { findRankedQuestions, countRankedQuestions } from "@/lib/question-ranking";
+ import { logger } from "@/lib/logger";
+ import { reportIncident } from "@/lib/monitoring";
+ import { QUESTION_CATEGORIES } from "@/lib/constants";
+@@ -24,37 +25,46 @@ export async function GET(request: NextRequest) {
+   const page = Math.max(1, Number(searchParams.get("page") || 1));
+   const pageSize = Math.min(50, Math.max(1, Number(searchParams.get("pageSize") || 12)));
+ 
+-  const where: Prisma.QuestionWhereInput = { status: "published" };
+-
+-  if (search) {
+-    where.OR = [
+-      { question: { contains: search, mode: "insensitive" } },
+-      { answer: { contains: search, mode: "insensitive" } },
+-      { username: { contains: search, mode: "insensitive" } },
+-    ];
+-  }
+-
+-  if (category && (QUESTION_CATEGORIES as readonly string[]).includes(category)) {
+-    where.category = category;
++  const validCategory = category && (QUESTION_CATEGORIES as readonly string[]).includes(category) ? category : "";
++
++  // "latest" (the /questions page default) ranks by total upvotes
++  // (realUpvotes + manualUpvotes) desc, then publishedAt desc — done in the
++  // database via findRankedQuestions, not by sorting in JS. "recently_answered"
++  // stays a pure publishedAt sort, which is the distinct, date-driven option
++  // the tab already offered.
++  if (sort === "recently_answered") {
++    const where: Prisma.QuestionWhereInput = { status: "published" };
++    if (search) {
++      where.OR = [
++        { question: { contains: search, mode: "insensitive" } },
++        { answer: { contains: search, mode: "insensitive" } },
++        { username: { contains: search, mode: "insensitive" } },
++      ];
++    }
++    if (validCategory) where.category = validCategory;
++
++    const [total, questions] = await Promise.all([
++      prisma.question.count({ where }),
++      prisma.question.findMany({
++        where,
++        orderBy: { publishedAt: "desc" },
++        skip: (page - 1) * pageSize,
++        take: pageSize,
++      }),
++    ]);
++
++    return NextResponse.json({
++      total,
++      page,
++      pageSize,
++      questions: questions.map(serializeQuestion),
++    });
+   }
+ 
+-  const orderBy: Prisma.QuestionOrderByWithRelationInput =
+-    sort === "recently_answered" ? { publishedAt: "desc" } : { publishedAt: "desc" };
+-  // Both sort modes currently order by publishedAt: "latest" questions and
+-  // "most recently answered" coincide here since a question is only ever
+-  // published at the moment it's answered. Kept as two distinct API values
+-  // (rather than collapsing them) so the UI's two tabs stay meaningful and
+-  // the backend has a seam to diverge later (e.g. if answers can be edited
+-  // after publish without changing publishedAt).
+-
++  const filters = { search, category: validCategory, skip: (page - 1) * pageSize, take: pageSize };
+   const [total, questions] = await Promise.all([
+-    prisma.question.count({ where }),
+-    prisma.question.findMany({
+-      where,
+-      orderBy,
+-      skip: (page - 1) * pageSize,
+-      take: pageSize,
+-    }),
++    countRankedQuestions(filters),
++    findRankedQuestions(filters),
+   ]);
+ 
+   return NextResponse.json({
+diff --git a/src/app/questions/page.tsx b/src/app/questions/page.tsx
+index e961d3c..37fa172 100644
+--- a/src/app/questions/page.tsx
++++ b/src/app/questions/page.tsx
+@@ -5,7 +5,8 @@ import { SiteFooter } from "@/components/site-footer";
+ import { Reveal } from "@/components/landing/reveal";
+ import { Eyebrow } from "@/components/landing/eyebrow";
+ import { QuestionsExplorer, type QuestionListItem } from "@/components/questions/questions-explorer";
+-import { prisma } from "@/lib/prisma";
++import { findRankedQuestions } from "@/lib/question-ranking";
++import { serializeQuestion } from "@/lib/serialize-question";
+ import { markdownToExcerpt } from "@/lib/markdown";
+ import { QUESTION_CATEGORIES, QUESTION_CATEGORY_SLUGS } from "@/lib/constants";
+ 
+@@ -33,21 +34,24 @@ export const metadata: Metadata = {
+ export const revalidate = 300;
+ 
+ export default async function QuestionsPage() {
+-  const questions = await prisma.question.findMany({
+-    where: { status: "published" },
+-    orderBy: { publishedAt: "desc" },
+-    take: 12,
+-  });
++  // Ranked by total upvotes (real + manual) desc, then publishedAt desc —
++  // see findRankedQuestions for why this is a raw query rather than a
++  // Prisma orderBy.
++  const questions = await findRankedQuestions({ take: 12 });
+ 
+-  const initialQuestions: QuestionListItem[] = questions.map((q) => ({
+-    id: q.id,
+-    username: q.username,
+-    question: q.question,
+-    slug: q.slug ?? "",
+-    category: q.category,
+-    publishedAt: q.publishedAt ? q.publishedAt.toISOString() : null,
+-    excerpt: q.answer ? markdownToExcerpt(q.answer) : "",
+-  }));
++  const initialQuestions: QuestionListItem[] = questions.map((q) => {
++    const serialized = serializeQuestion(q);
++    return {
++      id: q.id,
++      username: q.username,
++      question: q.question,
++      slug: q.slug ?? "",
++      category: q.category,
++      publishedAt: q.publishedAt ? q.publishedAt.toISOString() : null,
++      excerpt: q.answer ? markdownToExcerpt(q.answer) : "",
++      totalUpvotes: serialized.totalUpvotes,
++    };
++  });
+ 
+   return (
+     <>
+diff --git a/src/components/questions/questions-explorer.tsx b/src/components/questions/questions-explorer.tsx
+index 465265b..4919b06 100644
+--- a/src/components/questions/questions-explorer.tsx
++++ b/src/components/questions/questions-explorer.tsx
+@@ -5,6 +5,7 @@ import Link from "next/link";
+ import { QUESTION_CATEGORIES } from "@/lib/constants";
+ import { trackEvent } from "@/lib/analytics";
+ import { AskQuestionModal } from "./ask-question-modal";
++import { UpvoteButton } from "./upvote-button";
+ 
+ export interface QuestionListItem {
+   id: string;
+@@ -14,6 +15,7 @@ export interface QuestionListItem {
+   category: string | null;
+   publishedAt: string | null;
+   excerpt: string;
++  totalUpvotes: number;
+ }
+ 
+ const TABS = [
+@@ -53,15 +55,27 @@ export function QuestionsExplorer({ initialQuestions }: { initialQuestions: Ques
+       if (res.ok) {
+         const data = await res.json();
+         setQuestions(
+-          data.questions.map((q: { id: string; username: string; question: string; slug: string; category: string | null; publishedAt: string | null; answer: string | null }) => ({
+-            id: q.id,
+-            username: q.username,
+-            question: q.question,
+-            slug: q.slug,
+-            category: q.category,
+-            publishedAt: q.publishedAt,
+-            excerpt: q.answer ? q.answer.slice(0, 160) : "",
+-          }))
++          data.questions.map(
++            (q: {
++              id: string;
++              username: string;
++              question: string;
++              slug: string;
++              category: string | null;
++              publishedAt: string | null;
++              answer: string | null;
++              totalUpvotes: number;
++            }) => ({
++              id: q.id,
++              username: q.username,
++              question: q.question,
++              slug: q.slug,
++              category: q.category,
++              publishedAt: q.publishedAt,
++              excerpt: q.answer ? q.answer.slice(0, 160) : "",
++              totalUpvotes: q.totalUpvotes,
++            })
++          )
+         );
+         setTotal(data.total);
+       }
+@@ -203,6 +217,9 @@ export function QuestionsExplorer({ initialQuestions }: { initialQuestions: Ques
+                   <span>Asked by {q.username}</span>
+                   {q.publishedAt && <span>{new Date(q.publishedAt).toLocaleDateString()}</span>}
+                 </div>
++                <div className="mt-4">
++                  <UpvoteButton slug={q.slug} initialUpvotes={q.totalUpvotes} size="sm" />
++                </div>
+               </Link>
+             ))}
+           </div>
+diff --git a/src/components/questions/upvote-button.tsx b/src/components/questions/upvote-button.tsx
+index e58b5ff..7024bc5 100644
+--- a/src/components/questions/upvote-button.tsx
++++ b/src/components/questions/upvote-button.tsx
+@@ -1,9 +1,19 @@
+ "use client";
+ 
+-import { useEffect, useState } from "react";
++import { useEffect, useState, type MouseEvent } from "react";
+ import { trackEvent } from "@/lib/analytics";
+ 
+-export function UpvoteButton({ slug, initialUpvotes }: { slug: string; initialUpvotes: number }) {
++export function UpvoteButton({
++  slug,
++  initialUpvotes,
++  size = "md",
++}: {
++  slug: string;
++  initialUpvotes: number;
++  // "sm" is used on the /questions list cards, which are tighter on space
++  // than the full question page — same styling language, smaller footprint.
++  size?: "sm" | "md";
++}) {
+   const [totalUpvotes, setTotalUpvotes] = useState(initialUpvotes);
+   const [hasVoted, setHasVoted] = useState(false);
+   const [pending, setPending] = useState(false);
+@@ -28,41 +38,51 @@ export function UpvoteButton({ slug, initialUpvotes }: { slug: string; initialUp
+     };
+   }, [slug]);
+ 
+-  async function handleUpvote() {
+-    if (pending || hasVoted) return;
++  async function handleUpvote(event: MouseEvent<HTMLButtonElement>) {
++    // Cards on /questions wrap this button inside a <Link> to the question
++    // page — stop the click from also triggering that navigation.
++    event.preventDefault();
++    event.stopPropagation();
++    if (pending || !checked) return;
++
++    const wasVoted = hasVoted;
++    const method = wasVoted ? "DELETE" : "POST";
++
+     setPending(true);
+     // Optimistic update, rolled back on failure — the server response
+-    // (or the 409-as-success already-voted case) is still the source of
+-    // truth once it lands.
+-    setTotalUpvotes((n) => n + 1);
+-    setHasVoted(true);
++    // (or the already-voted/already-removed idempotent case) is still the
++    // source of truth once it lands.
++    setTotalUpvotes((n) => (wasVoted ? n - 1 : n + 1));
++    setHasVoted(!wasVoted);
+     try {
+-      const res = await fetch(`/api/questions/${slug}/upvote`, { method: "POST" });
++      const res = await fetch(`/api/questions/${slug}/upvote`, { method });
+       const data = await res.json().catch(() => null);
+       if (res.ok && data) {
+         setTotalUpvotes(data.totalUpvotes);
+         setHasVoted(data.hasVoted);
+-        trackEvent("question_upvote", { slug });
++        if (!wasVoted) trackEvent("question_upvote", { slug });
+       } else {
+-        setTotalUpvotes((n) => n - 1);
+-        setHasVoted(false);
++        setTotalUpvotes((n) => (wasVoted ? n + 1 : n - 1));
++        setHasVoted(wasVoted);
+       }
+     } catch {
+-      setTotalUpvotes((n) => n - 1);
+-      setHasVoted(false);
++      setTotalUpvotes((n) => (wasVoted ? n + 1 : n - 1));
++      setHasVoted(wasVoted);
+     } finally {
+       setPending(false);
+     }
+   }
+ 
++  const sizeClasses = size === "sm" ? "gap-1.5 px-3 py-1.5 text-[11px]" : "gap-2 px-4 py-2 text-xs";
++
+   return (
+     <button
+       type="button"
+       onClick={handleUpvote}
+-      disabled={pending || hasVoted || !checked}
++      disabled={pending || !checked}
+       aria-pressed={hasVoted}
+-      title={hasVoted ? "You've upvoted this question" : "Upvote this question"}
+-      className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 font-mono-ui text-xs uppercase tracking-[0.1em] transition-colors disabled:cursor-not-allowed ${
++      title={hasVoted ? "Remove your upvote" : "Upvote this question"}
++      className={`inline-flex items-center rounded-full border font-mono-ui uppercase tracking-[0.1em] transition-colors disabled:cursor-not-allowed ${sizeClasses} ${
+         hasVoted
+           ? "border-accent text-accent"
+           : "border-border text-text-muted hover:border-accent hover:text-accent"
+diff --git a/src/lib/question-ranking.ts b/src/lib/question-ranking.ts
+new file mode 100644
+index 0000000..89fc8e5
+--- /dev/null
++++ b/src/lib/question-ranking.ts
+@@ -0,0 +1,54 @@
++import { Prisma } from "@prisma/client";
++import type { Question } from "@prisma/client";
++import { prisma } from "@/lib/prisma";
++
++export interface RankedQuestionFilters {
++  search?: string;
++  category?: string | null;
++  skip?: number;
++  take?: number;
++}
++
++function buildWhere({ search = "", category }: Pick<RankedQuestionFilters, "search" | "category">) {
++  const conditions: Prisma.Sql[] = [Prisma.sql`status = 'published'`];
++
++  if (search) {
++    const like = `%${search}%`;
++    conditions.push(
++      Prisma.sql`(question ILIKE ${like} OR answer ILIKE ${like} OR username ILIKE ${like})`
++    );
++  }
++
++  if (category) {
++    conditions.push(Prisma.sql`category = ${category}`);
++  }
++
++  return Prisma.join(conditions, " AND ");
++}
++
++// Published questions ordered by total upvotes (realUpvotes + manualUpvotes,
++// the same total serializeQuestion computes) descending, then by
++// publishedAt descending. Prisma's orderBy can't express a sum of two
++// columns, so this is a raw, parameterized query — the ranking (and
++// pagination) happens in the database, not by sorting in JS after fetch.
++export async function findRankedQuestions(filters: RankedQuestionFilters = {}): Promise<Question[]> {
++  const { skip = 0, take = 12 } = filters;
++  const where = buildWhere(filters);
++
++  return prisma.$queryRaw<Question[]>`
++    SELECT * FROM "Question"
++    WHERE ${where}
++    ORDER BY ("realUpvotes" + "manualUpvotes") DESC, "publishedAt" DESC
++    LIMIT ${take} OFFSET ${skip}
++  `;
++}
++
++export async function countRankedQuestions(
++  filters: Pick<RankedQuestionFilters, "search" | "category"> = {}
++): Promise<number> {
++  const where = buildWhere(filters);
++  const rows = await prisma.$queryRaw<{ count: bigint }[]>`
++    SELECT COUNT(*)::bigint AS count FROM "Question" WHERE ${where}
++  `;
++  return Number(rows[0]?.count ?? 0);
++}

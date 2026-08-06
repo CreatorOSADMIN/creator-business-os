@@ -4,6 +4,7 @@ import { askQuestionSchema } from "@/lib/validation";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { verifySameOrigin } from "@/lib/verify-origin";
 import { serializeQuestion } from "@/lib/serialize-question";
+import { findRankedQuestions, countRankedQuestions } from "@/lib/question-ranking";
 import { logger } from "@/lib/logger";
 import { reportIncident } from "@/lib/monitoring";
 import { QUESTION_CATEGORIES } from "@/lib/constants";
@@ -24,37 +25,46 @@ export async function GET(request: NextRequest) {
   const page = Math.max(1, Number(searchParams.get("page") || 1));
   const pageSize = Math.min(50, Math.max(1, Number(searchParams.get("pageSize") || 12)));
 
-  const where: Prisma.QuestionWhereInput = { status: "published" };
+  const validCategory = category && (QUESTION_CATEGORIES as readonly string[]).includes(category) ? category : "";
 
-  if (search) {
-    where.OR = [
-      { question: { contains: search, mode: "insensitive" } },
-      { answer: { contains: search, mode: "insensitive" } },
-      { username: { contains: search, mode: "insensitive" } },
-    ];
+  // "latest" (the /questions page default) ranks by total upvotes
+  // (realUpvotes + manualUpvotes) desc, then publishedAt desc — done in the
+  // database via findRankedQuestions, not by sorting in JS. "recently_answered"
+  // stays a pure publishedAt sort, which is the distinct, date-driven option
+  // the tab already offered.
+  if (sort === "recently_answered") {
+    const where: Prisma.QuestionWhereInput = { status: "published" };
+    if (search) {
+      where.OR = [
+        { question: { contains: search, mode: "insensitive" } },
+        { answer: { contains: search, mode: "insensitive" } },
+        { username: { contains: search, mode: "insensitive" } },
+      ];
+    }
+    if (validCategory) where.category = validCategory;
+
+    const [total, questions] = await Promise.all([
+      prisma.question.count({ where }),
+      prisma.question.findMany({
+        where,
+        orderBy: { publishedAt: "desc" },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+    ]);
+
+    return NextResponse.json({
+      total,
+      page,
+      pageSize,
+      questions: questions.map(serializeQuestion),
+    });
   }
 
-  if (category && (QUESTION_CATEGORIES as readonly string[]).includes(category)) {
-    where.category = category;
-  }
-
-  const orderBy: Prisma.QuestionOrderByWithRelationInput =
-    sort === "recently_answered" ? { publishedAt: "desc" } : { publishedAt: "desc" };
-  // Both sort modes currently order by publishedAt: "latest" questions and
-  // "most recently answered" coincide here since a question is only ever
-  // published at the moment it's answered. Kept as two distinct API values
-  // (rather than collapsing them) so the UI's two tabs stay meaningful and
-  // the backend has a seam to diverge later (e.g. if answers can be edited
-  // after publish without changing publishedAt).
-
+  const filters = { search, category: validCategory, skip: (page - 1) * pageSize, take: pageSize };
   const [total, questions] = await Promise.all([
-    prisma.question.count({ where }),
-    prisma.question.findMany({
-      where,
-      orderBy,
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    }),
+    countRankedQuestions(filters),
+    findRankedQuestions(filters),
   ]);
 
   return NextResponse.json({

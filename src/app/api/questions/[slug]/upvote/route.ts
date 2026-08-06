@@ -100,3 +100,62 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: "Unable to record your upvote. Please try again." }, { status: 500 });
   }
 }
+
+// Toggle-off: removes this visitor's own vote. Same (questionId, ipHash)
+// identity as POST — a voter can only ever remove their own vote, never
+// anyone else's, since ipHash is derived from the request, not user input.
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
+  const originCheck = verifySameOrigin(request);
+  if (originCheck) return originCheck;
+
+  const { slug } = await params;
+  const question = await findPublishedQuestion(slug);
+  if (!question) {
+    return NextResponse.json({ error: "Question not found" }, { status: 404 });
+  }
+
+  const ip = getClientIp(request.headers);
+  const burst = rateLimit(`question-upvote:${ip}`, { limit: 10, windowMs: 60 * 1000 });
+  if (!burst.allowed) {
+    return NextResponse.json({ error: "Too many requests. Please try again shortly." }, { status: 429 });
+  }
+
+  const ipHash = hashIp(ip);
+
+  try {
+    const existingVote = await prisma.questionUpvote.findUnique({
+      where: { questionId_ipHash: { questionId: question.id, ipHash } },
+      select: { id: true },
+    });
+
+    if (!existingVote) {
+      // Nothing to remove — report current state as success rather than an
+      // error, mirroring the P2002-as-success branch in POST above.
+      return NextResponse.json({
+        totalUpvotes: serializeQuestion(question).totalUpvotes,
+        hasVoted: false,
+      });
+    }
+
+    // Same transactional pairing as the POST insert: the decrement and the
+    // QuestionUpvote delete happen together, so the denormalized count can
+    // never drift from the underlying vote rows.
+    const [updated] = await prisma.$transaction([
+      prisma.question.update({
+        where: { id: question.id },
+        data: { realUpvotes: { decrement: 1 } },
+      }),
+      prisma.questionUpvote.delete({ where: { id: existingVote.id } }),
+    ]);
+
+    revalidateQuestionPaths(updated);
+
+    return NextResponse.json({
+      totalUpvotes: serializeQuestion(updated).totalUpvotes,
+      hasVoted: false,
+    });
+  } catch (err) {
+    logger.error("questions: remove upvote failed", { scope: "questions-upvote", questionId: question.id, err });
+    return NextResponse.json({ error: "Unable to remove your upvote. Please try again." }, { status: 500 });
+  }
+}

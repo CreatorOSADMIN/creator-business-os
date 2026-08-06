@@ -5,7 +5,8 @@ import { SiteFooter } from "@/components/site-footer";
 import { Reveal } from "@/components/landing/reveal";
 import { Eyebrow } from "@/components/landing/eyebrow";
 import { QuestionsExplorer, type QuestionListItem } from "@/components/questions/questions-explorer";
-import { prisma } from "@/lib/prisma";
+import { findRankedQuestions } from "@/lib/question-ranking";
+import { serializeQuestion } from "@/lib/serialize-question";
 import { markdownToExcerpt } from "@/lib/markdown";
 import { QUESTION_CATEGORIES, QUESTION_CATEGORY_SLUGS } from "@/lib/constants";
 
@@ -33,21 +34,24 @@ export const metadata: Metadata = {
 export const revalidate = 300;
 
 export default async function QuestionsPage() {
-  const questions = await prisma.question.findMany({
-    where: { status: "published" },
-    orderBy: { publishedAt: "desc" },
-    take: 12,
-  });
+  // Ranked by total upvotes (real + manual) desc, then publishedAt desc —
+  // see findRankedQuestions for why this is a raw query rather than a
+  // Prisma orderBy.
+  const questions = await findRankedQuestions({ take: 12 });
 
-  const initialQuestions: QuestionListItem[] = questions.map((q) => ({
-    id: q.id,
-    username: q.username,
-    question: q.question,
-    slug: q.slug ?? "",
-    category: q.category,
-    publishedAt: q.publishedAt ? q.publishedAt.toISOString() : null,
-    excerpt: q.answer ? markdownToExcerpt(q.answer) : "",
-  }));
+  const initialQuestions: QuestionListItem[] = questions.map((q) => {
+    const serialized = serializeQuestion(q);
+    return {
+      id: q.id,
+      username: q.username,
+      question: q.question,
+      slug: q.slug ?? "",
+      category: q.category,
+      publishedAt: q.publishedAt ? q.publishedAt.toISOString() : null,
+      excerpt: q.answer ? markdownToExcerpt(q.answer) : "",
+      totalUpvotes: serialized.totalUpvotes,
+    };
+  });
 
   return (
     <>
