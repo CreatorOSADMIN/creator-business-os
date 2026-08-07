@@ -28,6 +28,7 @@ export function AnalysisForm() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [urlErrors, setUrlErrors] = useState<(string | undefined)[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
 
   function updateUrl(index: number, value: string) {
     setUrls((prev) => {
@@ -53,8 +54,9 @@ export function AnalysisForm() {
     setUrlErrors([]);
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setServerError(null);
 
     const nextErrors: FormErrors = {};
     if (!platform) nextErrors.platform = "Select a platform.";
@@ -96,8 +98,28 @@ export function AnalysisForm() {
     const validUrls = filled.map((entry) => entry.url);
     trackEvent("cta_click", { location: "content_analysis_analyze", platform, goal });
 
+    let analysisId: string | undefined;
     try {
-      const session = buildDemoSession(platform, goal, validUrls);
+      const res = await fetch("/api/content-analysis", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ platform, goal, videoUrls: validUrls }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setServerError(data.error || "Something went wrong. Please try again.");
+        setSubmitting(false);
+        return;
+      }
+      analysisId = data.id;
+    } catch {
+      setServerError("Network error. Please check your connection and try again.");
+      setSubmitting(false);
+      return;
+    }
+
+    try {
+      const session = buildDemoSession(platform, goal, validUrls, analysisId);
       sessionStorage.setItem(CA_DEMO_STORAGE_KEY, JSON.stringify(session));
     } catch {
       // sessionStorage unavailable (e.g. private browsing) — the loading
@@ -162,6 +184,7 @@ export function AnalysisForm() {
         >
           {submitting ? "Starting…" : "Analyze"}
         </button>
+        {serverError && <ErrorText>{serverError}</ErrorText>}
       </div>
     </form>
   );

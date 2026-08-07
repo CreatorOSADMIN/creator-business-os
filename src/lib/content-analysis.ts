@@ -41,14 +41,19 @@ export interface ContentAnalysisSession {
   goal: CaGoal;
   videos: string[];
   createdAt: string;
+  // Id of the persistent Analysis record created via POST /api/content-analysis,
+  // kept alongside the demo session so later patches can look it up. The
+  // simulated analyzing/report flow below doesn't use this yet.
+  analysisId?: string;
 }
 
 export function buildDemoSession(
   platform: CaPlatform,
   goal: CaGoal,
-  videos: string[]
+  videos: string[],
+  analysisId?: string
 ): ContentAnalysisSession {
-  return { platform, goal, videos, createdAt: new Date().toISOString() };
+  return { platform, goal, videos, createdAt: new Date().toISOString(), analysisId };
 }
 
 // Session-only handoff to the simulated loading + report pages. Nothing is

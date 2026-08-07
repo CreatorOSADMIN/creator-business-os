@@ -8,7 +8,9 @@ import {
   CREATOR_STATUSES,
   QUESTION_STATUSES,
   QUESTION_CATEGORIES,
+  CONTENT_ANALYSIS_MAX_URLS,
 } from "./constants";
+import { CA_PLATFORMS, CA_GOALS, isValidPlatformUrl } from "./content-analysis";
 
 const platformValues = PLATFORMS.map((p) => p.value) as [string, ...string[]];
 const audienceValues = AUDIENCE_SIZES.map((p) => p.value) as [string, ...string[]];
@@ -114,3 +116,43 @@ export type QuestionAnswerInput = z.infer<typeof questionAnswerSchema>;
 export const questionStatusSchema = z.object({
   status: z.enum(QUESTION_STATUSES),
 });
+
+// --- Content Analysis -------------------------------------------------
+
+const caPlatformValues = [...CA_PLATFORMS] as [string, ...string[]];
+const caGoalValues = [...CA_GOALS] as [string, ...string[]];
+
+// Mirrors the frontend demo's own format checks (src/lib/content-analysis.ts)
+// so the same platform/URL rules apply — but this is the copy that's
+// actually enforced, since the frontend's checks can't be trusted.
+export const createAnalysisSchema = z
+  .object({
+    platform: z.enum(caPlatformValues, { message: "Select a valid platform." }),
+    goal: z.enum(caGoalValues, { message: "Select a valid goal." }),
+    videoUrls: z
+      .array(z.string().trim().max(2000))
+      .min(1, "Paste at least one video link.")
+      .max(CONTENT_ANALYSIS_MAX_URLS, `You can submit at most ${CONTENT_ANALYSIS_MAX_URLS} videos.`),
+  })
+  .superRefine((data, ctx) => {
+    const seen = new Set<string>();
+    data.videoUrls.forEach((url, index) => {
+      if (seen.has(url)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Remove duplicate video URLs.",
+          path: ["videoUrls", index],
+        });
+      }
+      seen.add(url);
+
+      if (!isValidPlatformUrl(url, data.platform as (typeof CA_PLATFORMS)[number])) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Enter a valid ${data.platform} video URL.`,
+          path: ["videoUrls", index],
+        });
+      }
+    });
+  });
+export type CreateAnalysisInput = z.infer<typeof createAnalysisSchema>;
