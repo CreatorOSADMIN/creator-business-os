@@ -1,0 +1,15 @@
+diff --git a/src/components/content-analysis/analysis-form.tsx b/src/components/content-analysis/analysis-form.tsx
+index 7bfeb58..5cc7705 100644
+--- a/src/components/content-analysis/analysis-form.tsx
++++ b/src/components/content-analysis/analysis-form.tsx
+@@ -86,6 +86,10 @@ export function AnalysisForm() {
+       return;
+     }
+ 
++    // nextErrors already guarantees platform/goal are set at this point,
++    // but narrow explicitly so buildDemoSession gets valid literal types.
++    if (!platform || !goal) return;
++
+     setErrors({});
+     setSubmitting(true);
+ 

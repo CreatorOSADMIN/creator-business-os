@@ -86,6 +86,10 @@ export function AnalysisForm() {
       return;
     }
 
+    // nextErrors already guarantees platform/goal are set at this point,
+    // but narrow explicitly so buildDemoSession gets valid literal types.
+    if (!platform || !goal) return;
+
     setErrors({});
     setSubmitting(true);
 
