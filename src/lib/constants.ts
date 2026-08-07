@@ -96,6 +96,20 @@ export const STATUS_COLORS: Record<CreatorStatusValue, string> = {
   REJECTED: "badge-danger",
 };
 
+// --- Content Analysis (database foundation only; demo flow still uses
+// src/lib/content-analysis.ts and never touches this) ----------------------
+
+export const CONTENT_ANALYSIS_STATUSES = [
+  "queued",
+  "processing",
+  "completed",
+  "failed",
+] as const;
+
+export type ContentAnalysisStatusValue = (typeof CONTENT_ANALYSIS_STATUSES)[number];
+
+export const CONTENT_ANALYSIS_MAX_URLS = 10;
+
 // --- Public Q&A -----------------------------------------------------------
 
 export const QUESTION_STATUSES = ["pending", "published"] as const;

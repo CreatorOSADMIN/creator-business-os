@@ -59,6 +59,7 @@ model Creator {
   referrals   Creator[] @relation("Referrals")
 
   verificationTokens EmailVerificationToken[]
+  contentAnalyses    ContentAnalysis[]
 
   @@index([status])
   @@index([country])
@@ -145,4 +146,46 @@ model EmailVerificationToken {
   creator Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 
   @@index([creatorId])
+}
+
+// Database foundation for the future real Content Analysis product (the
+// current /content-analysis flow is a frontend-only demo, see
+// src/lib/content-analysis.ts). Owner is optional so anonymous, pre-signup
+// analyses can be persisted via anonymousId instead; no anonymous-id
+// generation logic is implemented here, only the field.
+model ContentAnalysis {
+  id String @id @default(cuid())
+
+  creatorId   String?
+  anonymousId String?
+
+  platform String
+  goal     String
+
+  // queued | processing | completed | failed — kept as a validated string
+  // rather than a native enum, matching Creator.status / Question.status.
+  // Allowed values enforced in application code (see src/lib/constants.ts).
+  status String @default("queued")
+
+  // JSON-encoded array of submitted video URLs (max 10, enforced in
+  // application code), following the same list-field convention as
+  // Creator.platforms / Question.answerImages.
+  videoUrls  String @default("[]")
+  videoCount Int    @default(0)
+
+  errorMessage String?
+
+  // Future analysis result payload, JSON-encoded once implemented in a
+  // later patch. Intentionally untyped/nullable here.
+  result String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+
+  creator Creator? @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+
+  @@index([creatorId])
+  @@index([anonymousId])
+  @@index([status])
 }
