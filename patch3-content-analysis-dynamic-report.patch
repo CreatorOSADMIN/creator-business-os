@@ -1,0 +1,1013 @@
+diff --git a/src/app/content-analysis/report/page.tsx b/src/app/content-analysis/report/page.tsx
+index cae0ec2..c34690b 100644
+--- a/src/app/content-analysis/report/page.tsx
++++ b/src/app/content-analysis/report/page.tsx
+@@ -1,9 +1,7 @@
+ import type { Metadata } from "next";
+ import { SiteHeader } from "@/components/site-header";
+ import { SiteFooter } from "@/components/site-footer";
+-import { Reveal } from "@/components/landing/reveal";
+-import { Eyebrow } from "@/components/landing/eyebrow";
+-import { ContentAnalysisFinalCta } from "@/components/content-analysis/final-cta";
++import { ContentAnalysisReportContent } from "@/components/content-analysis/report-content";
+ 
+ export const metadata: Metadata = {
+   title: "Your Content Analysis",
+@@ -11,245 +9,14 @@ export const metadata: Metadata = {
+   robots: { index: false, follow: false },
+ };
+ 
+-// Entirely static demo data — no real analysis was performed.
+-const PATTERNS = [
+-  {
+-    n: "01",
+-    title: "Sub-3-second hook",
+-    body: "Your top videos open on a question or a visual surprise before any branding appears.",
+-  },
+-  {
+-    n: "02",
+-    title: "Face-forward first frame",
+-    body: "Thumbnails and opening frames with a clear face outperform text-only or product-only opens.",
+-  },
+-  {
+-    n: "03",
+-    title: "Mid-roll pattern break",
+-    body: "A cut, caption change, or camera-angle shift around the 40% mark correlates with retention spikes.",
+-  },
+-];
+-
+-const BLUEPRINT = [
+-  { label: "Length", value: "38–52 seconds" },
+-  { label: "Hook", value: "Direct question in the first 2 seconds" },
+-  { label: "Pacing", value: "Cut or angle change every 4–6 seconds" },
+-  { label: "Captions", value: "On-screen text, high-contrast, bottom third" },
+-  { label: "CTA placement", value: "Spoken + on-screen in the final 3 seconds" },
+-];
+-
+-const STRENGTHS = [
+-  "Strong opening hooks across most videos",
+-  "Consistent visual style and color palette",
+-  "Clear, legible on-screen captions",
+-];
+-
+-const OPPORTUNITIES = [
+-  "Retention drops after the 20-second mark on longer videos",
+-  "Calls-to-action are inconsistent between videos",
+-  "Posting times vary widely across the sample",
+-];
+-
+-const FEATURE_SCORES = [
+-  { label: "Hook strength", value: 88 },
+-  { label: "Pacing", value: 74 },
+-  { label: "Audio clarity", value: 91 },
+-  { label: "Visual consistency", value: 82 },
+-  { label: "Caption quality", value: 79 },
+-];
+-
+-const CONFIDENCE = [
+-  { label: "Hook detection", value: "High", pct: 92 },
+-  { label: "Engagement comparison", value: "High", pct: 87 },
+-  { label: "Speech analysis", value: "Medium", pct: 68 },
+-  { label: "Color profiling", value: "Medium", pct: 71 },
+-];
+-
++// The report body is a client component: it reads the demo session from
++// sessionStorage and runs the local simulation engine, falling back to
++// static placeholder copy when no session is present.
+ export default function ContentAnalysisReportPage() {
+   return (
+     <>
+       <SiteHeader />
+-      <main className="flex-1 bg-bg">
+-        {/* Content Score */}
+-        <section className="px-6 pb-16 pt-20 sm:px-10 sm:pt-28">
+-          <div className="mx-auto max-w-6xl">
+-            <Reveal>
+-              <Eyebrow>Demo Report</Eyebrow>
+-              <h1 className="mt-6 text-balance font-display text-[clamp(2.25rem,6vw,4.5rem)] font-bold leading-[0.98] tracking-[-0.03em] text-text">
+-                Your content, scored.
+-              </h1>
+-            </Reveal>
+-
+-            <Reveal delay={120}>
+-              <div className="mt-10 flex flex-col gap-10 border-t border-border pt-10 sm:flex-row sm:items-end sm:justify-between">
+-                <div>
+-                  <p className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">
+-                    Content Score
+-                  </p>
+-                  <p className="mt-2 font-display text-7xl font-bold tracking-[-0.03em] text-text sm:text-8xl">
+-                    82<span className="text-3xl text-text-faint sm:text-4xl">/100</span>
+-                  </p>
+-                </div>
+-                <p className="max-w-sm text-balance text-sm leading-relaxed text-text-muted">
+-                  This sample scores above average on hooks and visual consistency, with the
+-                  clearest upside in mid-video pacing.
+-                </p>
+-              </div>
+-            </Reveal>
+-          </div>
+-        </section>
+-
+-        {/* Top Performing Patterns */}
+-        <section className="border-t border-border px-6 py-24 sm:px-10 sm:py-32">
+-          <div className="mx-auto max-w-6xl">
+-            <Reveal>
+-              <Eyebrow>Top Performing Patterns</Eyebrow>
+-              <h2 className="mt-5 max-w-2xl text-balance font-display text-3xl font-bold leading-tight tracking-[-0.02em] text-text sm:text-5xl">
+-                What your best videos have in common.
+-              </h2>
+-            </Reveal>
+-
+-            <div className="mt-16 border-t border-border">
+-              {PATTERNS.map((item, i) => (
+-                <Reveal key={item.n} delay={i * 90}>
+-                  <div className="grid grid-cols-1 gap-4 border-b border-border py-8 sm:grid-cols-12 sm:gap-8 sm:py-10">
+-                    <span className="font-mono-ui text-sm text-text-faint sm:col-span-2">
+-                      {item.n}
+-                    </span>
+-                    <h3 className="font-display text-xl font-bold text-text sm:col-span-4">
+-                      {item.title}
+-                    </h3>
+-                    <p className="text-sm leading-relaxed text-text-muted sm:col-span-6">
+-                      {item.body}
+-                    </p>
+-                  </div>
+-                </Reveal>
+-              ))}
+-            </div>
+-          </div>
+-        </section>
+-
+-        {/* Ideal Video Blueprint */}
+-        <section className="border-t border-border px-6 py-24 sm:px-10 sm:py-32">
+-          <div className="mx-auto max-w-6xl">
+-            <Reveal>
+-              <Eyebrow>Ideal Video Blueprint</Eyebrow>
+-              <h2 className="mt-5 max-w-2xl text-balance font-display text-3xl font-bold leading-tight tracking-[-0.02em] text-text sm:text-5xl">
+-                What your next video should look like.
+-              </h2>
+-            </Reveal>
+-
+-            <div className="mt-14 grid gap-3 sm:grid-cols-2">
+-              {BLUEPRINT.map((item, i) => (
+-                <Reveal key={item.label} delay={i * 70}>
+-                  <div className="h-full rounded-2xl border border-border bg-bg-elevated p-6">
+-                    <p className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">
+-                      {item.label}
+-                    </p>
+-                    <p className="mt-2 font-display text-lg font-bold text-text">{item.value}</p>
+-                  </div>
+-                </Reveal>
+-              ))}
+-            </div>
+-          </div>
+-        </section>
+-
+-        {/* Strengths & Opportunities */}
+-        <section className="border-t border-border px-6 py-24 sm:px-10 sm:py-32">
+-          <div className="mx-auto max-w-6xl">
+-            <Reveal>
+-              <Eyebrow>Strengths &amp; Opportunities</Eyebrow>
+-            </Reveal>
+-
+-            <div className="mt-14 grid gap-6 md:grid-cols-2">
+-              <Reveal delay={80}>
+-                <div className="h-full rounded-2xl border border-border bg-bg-elevated p-8">
+-                  <h3 className="font-display text-lg font-bold text-text">Strengths</h3>
+-                  <ul className="mt-5 flex flex-col gap-3">
+-                    {STRENGTHS.map((s) => (
+-                      <li key={s} className="flex gap-3 text-sm leading-relaxed text-text-muted">
+-                        <span className="text-accent">+</span>
+-                        {s}
+-                      </li>
+-                    ))}
+-                  </ul>
+-                </div>
+-              </Reveal>
+-
+-              <Reveal delay={160}>
+-                <div className="h-full rounded-2xl border border-border bg-bg-elevated p-8">
+-                  <h3 className="font-display text-lg font-bold text-text">Opportunities</h3>
+-                  <ul className="mt-5 flex flex-col gap-3">
+-                    {OPPORTUNITIES.map((o) => (
+-                      <li key={o} className="flex gap-3 text-sm leading-relaxed text-text-muted">
+-                        <span className="text-text-faint">–</span>
+-                        {o}
+-                      </li>
+-                    ))}
+-                  </ul>
+-                </div>
+-              </Reveal>
+-            </div>
+-          </div>
+-        </section>
+-
+-        {/* Feature Scores */}
+-        <section className="border-t border-border px-6 py-24 sm:px-10 sm:py-32">
+-          <div className="mx-auto max-w-4xl">
+-            <Reveal>
+-              <Eyebrow>Feature Scores</Eyebrow>
+-              <h2 className="mt-5 max-w-2xl text-balance font-display text-3xl font-bold leading-tight tracking-[-0.02em] text-text sm:text-5xl">
+-                Signals we measured across your videos.
+-              </h2>
+-            </Reveal>
+-
+-            <div className="mt-14 flex flex-col gap-6">
+-              {FEATURE_SCORES.map((f, i) => (
+-                <Reveal key={f.label} delay={i * 60}>
+-                  <div>
+-                    <div className="flex items-center justify-between">
+-                      <p className="text-sm font-medium text-text">{f.label}</p>
+-                      <p className="font-mono-ui text-xs text-text-faint">{f.value}/100</p>
+-                    </div>
+-                    <div className="mt-2 h-px w-full overflow-hidden bg-border">
+-                      <div
+-                        className="h-full bg-accent"
+-                        style={{ width: `${f.value}%` }}
+-                      />
+-                    </div>
+-                  </div>
+-                </Reveal>
+-              ))}
+-            </div>
+-          </div>
+-        </section>
+-
+-        {/* Confidence Indicators */}
+-        <section className="border-t border-border px-6 py-24 sm:px-10 sm:py-32">
+-          <div className="mx-auto max-w-6xl">
+-            <Reveal>
+-              <Eyebrow>Confidence Indicators</Eyebrow>
+-              <p className="mt-5 max-w-xl text-balance text-sm leading-relaxed text-text-muted">
+-                How confident this demo&apos;s model is in each part of the analysis above.
+-              </p>
+-            </Reveal>
+-
+-            <div className="mt-14 grid grid-cols-2 gap-x-8 gap-y-10 border-t border-border pt-12 md:grid-cols-4">
+-              {CONFIDENCE.map((c, i) => (
+-                <Reveal key={c.label} delay={i * 80}>
+-                  <p className="font-display text-4xl font-bold tracking-[-0.02em] text-text">
+-                    {c.pct}%
+-                  </p>
+-                  <p className="mt-2 text-xs uppercase tracking-[0.1em] text-accent">{c.value}</p>
+-                  <p className="mt-1 text-sm text-text-muted">{c.label}</p>
+-                </Reveal>
+-              ))}
+-            </div>
+-          </div>
+-        </section>
+-
+-        <ContentAnalysisFinalCta location="content_analysis_report_final_cta" />
+-      </main>
++      <ContentAnalysisReportContent />
+       <SiteFooter />
+     </>
+   );
+diff --git a/src/components/content-analysis/report-content.tsx b/src/components/content-analysis/report-content.tsx
+new file mode 100644
+index 0000000..f70b159
+--- /dev/null
++++ b/src/components/content-analysis/report-content.tsx
+@@ -0,0 +1,306 @@
++"use client";
++
++import { useEffect, useState } from "react";
++import { Reveal } from "@/components/landing/reveal";
++import { Eyebrow } from "@/components/landing/eyebrow";
++import { ContentAnalysisFinalCta } from "@/components/content-analysis/final-cta";
++import {
++  CA_GOALS,
++  CA_PLATFORMS,
++  CA_DEMO_STORAGE_KEY,
++  type CaGoal,
++  type CaPlatform,
++  type ContentAnalysisSession,
++} from "@/lib/content-analysis";
++import {
++  generateContentAnalysisReport,
++  type ContentAnalysisReport,
++} from "@/lib/content-analysis-engine";
++
++// Static placeholder shown before hydration and whenever no valid demo
++// session is found in sessionStorage — this is the "safe fallback" copy.
++const FALLBACK_REPORT: ContentAnalysisReport = {
++  contentScore: 82,
++  scoreSummary:
++    "This sample scores above average on hooks and visual consistency, with the clearest upside in mid-video pacing.",
++  featureScores: [
++    { key: "hook", label: "Hook strength", score: 88, explanation: "", confidence: 92 },
++    { key: "pacing", label: "Pacing", score: 74, explanation: "", confidence: 0 },
++    { key: "audio", label: "Audio clarity", score: 91, explanation: "", confidence: 0 },
++    { key: "visualConsistency", label: "Visual consistency", score: 82, explanation: "", confidence: 0 },
++    { key: "captionQuality", label: "Caption quality", score: 79, explanation: "", confidence: 0 },
++  ],
++  patterns: [
++    {
++      title: "Sub-3-second hook",
++      body: "Your top videos open on a question or a visual surprise before any branding appears.",
++    },
++    {
++      title: "Face-forward first frame",
++      body: "Thumbnails and opening frames with a clear face outperform text-only or product-only opens.",
++    },
++    {
++      title: "Mid-roll pattern break",
++      body: "A cut, caption change, or camera-angle shift around the 40% mark correlates with retention spikes.",
++    },
++  ],
++  blueprint: [
++    { label: "Length", value: "38–52 seconds" },
++    { label: "Hook", value: "Direct question in the first 2 seconds" },
++    { label: "Pacing", value: "Cut or angle change every 4–6 seconds" },
++    { label: "Captions", value: "On-screen text, high-contrast, bottom third" },
++    { label: "CTA placement", value: "Spoken + on-screen in the final 3 seconds" },
++  ],
++  strengths: [
++    "Strong opening hooks across most videos",
++    "Consistent visual style and color palette",
++    "Clear, legible on-screen captions",
++  ],
++  opportunities: [
++    "Retention drops after the 20-second mark on longer videos",
++    "Calls-to-action are inconsistent between videos",
++    "Posting times vary widely across the sample",
++  ],
++  confidence: [
++    { label: "Hook detection", value: "High", pct: 92 },
++    { label: "Engagement comparison", value: "High", pct: 87 },
++    { label: "Speech analysis", value: "Medium", pct: 68 },
++    { label: "Color profiling", value: "Medium", pct: 71 },
++  ],
++};
++
++function isCaPlatform(value: unknown): value is CaPlatform {
++  return typeof value === "string" && (CA_PLATFORMS as readonly string[]).includes(value);
++}
++
++function isCaGoal(value: unknown): value is CaGoal {
++  return typeof value === "string" && (CA_GOALS as readonly string[]).includes(value);
++}
++
++function readDemoSession(): ContentAnalysisSession | null {
++  try {
++    const raw = sessionStorage.getItem(CA_DEMO_STORAGE_KEY);
++    if (!raw) return null;
++
++    const parsed: unknown = JSON.parse(raw);
++    if (typeof parsed !== "object" || parsed === null) return null;
++
++    const candidate = parsed as Partial<ContentAnalysisSession>;
++    if (!isCaPlatform(candidate.platform) || !isCaGoal(candidate.goal)) return null;
++    if (!Array.isArray(candidate.videos) || candidate.videos.length === 0) return null;
++    if (!candidate.videos.every((v) => typeof v === "string")) return null;
++
++    return {
++      platform: candidate.platform,
++      goal: candidate.goal,
++      videos: candidate.videos,
++      createdAt: typeof candidate.createdAt === "string" ? candidate.createdAt : new Date().toISOString(),
++    };
++  } catch {
++    // sessionStorage unavailable or malformed payload — fall back safely.
++    return null;
++  }
++}
++
++export function ContentAnalysisReportContent() {
++  const [report, setReport] = useState<ContentAnalysisReport>(FALLBACK_REPORT);
++
++  useEffect(() => {
++    const session = readDemoSession();
++    if (!session) return;
++
++    try {
++      const generated = generateContentAnalysisReport(session);
++      // One-time hydration of the real session's report, not a cascading
++      // update — mirrors the reduced-motion opt-out in the analyzing page.
++      // eslint-disable-next-line react-hooks/set-state-in-effect
++      setReport(generated);
++    } catch {
++      // Any unexpected shape falls back to the static placeholder already set.
++    }
++  }, []);
++
++  return (
++    <main className="flex-1 bg-bg">
++      {/* Content Score */}
++      <section className="px-6 pb-16 pt-20 sm:px-10 sm:pt-28">
++        <div className="mx-auto max-w-6xl">
++          <Reveal>
++            <Eyebrow>Demo Report</Eyebrow>
++            <h1 className="mt-6 text-balance font-display text-[clamp(2.25rem,6vw,4.5rem)] font-bold leading-[0.98] tracking-[-0.03em] text-text">
++              Your content, scored.
++            </h1>
++          </Reveal>
++
++          <Reveal delay={120}>
++            <div className="mt-10 flex flex-col gap-10 border-t border-border pt-10 sm:flex-row sm:items-end sm:justify-between">
++              <div>
++                <p className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">
++                  Content Score
++                </p>
++                <p className="mt-2 font-display text-7xl font-bold tracking-[-0.03em] text-text sm:text-8xl">
++                  {report.contentScore}
++                  <span className="text-3xl text-text-faint sm:text-4xl">/100</span>
++                </p>
++              </div>
++              <p className="max-w-sm text-balance text-sm leading-relaxed text-text-muted">
++                {report.scoreSummary}
++              </p>
++            </div>
++          </Reveal>
++        </div>
++      </section>
++
++      {/* Top Performing Patterns */}
++      <section className="border-t border-border px-6 py-24 sm:px-10 sm:py-32">
++        <div className="mx-auto max-w-6xl">
++          <Reveal>
++            <Eyebrow>Top Performing Patterns</Eyebrow>
++            <h2 className="mt-5 max-w-2xl text-balance font-display text-3xl font-bold leading-tight tracking-[-0.02em] text-text sm:text-5xl">
++              What your best videos have in common.
++            </h2>
++          </Reveal>
++
++          <div className="mt-16 border-t border-border">
++            {report.patterns.map((item, i) => (
++              <Reveal key={item.title} delay={i * 90}>
++                <div className="grid grid-cols-1 gap-4 border-b border-border py-8 sm:grid-cols-12 sm:gap-8 sm:py-10">
++                  <span className="font-mono-ui text-sm text-text-faint sm:col-span-2">
++                    {String(i + 1).padStart(2, "0")}
++                  </span>
++                  <h3 className="font-display text-xl font-bold text-text sm:col-span-4">
++                    {item.title}
++                  </h3>
++                  <p className="text-sm leading-relaxed text-text-muted sm:col-span-6">
++                    {item.body}
++                  </p>
++                </div>
++              </Reveal>
++            ))}
++          </div>
++        </div>
++      </section>
++
++      {/* Ideal Video Blueprint */}
++      <section className="border-t border-border px-6 py-24 sm:px-10 sm:py-32">
++        <div className="mx-auto max-w-6xl">
++          <Reveal>
++            <Eyebrow>Ideal Video Blueprint</Eyebrow>
++            <h2 className="mt-5 max-w-2xl text-balance font-display text-3xl font-bold leading-tight tracking-[-0.02em] text-text sm:text-5xl">
++              What your next video should look like.
++            </h2>
++          </Reveal>
++
++          <div className="mt-14 grid gap-3 sm:grid-cols-2">
++            {report.blueprint.map((item, i) => (
++              <Reveal key={item.label} delay={i * 70}>
++                <div className="h-full rounded-2xl border border-border bg-bg-elevated p-6">
++                  <p className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">
++                    {item.label}
++                  </p>
++                  <p className="mt-2 font-display text-lg font-bold text-text">{item.value}</p>
++                </div>
++              </Reveal>
++            ))}
++          </div>
++        </div>
++      </section>
++
++      {/* Strengths & Opportunities */}
++      <section className="border-t border-border px-6 py-24 sm:px-10 sm:py-32">
++        <div className="mx-auto max-w-6xl">
++          <Reveal>
++            <Eyebrow>Strengths &amp; Opportunities</Eyebrow>
++          </Reveal>
++
++          <div className="mt-14 grid gap-6 md:grid-cols-2">
++            <Reveal delay={80}>
++              <div className="h-full rounded-2xl border border-border bg-bg-elevated p-8">
++                <h3 className="font-display text-lg font-bold text-text">Strengths</h3>
++                <ul className="mt-5 flex flex-col gap-3">
++                  {report.strengths.map((s) => (
++                    <li key={s} className="flex gap-3 text-sm leading-relaxed text-text-muted">
++                      <span className="text-accent">+</span>
++                      {s}
++                    </li>
++                  ))}
++                </ul>
++              </div>
++            </Reveal>
++
++            <Reveal delay={160}>
++              <div className="h-full rounded-2xl border border-border bg-bg-elevated p-8">
++                <h3 className="font-display text-lg font-bold text-text">Opportunities</h3>
++                <ul className="mt-5 flex flex-col gap-3">
++                  {report.opportunities.map((o) => (
++                    <li key={o} className="flex gap-3 text-sm leading-relaxed text-text-muted">
++                      <span className="text-text-faint">–</span>
++                      {o}
++                    </li>
++                  ))}
++                </ul>
++              </div>
++            </Reveal>
++          </div>
++        </div>
++      </section>
++
++      {/* Feature Scores */}
++      <section className="border-t border-border px-6 py-24 sm:px-10 sm:py-32">
++        <div className="mx-auto max-w-4xl">
++          <Reveal>
++            <Eyebrow>Feature Scores</Eyebrow>
++            <h2 className="mt-5 max-w-2xl text-balance font-display text-3xl font-bold leading-tight tracking-[-0.02em] text-text sm:text-5xl">
++              Signals we measured across your videos.
++            </h2>
++          </Reveal>
++
++          <div className="mt-14 flex flex-col gap-6">
++            {report.featureScores.map((f, i) => (
++              <Reveal key={f.key} delay={i * 60}>
++                <div>
++                  <div className="flex items-center justify-between">
++                    <p className="text-sm font-medium text-text">{f.label}</p>
++                    <p className="font-mono-ui text-xs text-text-faint">{f.score}/100</p>
++                  </div>
++                  <div className="mt-2 h-px w-full overflow-hidden bg-border">
++                    <div className="h-full bg-accent" style={{ width: `${f.score}%` }} />
++                  </div>
++                  {f.explanation && (
++                    <p className="mt-2 text-xs leading-relaxed text-text-faint">{f.explanation}</p>
++                  )}
++                </div>
++              </Reveal>
++            ))}
++          </div>
++        </div>
++      </section>
++
++      {/* Confidence Indicators */}
++      <section className="border-t border-border px-6 py-24 sm:px-10 sm:py-32">
++        <div className="mx-auto max-w-6xl">
++          <Reveal>
++            <Eyebrow>Confidence Indicators</Eyebrow>
++            <p className="mt-5 max-w-xl text-balance text-sm leading-relaxed text-text-muted">
++              How confident this demo&apos;s model is in each part of the analysis above.
++            </p>
++          </Reveal>
++
++          <div className="mt-14 grid grid-cols-2 gap-x-8 gap-y-10 border-t border-border pt-12 md:grid-cols-4">
++            {report.confidence.map((c, i) => (
++              <Reveal key={c.label} delay={i * 80}>
++                <p className="font-display text-4xl font-bold tracking-[-0.02em] text-text">
++                  {c.pct}%
++                </p>
++                <p className="mt-2 text-xs uppercase tracking-[0.1em] text-accent">{c.value}</p>
++                <p className="mt-1 text-sm text-text-muted">{c.label}</p>
++              </Reveal>
++            ))}
++          </div>
++        </div>
++      </section>
++
++      <ContentAnalysisFinalCta location="content_analysis_report_final_cta" />
++    </main>
++  );
++}
+diff --git a/src/lib/content-analysis-engine.ts b/src/lib/content-analysis-engine.ts
+new file mode 100644
+index 0000000..9fb92dc
+--- /dev/null
++++ b/src/lib/content-analysis-engine.ts
+@@ -0,0 +1,430 @@
++// Deterministic, fully local simulation engine for the Content Analysis demo.
++// No network calls, no AI models, no persistence — every value here is
++// derived mathematically from the submitted demo session so the same
++// session always reproduces the same report.
++
++import type { CaGoal, CaPlatform, ContentAnalysisSession } from "@/lib/content-analysis";
++
++export interface FeatureScore {
++  key: string;
++  label: string;
++  score: number;
++  explanation: string;
++  confidence: number;
++}
++
++export interface WinningPattern {
++  title: string;
++  body: string;
++}
++
++export interface BlueprintItem {
++  label: string;
++  value: string;
++}
++
++export type ConfidenceLevel = "High" | "Medium" | "Low";
++
++export interface ConfidenceIndicator {
++  label: string;
++  value: ConfidenceLevel;
++  pct: number;
++}
++
++export interface ContentAnalysisReport {
++  contentScore: number;
++  scoreSummary: string;
++  featureScores: FeatureScore[];
++  patterns: WinningPattern[];
++  blueprint: BlueprintItem[];
++  strengths: string[];
++  opportunities: string[];
++  confidence: ConfidenceIndicator[];
++}
++
++// ---------------------------------------------------------------------------
++// Deterministic PRNG — FNV-1a hash for the seed, mulberry32 for the stream.
++// ---------------------------------------------------------------------------
++
++function hashSeed(input: string): number {
++  let h = 2166136261;
++  for (let i = 0; i < input.length; i++) {
++    h ^= input.charCodeAt(i);
++    h = Math.imul(h, 16777619);
++  }
++  return h >>> 0;
++}
++
++function mulberry32(seed: number): () => number {
++  let a = seed >>> 0;
++  return function next() {
++    a = (a + 0x6d2b79f5) | 0;
++    let t = Math.imul(a ^ (a >>> 15), 1 | a);
++    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
++    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
++  };
++}
++
++function clamp(value: number, min: number, max: number): number {
++  return Math.max(min, Math.min(max, value));
++}
++
++function randInt(rng: () => number, min: number, max: number): number {
++  return Math.floor(rng() * (max - min + 1)) + min;
++}
++
++function pick<T>(rng: () => number, options: readonly T[]): T {
++  return options[Math.floor(rng() * options.length) % options.length];
++}
++
++/** Deterministic, order-preserving-free unique sample of `count` items. */
++function pickN<T>(rng: () => number, options: readonly T[], count: number): T[] {
++  const pool = [...options];
++  const result: T[] = [];
++  const n = Math.min(count, pool.length);
++  for (let i = 0; i < n; i++) {
++    const idx = Math.floor(rng() * pool.length);
++    result.push(pool[idx]);
++    pool.splice(idx, 1);
++  }
++  return result;
++}
++
++function confidenceLevel(pct: number): ConfidenceLevel {
++  if (pct >= 80) return "High";
++  if (pct >= 60) return "Medium";
++  return "Low";
++}
++
++// ---------------------------------------------------------------------------
++// Platform / goal tuning tables — these give the simulation its personality.
++// ---------------------------------------------------------------------------
++
++const PLATFORM_BASE_SCORE: Record<CaPlatform, number> = {
++  TikTok: 79,
++  Instagram: 75,
++  YouTube: 72,
++};
++
++const GOAL_SCORE_MODIFIER: Record<CaGoal, number> = {
++  "Maximize Views": 4,
++  "Gain Followers": 1,
++  "Increase Comments": -2,
++  "Improve Engagement": 2,
++};
++
++const PLATFORM_POSTING_WINDOW: Record<CaPlatform, string> = {
++  TikTok: "6–9pm on weekdays, when scroll sessions run longest",
++  Instagram: "11am–1pm and 7–8pm, around lunch and evening wind-down",
++  YouTube: "Weekend mornings, when longer watch sessions are more likely",
++};
++
++const PLATFORM_DURATION: Record<CaPlatform, string> = {
++  TikTok: "21–34 seconds",
++  Instagram: "26–45 seconds",
++  YouTube: "6–9 minutes",
++};
++
++const PLATFORM_VISUAL_STYLE: Record<CaPlatform, string> = {
++  TikTok: "Handheld, high-contrast, quick cuts every 2–3 seconds",
++  Instagram: "Clean single-take with a consistent color grade",
++  YouTube: "Structured b-roll with a stable, well-lit talking head",
++};
++
++const GOAL_CTA: Record<CaGoal, string> = {
++  "Maximize Views": "Spoken tease of the next video in the final 2 seconds",
++  "Gain Followers": "\"Follow for part 2\" spoken and on-screen at the end",
++  "Increase Comments": "A direct either/or question inviting a comment reply",
++  "Improve Engagement": "Ask viewers to share the one takeaway that landed",
++};
++
++const GOAL_TONE: Record<CaGoal, string> = {
++  "Maximize Views": "High-energy and fast-paced from the first frame",
++  "Gain Followers": "Personable and consistent, building a recognizable voice",
++  "Increase Comments": "Slightly provocative — an opinion worth reacting to",
++  "Improve Engagement": "Conversational, like talking to one specific viewer",
++};
++
++const HOOK_TYPES = [
++  "Direct question in the first 2 seconds",
++  "Bold claim or stat that contradicts expectation",
++  "Mid-action cold open with no intro",
++  "\"Nobody tells you this\" framing",
++  "Visual surprise before any branding appears",
++] as const;
++
++// ---------------------------------------------------------------------------
++// Feature score definitions
++// ---------------------------------------------------------------------------
++
++interface FeatureDef {
++  key: string;
++  label: string;
++  baseRange: [number, number];
++  confidenceRange: [number, number];
++  explanations: string[];
++}
++
++const FEATURE_DEFS: FeatureDef[] = [
++  {
++    key: "hook",
++    label: "Hook",
++    baseRange: [68, 94],
++    confidenceRange: [78, 95],
++    explanations: [
++      "Most videos open with motion or a question before any branding appears.",
++      "The first frame is strong, but a few videos take too long to state the premise.",
++      "Openings are consistent enough to read as a signature style.",
++    ],
++  },
++  {
++    key: "postingTime",
++    label: "Posting Time",
++    baseRange: [52, 88],
++    confidenceRange: [55, 80],
++    explanations: [
++      "Publish times are scattered across the day, diluting the algorithm's early signal.",
++      "Most uploads land inside a predictable window, which is helping consistency.",
++      "A tighter posting window would likely compound your early engagement.",
++    ],
++  },
++  {
++    key: "duration",
++    label: "Duration",
++    baseRange: [60, 92],
++    confidenceRange: [65, 90],
++    explanations: [
++      "Runtime sits close to the sweet spot for this platform and goal.",
++      "A few videos run long past the point where the hook has paid off.",
++      "Trimming the middle third would likely lift completion rate.",
++    ],
++  },
++  {
++    key: "editing",
++    label: "Editing",
++    baseRange: [62, 93],
++    confidenceRange: [70, 92],
++    explanations: [
++      "Cut frequency keeps pace with the pacing this format rewards.",
++      "Transitions are clean, though a couple of scenes run without a pattern break.",
++      "Editing rhythm is consistent enough to feel intentional, not accidental.",
++    ],
++  },
++  {
++    key: "visualStyle",
++    label: "Visual Style",
++    baseRange: [58, 91],
++    confidenceRange: [60, 88],
++    explanations: [
++      "Color and framing stay consistent across the sample, which builds recognizability.",
++      "Lighting varies between videos, which softens the sense of a consistent look.",
++      "Visual choices are distinct enough to stand out while scrolling.",
++    ],
++  },
++  {
++    key: "cta",
++    label: "CTA",
++    baseRange: [48, 86],
++    confidenceRange: [55, 82],
++    explanations: [
++      "Calls-to-action are inconsistent — some videos skip them entirely.",
++      "The CTA lands late enough that some viewers may already be gone.",
++      "Spoken and on-screen CTAs reinforce each other well when both are present.",
++    ],
++  },
++  {
++    key: "storytelling",
++    label: "Storytelling",
++    baseRange: [55, 90],
++    confidenceRange: [58, 85],
++    explanations: [
++      "Videos follow a clear setup-to-payoff arc rather than a flat list of points.",
++      "A couple of videos front-load context that could move later without losing clarity.",
++      "The narrative through-line is strong enough to justify longer runtimes.",
++    ],
++  },
++];
++
++// Small per-platform nudges so the same feature reads differently by platform.
++const PLATFORM_FEATURE_OFFSET: Record<CaPlatform, Partial<Record<string, number>>> = {
++  TikTok: { hook: 5, duration: 4, postingTime: 3, storytelling: -4 },
++  Instagram: { visualStyle: 5, cta: 3, editing: 2 },
++  YouTube: { storytelling: 6, editing: 4, hook: -3, postingTime: -3 },
++};
++
++// ---------------------------------------------------------------------------
++// Winning pattern pool
++// ---------------------------------------------------------------------------
++
++const GENERAL_PATTERNS: WinningPattern[] = [
++  {
++    title: "Question hooks outperform statements",
++    body: "Videos opening on a direct question hold viewers longer than ones that open with a statement or intro.",
++  },
++  {
++    title: "Mid-roll pattern break",
++    body: "A cut, caption change, or camera-angle shift around the 40% mark correlates with retention spikes.",
++  },
++  {
++    title: "Subtitles lift retention",
++    body: "Videos with on-screen captions retain viewers noticeably longer than caption-free videos in this sample.",
++  },
++  {
++    title: "Face-forward first frame",
++    body: "Thumbnails and opening frames with a clear face outperform text-only or product-only opens.",
++  },
++  {
++    title: "Single-topic videos win",
++    body: "Videos covering one idea end-to-end outperform videos that try to cover several points in one clip.",
++  },
++];
++
++const PLATFORM_PATTERNS: Record<CaPlatform, WinningPattern> = {
++  TikTok: {
++    title: "Short-form sweet spot",
++    body: "Videos between 21 and 34 seconds showed the strongest completion rate across the sample.",
++  },
++  Instagram: {
++    title: "Save-worthy framing",
++    body: "Videos framed as reference material ('save this for later') accumulated more saves than pure entertainment clips.",
++  },
++  YouTube: {
++    title: "Chaptered structure",
++    body: "Videos with a clear chapter structure held audience retention flatter through the middle section.",
++  },
++};
++
++const GOAL_PATTERNS: Record<CaGoal, WinningPattern> = {
++  "Maximize Views": {
++    title: "Curiosity gap openings",
++    body: "Videos that withhold the payoff until the final third accumulate more full watch-throughs.",
++  },
++  "Gain Followers": {
++    title: "Series framing",
++    body: "Videos explicitly framed as part of a series convert more first-time viewers into follows.",
++  },
++  "Increase Comments": {
++    title: "Debatable takes",
++    body: "Videos stating a clear, debatable opinion generate more comment replies than neutral how-to framing.",
++  },
++  "Improve Engagement": {
++    title: "Direct address",
++    body: "Videos that speak to a single viewer ('you') outperform videos narrated in the third person.",
++  },
++};
++
++// ---------------------------------------------------------------------------
++// Strengths / opportunities pools
++// ---------------------------------------------------------------------------
++
++function strengthsPool(platform: CaPlatform): string[] {
++  return [
++    "Strong opening hooks across most videos",
++    "Consistent visual style and color palette",
++    "Clear, legible on-screen captions",
++    `Publishing cadence that fits how people browse ${platform}`,
++    "Audio is clean and consistently mixed across the sample",
++    "A recognizable presenter voice carries between videos",
++  ];
++}
++
++function opportunitiesPool(platform: CaPlatform): string[] {
++  return [
++    "Retention drops after the 20-second mark on longer videos",
++    "Calls-to-action are inconsistent between videos",
++    "Posting times vary widely across the sample",
++    `Hook variety is narrow for how competitive ${platform} discovery is right now`,
++    "Endings trail off instead of closing with a clear next step",
++    "Pacing dips in the middle third on the longer videos in the sample",
++  ];
++}
++
++// ---------------------------------------------------------------------------
++// Public API
++// ---------------------------------------------------------------------------
++
++export function generateContentAnalysisReport(
++  session: ContentAnalysisSession
++): ContentAnalysisReport {
++  const { platform, goal, videos } = session;
++  const videoCount = Math.max(videos.length, 1);
++  const seed = hashSeed(`${platform}|${goal}|${videoCount}|${videos.join(",")}`);
++  const rng = mulberry32(seed);
++
++  // --- Content score --------------------------------------------------
++  const videoCountBonus = clamp(Math.round((videoCount - 1) * 1.5), 0, 9);
++  const variance = randInt(rng, -4, 4);
++  const contentScore = clamp(
++    PLATFORM_BASE_SCORE[platform] + GOAL_SCORE_MODIFIER[goal] + videoCountBonus + variance,
++    52,
++    97
++  );
++
++  const scoreBand =
++    contentScore >= 85 ? "well above average" : contentScore >= 70 ? "above average" : "in a solid starting range";
++  const scoreSummary = `Across ${videoCount} video${videoCount === 1 ? "" : "s"}, this sample scores ${scoreBand} for ${platform}, with the clearest signal coming from how it's optimized for "${goal.toLowerCase()}".`;
++
++  // --- Feature scores ---------------------------------------------------
++  const featureScores: FeatureScore[] = FEATURE_DEFS.map((def) => {
++    const offset = PLATFORM_FEATURE_OFFSET[platform][def.key] ?? 0;
++    const [minScore, maxScore] = def.baseRange;
++    const score = clamp(randInt(rng, minScore, maxScore) + offset, 30, 99);
++    const [minConf, maxConf] = def.confidenceRange;
++    const confidence = clamp(randInt(rng, minConf, maxConf), 30, 99);
++    return {
++      key: def.key,
++      label: def.label,
++      score,
++      explanation: pick(rng, def.explanations),
++      confidence,
++    };
++  });
++
++  // --- Winning patterns ---------------------------------------------------
++  const patternPool = GENERAL_PATTERNS.filter(
++    (p) => p.title !== PLATFORM_PATTERNS[platform].title
++  );
++  const patterns: WinningPattern[] = [
++    PLATFORM_PATTERNS[platform],
++    GOAL_PATTERNS[goal],
++    ...pickN(rng, patternPool, 1),
++  ];
++
++  // --- Ideal video blueprint ---------------------------------------------
++  const blueprint: BlueprintItem[] = [
++    { label: "Duration", value: PLATFORM_DURATION[platform] },
++    { label: "Hook", value: pick(rng, HOOK_TYPES) },
++    { label: "Tone", value: GOAL_TONE[goal] },
++    { label: "CTA", value: GOAL_CTA[goal] },
++    { label: "Subtitles", value: "On-screen text, high-contrast, bottom third" },
++    { label: "Posting Window", value: PLATFORM_POSTING_WINDOW[platform] },
++    { label: "Visual Style", value: PLATFORM_VISUAL_STYLE[platform] },
++  ];
++
++  // --- Strengths / opportunities ------------------------------------------
++  const strengths = pickN(rng, strengthsPool(platform), 3);
++  const opportunities = pickN(rng, opportunitiesPool(platform), 3);
++
++  // --- Confidence indicators ------------------------------------------------
++  const confidenceLabels = [
++    "Hook detection",
++    "Engagement comparison",
++    "Speech analysis",
++    "Color profiling",
++  ];
++  const confidence: ConfidenceIndicator[] = confidenceLabels.map((label) => {
++    const pct = clamp(randInt(rng, 45, 96), 30, 99);
++    return { label, value: confidenceLevel(pct), pct };
++  });
++
++  return {
++    contentScore,
++    scoreSummary,
++    featureScores,
++    patterns,
++    blueprint,
++    strengths,
++    opportunities,
++    confidence,
++  };
++}
