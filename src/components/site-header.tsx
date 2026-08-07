@@ -6,6 +6,7 @@ import { TrackedLink } from "@/components/analytics/tracked-link";
 
 const NAV_LINKS = [
   { href: "/#problem", label: "Why CreatorOS" },
+  { href: "/content-analysis", label: "Content Analysis" },
   { href: "/questions", label: "Questions" },
   { href: "/updates", label: "Updates" },
   { href: "/about", label: "About" },
