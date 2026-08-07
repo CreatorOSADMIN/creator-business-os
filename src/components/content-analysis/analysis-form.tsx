@@ -3,21 +3,16 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { trackEvent } from "@/lib/analytics";
-
-const CA_PLATFORMS = ["TikTok", "Instagram", "YouTube"] as const;
-
-const CA_GOALS = [
-  "Maximize Views",
-  "Gain Followers",
-  "Increase Comments",
-  "Improve Engagement",
-] as const;
-
-const URL_SLOTS = Array.from({ length: 10 }, (_, i) => i);
-
-// Session-only handoff to the simulated loading + report pages. Nothing is
-// sent anywhere — this is purely a frontend demo, no backend involved.
-const DEMO_STORAGE_KEY = "creatoros:content-analysis-demo";
+import {
+  CA_GOALS,
+  CA_PLATFORMS,
+  CA_DEMO_STORAGE_KEY,
+  buildDemoSession,
+  isValidPlatformUrl,
+  type CaGoal,
+  type CaPlatform,
+} from "@/lib/content-analysis";
+import { VideoUrlList } from "@/components/content-analysis/video-url-list";
 
 type FormErrors = {
   platform?: string;
@@ -25,15 +20,13 @@ type FormErrors = {
   urls?: string;
 };
 
-const inputClass =
-  "w-full rounded-lg border border-border bg-bg-elevated px-4 py-2.5 text-sm text-text placeholder:text-text-faint transition-colors focus:border-accent focus:outline-none focus-visible:outline-none";
-
 export function AnalysisForm() {
   const router = useRouter();
-  const [platform, setPlatform] = useState<string>("");
-  const [goal, setGoal] = useState<string>("");
-  const [urls, setUrls] = useState<string[]>(() => Array(10).fill(""));
+  const [platform, setPlatform] = useState<CaPlatform | "">("");
+  const [goal, setGoal] = useState<CaGoal | "">("");
+  const [urls, setUrls] = useState<string[]>([""]);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [urlErrors, setUrlErrors] = useState<(string | undefined)[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   function updateUrl(index: number, value: string) {
@@ -44,14 +37,49 @@ export function AnalysisForm() {
     });
   }
 
+  function addUrl() {
+    setUrls((prev) => (prev.length >= 10 ? prev : [...prev, ""]));
+  }
+
+  function removeUrl(index: number) {
+    setUrls((prev) => (prev.length <= 1 ? prev : prev.filter((_, i) => i !== index)));
+    setUrlErrors((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function selectPlatform(next: CaPlatform) {
+    setPlatform(next);
+    // Field format depends on platform, so previous per-field errors no
+    // longer apply once the platform changes.
+    setUrlErrors([]);
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    const filledUrls = urls.map((u) => u.trim()).filter(Boolean);
     const nextErrors: FormErrors = {};
     if (!platform) nextErrors.platform = "Select a platform.";
     if (!goal) nextErrors.goal = "Select a goal.";
-    if (filledUrls.length === 0) nextErrors.urls = "Paste at least one video link.";
+
+    const filled = urls
+      .map((url, index) => ({ url: url.trim(), index }))
+      .filter((entry) => entry.url.length > 0);
+
+    const nextUrlErrors: (string | undefined)[] = urls.map(() => undefined);
+
+    if (filled.length === 0) {
+      nextErrors.urls = "Paste at least one video link.";
+    } else if (platform) {
+      for (const { url, index } of filled) {
+        if (!isValidPlatformUrl(url, platform)) {
+          nextUrlErrors[index] = `Enter a valid ${platform} video URL.`;
+        }
+      }
+      if (nextUrlErrors.some(Boolean)) {
+        nextErrors.urls = "Fix the highlighted links below.";
+      }
+    }
+
+    setUrlErrors(nextUrlErrors);
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
@@ -60,13 +88,13 @@ export function AnalysisForm() {
 
     setErrors({});
     setSubmitting(true);
+
+    const validUrls = filled.map((entry) => entry.url);
     trackEvent("cta_click", { location: "content_analysis_analyze", platform, goal });
 
     try {
-      sessionStorage.setItem(
-        DEMO_STORAGE_KEY,
-        JSON.stringify({ platform, goal, urls: filledUrls })
-      );
+      const session = buildDemoSession(platform, goal, validUrls);
+      sessionStorage.setItem(CA_DEMO_STORAGE_KEY, JSON.stringify(session));
     } catch {
       // sessionStorage unavailable (e.g. private browsing) — the loading
       // and report pages fall back to their own placeholder copy.
@@ -84,7 +112,12 @@ export function AnalysisForm() {
         <div data-error={errors.platform ? "true" : "false"} className="mt-4">
           <div className="flex flex-wrap gap-3">
             {CA_PLATFORMS.map((p) => (
-              <SelectPill key={p} label={p} checked={platform === p} onClick={() => setPlatform(p)} />
+              <SelectPill
+                key={p}
+                label={p}
+                checked={platform === p}
+                onClick={() => selectPlatform(p)}
+              />
             ))}
           </div>
           {errors.platform && <ErrorText>{errors.platform}</ErrorText>}
@@ -105,28 +138,15 @@ export function AnalysisForm() {
         </div>
       </div>
 
-      <div>
-        <div className="flex items-baseline justify-between gap-4">
-          <p className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">
-            Video Links <span className="text-accent">*</span>
-          </p>
-          <p className="text-xs text-text-faint">Up to 10, same platform</p>
-        </div>
-        <div data-error={errors.urls ? "true" : "false"} className="mt-4 grid gap-3 sm:grid-cols-2">
-          {URL_SLOTS.map((i) => (
-            <label key={i} className="flex flex-col gap-1.5">
-              <span className="font-mono-ui text-xs text-text-faint">Video {i + 1}</span>
-              <input
-                className={inputClass}
-                type="url"
-                inputMode="url"
-                value={urls[i]}
-                onChange={(e) => updateUrl(i, e.target.value)}
-                placeholder="https://..."
-              />
-            </label>
-          ))}
-        </div>
+      <div data-error={errors.urls ? "true" : "false"}>
+        <VideoUrlList
+          platform={platform}
+          urls={urls}
+          errors={urlErrors}
+          onChange={updateUrl}
+          onAdd={addUrl}
+          onRemove={removeUrl}
+        />
         {errors.urls && <ErrorText>{errors.urls}</ErrorText>}
       </div>
 
