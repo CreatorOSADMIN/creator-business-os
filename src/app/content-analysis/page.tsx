@@ -5,6 +5,7 @@ import { Reveal } from "@/components/landing/reveal";
 import { Eyebrow } from "@/components/landing/eyebrow";
 import { TrackedLink } from "@/components/analytics/tracked-link";
 import { AnalysisForm } from "@/components/content-analysis/analysis-form";
+import { AnalysisHistory } from "@/components/content-analysis/analysis-history";
 import { ContentAnalysisFinalCta } from "@/components/content-analysis/final-cta";
 
 export const metadata: Metadata = {
@@ -116,6 +117,7 @@ export default function ContentAnalysisPage() {
               <div className="mt-14 rounded-2xl border border-border bg-bg-elevated p-8 sm:p-10">
                 <AnalysisForm />
               </div>
+              <AnalysisHistory />
             </Reveal>
           </div>
         </section>
