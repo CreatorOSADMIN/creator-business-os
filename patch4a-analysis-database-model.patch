@@ -1,0 +1,117 @@
+diff --git a/prisma/migrations/20260808000000_add_content_analysis/migration.sql b/prisma/migrations/20260808000000_add_content_analysis/migration.sql
+new file mode 100644
+index 0000000..75ee463
+--- /dev/null
++++ b/prisma/migrations/20260808000000_add_content_analysis/migration.sql
+@@ -0,0 +1,28 @@
++-- Database foundation for the future real Content Analysis product.
++-- Additive only: new table, no changes to existing tables.
++
++CREATE TABLE "ContentAnalysis" (
++    "id" TEXT NOT NULL,
++    "creatorId" TEXT,
++    "anonymousId" TEXT,
++    "platform" TEXT NOT NULL,
++    "goal" TEXT NOT NULL,
++    "status" TEXT NOT NULL DEFAULT 'queued',
++    "videoUrls" TEXT NOT NULL DEFAULT '[]',
++    "videoCount" INTEGER NOT NULL DEFAULT 0,
++    "errorMessage" TEXT,
++    "result" TEXT,
++    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
++    "updatedAt" TIMESTAMP(3) NOT NULL,
++    "completedAt" TIMESTAMP(3),
++
++    CONSTRAINT "ContentAnalysis_pkey" PRIMARY KEY ("id")
++);
++
++CREATE INDEX "ContentAnalysis_creatorId_idx" ON "ContentAnalysis"("creatorId");
++
++CREATE INDEX "ContentAnalysis_anonymousId_idx" ON "ContentAnalysis"("anonymousId");
++
++CREATE INDEX "ContentAnalysis_status_idx" ON "ContentAnalysis"("status");
++
++ALTER TABLE "ContentAnalysis" ADD CONSTRAINT "ContentAnalysis_creatorId_fkey" FOREIGN KEY ("creatorId") REFERENCES "Creator"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+diff --git a/prisma/schema.prisma b/prisma/schema.prisma
+index c5ced13..28ec181 100644
+--- a/prisma/schema.prisma
++++ b/prisma/schema.prisma
+@@ -59,6 +59,7 @@ model Creator {
+   referrals   Creator[] @relation("Referrals")
+ 
+   verificationTokens EmailVerificationToken[]
++  contentAnalyses    ContentAnalysis[]
+ 
+   @@index([status])
+   @@index([country])
+@@ -146,3 +147,45 @@ model EmailVerificationToken {
+ 
+   @@index([creatorId])
+ }
++
++// Database foundation for the future real Content Analysis product (the
++// current /content-analysis flow is a frontend-only demo, see
++// src/lib/content-analysis.ts). Owner is optional so anonymous, pre-signup
++// analyses can be persisted via anonymousId instead; no anonymous-id
++// generation logic is implemented here, only the field.
++model ContentAnalysis {
++  id String @id @default(cuid())
++
++  creatorId   String?
++  anonymousId String?
++
++  platform String
++  goal     String
++
++  // queued | processing | completed | failed — kept as a validated string
++  // rather than a native enum, matching Creator.status / Question.status.
++  // Allowed values enforced in application code (see src/lib/constants.ts).
++  status String @default("queued")
++
++  // JSON-encoded array of submitted video URLs (max 10, enforced in
++  // application code), following the same list-field convention as
++  // Creator.platforms / Question.answerImages.
++  videoUrls  String @default("[]")
++  videoCount Int    @default(0)
++
++  errorMessage String?
++
++  // Future analysis result payload, JSON-encoded once implemented in a
++  // later patch. Intentionally untyped/nullable here.
++  result String?
++
++  createdAt   DateTime  @default(now())
++  updatedAt   DateTime  @updatedAt
++  completedAt DateTime?
++
++  creator Creator? @relation(fields: [creatorId], references: [id], onDelete: SetNull)
++
++  @@index([creatorId])
++  @@index([anonymousId])
++  @@index([status])
++}
+diff --git a/src/lib/constants.ts b/src/lib/constants.ts
+index 1b40a17..bb6a346 100644
+--- a/src/lib/constants.ts
++++ b/src/lib/constants.ts
+@@ -96,6 +96,20 @@ export const STATUS_COLORS: Record<CreatorStatusValue, string> = {
+   REJECTED: "badge-danger",
+ };
+ 
++// --- Content Analysis (database foundation only; demo flow still uses
++// src/lib/content-analysis.ts and never touches this) ----------------------
++
++export const CONTENT_ANALYSIS_STATUSES = [
++  "queued",
++  "processing",
++  "completed",
++  "failed",
++] as const;
++
++export type ContentAnalysisStatusValue = (typeof CONTENT_ANALYSIS_STATUSES)[number];
++
++export const CONTENT_ANALYSIS_MAX_URLS = 10;
++
+ // --- Public Q&A -----------------------------------------------------------
+ 
+ export const QUESTION_STATUSES = ["pending", "published"] as const;

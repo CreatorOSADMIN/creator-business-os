@@ -110,6 +110,11 @@ export type ContentAnalysisStatusValue = (typeof CONTENT_ANALYSIS_STATUSES)[numb
 
 export const CONTENT_ANALYSIS_MAX_URLS = 10;
 
+// Free analyses allowed per anonymous visitor (see anonymous-session.ts)
+// before /api/content-analysis rejects further creation. Enforced
+// server-side only; the browser is never trusted to report usage.
+export const CONTENT_ANALYSIS_FREE_LIMIT = 3;
+
 // --- Public Q&A -----------------------------------------------------------
 
 export const QUESTION_STATUSES = ["pending", "published"] as const;

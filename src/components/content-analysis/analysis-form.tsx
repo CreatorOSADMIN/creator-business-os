@@ -13,6 +13,7 @@ import {
   type CaPlatform,
 } from "@/lib/content-analysis";
 import { VideoUrlList } from "@/components/content-analysis/video-url-list";
+import { CONTENT_ANALYSIS_FREE_LIMIT } from "@/lib/constants";
 
 type FormErrors = {
   platform?: string;
@@ -29,6 +30,8 @@ export function AnalysisForm() {
   const [urlErrors, setUrlErrors] = useState<(string | undefined)[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [remainingFreeAnalyses, setRemainingFreeAnalyses] = useState<number | null>(null);
+  const [limitReached, setLimitReached] = useState(false);
 
   function updateUrl(index: number, value: string) {
     setUrls((prev) => {
@@ -107,11 +110,18 @@ export function AnalysisForm() {
       });
       const data = await res.json();
       if (!res.ok) {
+        if (data.code === "FREE_ANALYSES_EXHAUSTED") {
+          setLimitReached(true);
+          setRemainingFreeAnalyses(0);
+        }
         setServerError(data.error || "Something went wrong. Please try again.");
         setSubmitting(false);
         return;
       }
       analysisId = data.id;
+      if (typeof data.remainingFreeAnalyses === "number") {
+        setRemainingFreeAnalyses(data.remainingFreeAnalyses);
+      }
     } catch {
       setServerError("Network error. Please check your connection and try again.");
       setSubmitting(false);
@@ -179,11 +189,18 @@ export function AnalysisForm() {
       <div className="border-t border-border pt-10">
         <button
           type="submit"
-          disabled={submitting}
+          disabled={submitting || limitReached}
           className="w-full rounded-full bg-accent px-8 py-3.5 font-mono-ui text-xs font-medium uppercase tracking-[0.15em] text-bg transition-transform hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
         >
-          {submitting ? "Starting…" : "Analyze"}
+          {submitting ? "Starting…" : limitReached ? "Free analyses used" : "Analyze"}
         </button>
+        {remainingFreeAnalyses !== null && (
+          <p className="mt-3 font-mono-ui text-xs uppercase tracking-[0.1em] text-text-faint">
+            {limitReached
+              ? `${CONTENT_ANALYSIS_FREE_LIMIT} / ${CONTENT_ANALYSIS_FREE_LIMIT} free analyses used`
+              : `${remainingFreeAnalyses} free ${remainingFreeAnalyses === 1 ? "analysis" : "analyses"} remaining`}
+          </p>
+        )}
         {serverError && <ErrorText>{serverError}</ErrorText>}
       </div>
     </form>

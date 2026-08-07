@@ -1,0 +1,264 @@
+diff --git a/src/app/api/content-analysis/route.ts b/src/app/api/content-analysis/route.ts
+new file mode 100644
+index 0000000..dbea130
+--- /dev/null
++++ b/src/app/api/content-analysis/route.ts
+@@ -0,0 +1,99 @@
++import { NextRequest, NextResponse } from "next/server";
++import { prisma } from "@/lib/prisma";
++import { createAnalysisSchema } from "@/lib/validation";
++import { rateLimit, getClientIp } from "@/lib/rate-limit";
++import { verifySameOrigin } from "@/lib/verify-origin";
++import { getRegisteredCreatorIdFromCookie } from "@/lib/creator-session";
++import { logger } from "@/lib/logger";
++import { reportIncident } from "@/lib/monitoring";
++
++/**
++ * Creates a persistent Content Analysis record from the (still simulated)
++ * /content-analysis form. No analysis is performed here — this only turns a
++ * validated submission into a "queued" database record that later patches
++ * can pick up. See src/lib/content-analysis-engine.ts for the report
++ * generation, which stays untouched and unrelated to this route.
++ */
++export async function POST(request: NextRequest) {
++  const originCheck = verifySameOrigin(request);
++  if (originCheck) return originCheck;
++
++  const ip = getClientIp(request.headers);
++
++  const burst = rateLimit(`content-analysis-create-burst:${ip}`, {
++    limit: 5,
++    windowMs: 30 * 1000,
++  });
++  if (!burst.allowed) {
++    logger.warn("content-analysis: burst rate limit exceeded", { scope: "content-analysis", ip });
++    return NextResponse.json(
++      { error: "Too many submissions. Please try again later." },
++      { status: 429 }
++    );
++  }
++
++  const { allowed } = rateLimit(`content-analysis-create:${ip}`, {
++    limit: 15,
++    windowMs: 10 * 60 * 1000,
++  });
++  if (!allowed) {
++    logger.warn("content-analysis: rate limit exceeded", { scope: "content-analysis", ip });
++    return NextResponse.json(
++      { error: "Too many submissions. Please try again later." },
++      { status: 429 }
++    );
++  }
++
++  let body: unknown;
++  try {
++    body = await request.json();
++  } catch {
++    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
++  }
++
++  const parsed = createAnalysisSchema.safeParse(body);
++  if (!parsed.success) {
++    return NextResponse.json(
++      { error: "Validation failed", issues: parsed.error.flatten() },
++      { status: 400 }
++    );
++  }
++
++  const { platform, goal, videoUrls } = parsed.data;
++
++  // Never trust a creator id supplied by the browser — only the signed,
++  // httpOnly session cookie identifies the authenticated creator, and even
++  // then it's re-verified against the database (the cookie can outlive the
++  // record, e.g. if it was deleted) before being used as a foreign key.
++  let creatorId: string | null = null;
++  const cookieCreatorId = await getRegisteredCreatorIdFromCookie();
++  if (cookieCreatorId) {
++    const creator = await prisma.creator.findUnique({
++      where: { id: cookieCreatorId },
++      select: { id: true },
++    });
++    creatorId = creator?.id ?? null;
++  }
++
++  try {
++    const analysis = await prisma.contentAnalysis.create({
++      data: {
++        creatorId,
++        platform,
++        goal,
++        videoUrls: JSON.stringify(videoUrls),
++        videoCount: videoUrls.length,
++        status: "queued",
++      },
++      select: { id: true, status: true },
++    });
++
++    return NextResponse.json({ ok: true, id: analysis.id, status: analysis.status }, { status: 201 });
++  } catch (err) {
++    reportIncident("content_analysis_create_failed", { scope: "content-analysis", ip, err });
++    return NextResponse.json(
++      { error: "Something went wrong. Please try again." },
++      { status: 500 }
++    );
++  }
++}
+diff --git a/src/components/content-analysis/analysis-form.tsx b/src/components/content-analysis/analysis-form.tsx
+index 5cc7705..4a05672 100644
+--- a/src/components/content-analysis/analysis-form.tsx
++++ b/src/components/content-analysis/analysis-form.tsx
+@@ -28,6 +28,7 @@ export function AnalysisForm() {
+   const [errors, setErrors] = useState<FormErrors>({});
+   const [urlErrors, setUrlErrors] = useState<(string | undefined)[]>([]);
+   const [submitting, setSubmitting] = useState(false);
++  const [serverError, setServerError] = useState<string | null>(null);
+ 
+   function updateUrl(index: number, value: string) {
+     setUrls((prev) => {
+@@ -53,8 +54,9 @@ export function AnalysisForm() {
+     setUrlErrors([]);
+   }
+ 
+-  function handleSubmit(e: React.FormEvent) {
++  async function handleSubmit(e: React.FormEvent) {
+     e.preventDefault();
++    setServerError(null);
+ 
+     const nextErrors: FormErrors = {};
+     if (!platform) nextErrors.platform = "Select a platform.";
+@@ -96,8 +98,28 @@ export function AnalysisForm() {
+     const validUrls = filled.map((entry) => entry.url);
+     trackEvent("cta_click", { location: "content_analysis_analyze", platform, goal });
+ 
++    let analysisId: string | undefined;
+     try {
+-      const session = buildDemoSession(platform, goal, validUrls);
++      const res = await fetch("/api/content-analysis", {
++        method: "POST",
++        headers: { "Content-Type": "application/json" },
++        body: JSON.stringify({ platform, goal, videoUrls: validUrls }),
++      });
++      const data = await res.json();
++      if (!res.ok) {
++        setServerError(data.error || "Something went wrong. Please try again.");
++        setSubmitting(false);
++        return;
++      }
++      analysisId = data.id;
++    } catch {
++      setServerError("Network error. Please check your connection and try again.");
++      setSubmitting(false);
++      return;
++    }
++
++    try {
++      const session = buildDemoSession(platform, goal, validUrls, analysisId);
+       sessionStorage.setItem(CA_DEMO_STORAGE_KEY, JSON.stringify(session));
+     } catch {
+       // sessionStorage unavailable (e.g. private browsing) — the loading
+@@ -162,6 +184,7 @@ export function AnalysisForm() {
+         >
+           {submitting ? "Starting…" : "Analyze"}
+         </button>
++        {serverError && <ErrorText>{serverError}</ErrorText>}
+       </div>
+     </form>
+   );
+diff --git a/src/lib/content-analysis.ts b/src/lib/content-analysis.ts
+index 95e4010..484e62a 100644
+--- a/src/lib/content-analysis.ts
++++ b/src/lib/content-analysis.ts
+@@ -41,14 +41,19 @@ export interface ContentAnalysisSession {
+   goal: CaGoal;
+   videos: string[];
+   createdAt: string;
++  // Id of the persistent Analysis record created via POST /api/content-analysis,
++  // kept alongside the demo session so later patches can look it up. The
++  // simulated analyzing/report flow below doesn't use this yet.
++  analysisId?: string;
+ }
+ 
+ export function buildDemoSession(
+   platform: CaPlatform,
+   goal: CaGoal,
+-  videos: string[]
++  videos: string[],
++  analysisId?: string
+ ): ContentAnalysisSession {
+-  return { platform, goal, videos, createdAt: new Date().toISOString() };
++  return { platform, goal, videos, createdAt: new Date().toISOString(), analysisId };
+ }
+ 
+ // Session-only handoff to the simulated loading + report pages. Nothing is
+diff --git a/src/lib/monitoring.ts b/src/lib/monitoring.ts
+index d83eef2..da6fde7 100644
+--- a/src/lib/monitoring.ts
++++ b/src/lib/monitoring.ts
+@@ -18,7 +18,8 @@ export type MonitoringEvent =
+   | "signup_failed"
+   | "signup_email_failed"
+   | "signup_cookie_failed"
+-  | "question_submit_failed";
++  | "question_submit_failed"
++  | "content_analysis_create_failed";
+ 
+ export type MonitoringDetails = Record<string, unknown>;
+ 
+diff --git a/src/lib/validation.ts b/src/lib/validation.ts
+index 15ecd7f..4b97a3c 100644
+--- a/src/lib/validation.ts
++++ b/src/lib/validation.ts
+@@ -8,7 +8,9 @@ import {
+   CREATOR_STATUSES,
+   QUESTION_STATUSES,
+   QUESTION_CATEGORIES,
++  CONTENT_ANALYSIS_MAX_URLS,
+ } from "./constants";
++import { CA_PLATFORMS, CA_GOALS, isValidPlatformUrl } from "./content-analysis";
+ 
+ const platformValues = PLATFORMS.map((p) => p.value) as [string, ...string[]];
+ const audienceValues = AUDIENCE_SIZES.map((p) => p.value) as [string, ...string[]];
+@@ -114,3 +116,43 @@ export type QuestionAnswerInput = z.infer<typeof questionAnswerSchema>;
+ export const questionStatusSchema = z.object({
+   status: z.enum(QUESTION_STATUSES),
+ });
++
++// --- Content Analysis -------------------------------------------------
++
++const caPlatformValues = [...CA_PLATFORMS] as [string, ...string[]];
++const caGoalValues = [...CA_GOALS] as [string, ...string[]];
++
++// Mirrors the frontend demo's own format checks (src/lib/content-analysis.ts)
++// so the same platform/URL rules apply — but this is the copy that's
++// actually enforced, since the frontend's checks can't be trusted.
++export const createAnalysisSchema = z
++  .object({
++    platform: z.enum(caPlatformValues, { message: "Select a valid platform." }),
++    goal: z.enum(caGoalValues, { message: "Select a valid goal." }),
++    videoUrls: z
++      .array(z.string().trim().max(2000))
++      .min(1, "Paste at least one video link.")
++      .max(CONTENT_ANALYSIS_MAX_URLS, `You can submit at most ${CONTENT_ANALYSIS_MAX_URLS} videos.`),
++  })
++  .superRefine((data, ctx) => {
++    const seen = new Set<string>();
++    data.videoUrls.forEach((url, index) => {
++      if (seen.has(url)) {
++        ctx.addIssue({
++          code: z.ZodIssueCode.custom,
++          message: "Remove duplicate video URLs.",
++          path: ["videoUrls", index],
++        });
++      }
++      seen.add(url);
++
++      if (!isValidPlatformUrl(url, data.platform as (typeof CA_PLATFORMS)[number])) {
++        ctx.addIssue({
++          code: z.ZodIssueCode.custom,
++          message: `Enter a valid ${data.platform} video URL.`,
++          path: ["videoUrls", index],
++        });
++      }
++    });
++  });
++export type CreateAnalysisInput = z.infer<typeof createAnalysisSchema>;
