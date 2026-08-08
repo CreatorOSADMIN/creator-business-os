@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Reveal } from "@/components/landing/reveal";
 import { Eyebrow } from "@/components/landing/eyebrow";
 import { ContentAnalysisFinalCta } from "@/components/content-analysis/final-cta";
+import { ContentAnalysisRealReport } from "@/components/content-analysis/real-report";
 import {
   CA_GOALS,
   CA_PLATFORMS,
@@ -17,6 +18,7 @@ import {
   generateContentAnalysisReport,
   type ContentAnalysisReport,
 } from "@/lib/content-analysis-engine";
+import type { ContentAnalysisReportResult } from "@/lib/content-analysis-report";
 
 // Static placeholder shown before hydration and whenever no valid demo
 // session is found in sessionStorage — this is the "safe fallback" copy.
@@ -103,16 +105,28 @@ function readDemoSession(): ContentAnalysisSession | null {
   }
 }
 
+type ReportGateState =
+  | { kind: "checking" }
+  | { kind: "demo" }
+  | { kind: "real"; result: ContentAnalysisReportResult }
+  | { kind: "unavailable" };
+
+function isReportResultShape(value: unknown): value is ContentAnalysisReportResult {
+  if (typeof value !== "object" || value === null) return false;
+  const o = value as Record<string, unknown>;
+  return typeof o.fetchedAt === "string" && Array.isArray(o.videos) && Array.isArray(o.failedUrls);
+}
+
 // When the URL carries a persisted analysis id (from the real
-// submit → queued → analyzing flow), this page must not show the static/
-// demo report unless that analysis is genuinely COMPLETED — otherwise it
-// would look like a real result was produced when none exists yet. No id
-// in the URL (e.g. a direct visit) keeps the previous demo-only behavior.
-function usePersistedGate(): "checking" | "ok" {
+// submit → queued → analyzing flow), this page must render that
+// analysis's real, persisted result — never the static/demo report —
+// once it's genuinely COMPLETED. No id in the URL (e.g. a direct visit)
+// keeps the previous demo-only behavior.
+function useReportGate(): ReportGateState {
   const router = useRouter();
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
-  const [state, setState] = useState<"checking" | "ok">(id ? "checking" : "ok");
+  const [state, setState] = useState<ReportGateState>(id ? { kind: "checking" } : { kind: "demo" });
 
   useEffect(() => {
     if (!id) return;
@@ -125,17 +139,26 @@ function usePersistedGate(): "checking" | "ok" {
         if (!res.ok) {
           // Unknown/foreign id — fall back to the static demo copy rather
           // than blocking the page.
-          setState("ok");
+          setState({ kind: "demo" });
           return;
         }
         const data = await res.json();
-        if (data.status === "completed") {
-          setState("ok");
-        } else {
+        if (data.status !== "completed") {
+          // Includes "failed": the analyzing page already renders a clear
+          // failure state, so route there instead of showing anything
+          // report-shaped here.
           router.replace(`/content-analysis/analyzing?id=${encodeURIComponent(id)}`);
+          return;
+        }
+        if (isReportResultShape(data.result)) {
+          setState({ kind: "real", result: data.result });
+        } else {
+          // Completed but no usable result (missing/invalid JSON) — never
+          // silently fall back to demo data for a real analysis id.
+          setState({ kind: "unavailable" });
         }
       } catch {
-        if (!cancelled) setState("ok");
+        if (!cancelled) setState({ kind: "demo" });
       }
     })();
 
@@ -147,9 +170,8 @@ function usePersistedGate(): "checking" | "ok" {
   return state;
 }
 
-function ReportBody() {
+function DemoReportBody() {
   const [report, setReport] = useState<ContentAnalysisReport>(FALLBACK_REPORT);
-  const gate = usePersistedGate();
 
   useEffect(() => {
     const session = readDemoSession();
@@ -165,16 +187,6 @@ function ReportBody() {
       // Any unexpected shape falls back to the static placeholder already set.
     }
   }, []);
-
-  if (gate === "checking") {
-    return (
-      <main className="flex min-h-[60vh] flex-1 items-center justify-center bg-bg px-6">
-        <p className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">
-          Loading…
-        </p>
-      </main>
-    );
-  }
 
   return (
     <main className="flex-1 bg-bg">
@@ -359,6 +371,47 @@ function ReportBody() {
       <ContentAnalysisFinalCta location="content_analysis_report_final_cta" />
     </main>
   );
+}
+
+function UnavailableReportBody() {
+  return (
+    <main className="flex min-h-[60vh] flex-1 flex-col items-center justify-center gap-6 bg-bg px-6 text-center">
+      <Eyebrow>Content Analysis</Eyebrow>
+      <p className="max-w-md text-balance text-sm leading-relaxed text-text-muted">
+        We couldn&apos;t load this report right now. Please start a new analysis.
+      </p>
+      <a
+        href="/content-analysis"
+        className="inline-block rounded-full border border-border-strong px-6 py-3 font-mono-ui text-xs uppercase tracking-[0.15em] text-text-muted transition-colors hover:border-accent hover:text-accent"
+      >
+        Start a new analysis
+      </a>
+    </main>
+  );
+}
+
+function ReportBody() {
+  const gate = useReportGate();
+
+  if (gate.kind === "checking") {
+    return (
+      <main className="flex min-h-[60vh] flex-1 items-center justify-center bg-bg px-6">
+        <p className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">
+          Loading…
+        </p>
+      </main>
+    );
+  }
+
+  if (gate.kind === "real") {
+    return <ContentAnalysisRealReport result={gate.result} />;
+  }
+
+  if (gate.kind === "unavailable") {
+    return <UnavailableReportBody />;
+  }
+
+  return <DemoReportBody />;
 }
 
 export function ContentAnalysisReportContent() {

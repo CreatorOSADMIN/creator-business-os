@@ -1,0 +1,1016 @@
+diff --git a/src/app/api/content-analysis/[id]/route.ts b/src/app/api/content-analysis/[id]/route.ts
+index f5a4f43..eae97da 100644
+--- a/src/app/api/content-analysis/[id]/route.ts
++++ b/src/app/api/content-analysis/[id]/route.ts
+@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
+ import { prisma } from "@/lib/prisma";
+ import { rateLimit, getClientIp } from "@/lib/rate-limit";
+ import { getOrCreateAnonymousId } from "@/lib/anonymous-session";
++import { resolveReportAccess, type ContentAnalysisReportResult } from "@/lib/content-analysis-report";
++
++const GENERIC_FAILURE_MESSAGE = "This analysis failed. Please start a new one.";
++const GENERIC_UNREADABLE_MESSAGE = "This analysis result couldn't be read. Please start a new one.";
+ 
+ export interface ContentAnalysisStatusResponse {
+   id: string;
+@@ -12,6 +16,13 @@ export interface ContentAnalysisStatusResponse {
+   goal: string;
+   videoCount: number;
+   reportAvailable: boolean;
++  // Only ever present for a status of "completed" with a valid, parsed
++  // real result — never demo data, never the raw persisted string. Never
++  // includes anonymousId, creatorId, provider id, or any other internal
++  // field — see buildReportResult.
++  result?: ContentAnalysisReportResult;
++  // A safe, pre-written message only — never the raw internal error.
++  errorMessage?: string;
+ }
+ 
+ /**
+@@ -49,18 +60,32 @@ export async function GET(
+       videoCount: true,
+       status: true,
+       result: true,
++      errorMessage: true,
+       createdAt: true,
+       updatedAt: true,
+     },
+   });
+ 
+-  // Same response whether the row is missing or owned by another visitor —
+-  // never confirm that a given id exists for someone else.
+-  if (!analysis || analysis.anonymousId !== anonymousId) {
++  // Ownership + status/result decision lives in one tested function so an
++  // id belonging to another anonymous visitor and a genuinely missing id
++  // are indistinguishable to the caller either way.
++  const access = resolveReportAccess(
++    analysis
++      ? {
++          anonymousId: analysis.anonymousId,
++          status: analysis.status,
++          result: analysis.result,
++          errorMessage: analysis.errorMessage,
++        }
++      : null,
++    anonymousId
++  );
++
++  if (access.kind === "not_found" || !analysis) {
+     return NextResponse.json({ error: "Analysis not found" }, { status: 404 });
+   }
+ 
+-  const body: ContentAnalysisStatusResponse = {
++  const base = {
+     id: analysis.id,
+     status: analysis.status,
+     createdAt: analysis.createdAt.toISOString(),
+@@ -68,8 +93,24 @@ export async function GET(
+     platform: analysis.platform,
+     goal: analysis.goal,
+     videoCount: analysis.videoCount,
+-    reportAvailable: analysis.status === "completed" && analysis.result !== null,
+   };
+ 
++  let body: ContentAnalysisStatusResponse;
++  switch (access.kind) {
++    case "completed":
++      body = { ...base, reportAvailable: true, result: access.result };
++      break;
++    case "completed_invalid":
++      body = { ...base, reportAvailable: false, errorMessage: GENERIC_UNREADABLE_MESSAGE };
++      break;
++    case "failed":
++      body = { ...base, reportAvailable: false, errorMessage: GENERIC_FAILURE_MESSAGE };
++      break;
++    case "processing":
++    case "queued":
++      body = { ...base, reportAvailable: false };
++      break;
++  }
++
+   return NextResponse.json(body);
+ }
+diff --git a/src/components/content-analysis/__tests__/report-format.test.ts b/src/components/content-analysis/__tests__/report-format.test.ts
+new file mode 100644
+index 0000000..a2f1774
+--- /dev/null
++++ b/src/components/content-analysis/__tests__/report-format.test.ts
+@@ -0,0 +1,45 @@
++import { describe, it, expect } from "vitest";
++import { formatCompactNumber, formatDuration, formatPublishedDate } from "../report-format";
++
++describe("formatCompactNumber", () => {
++  it("returns null for null input", () => {
++    expect(formatCompactNumber(null)).toBeNull();
++  });
++
++  it("compacts large numbers", () => {
++    expect(formatCompactNumber(1500)).toBe("1.5K");
++    expect(formatCompactNumber(2_300_000)).toBe("2.3M");
++  });
++
++  it("passes through small numbers", () => {
++    expect(formatCompactNumber(42)).toBe("42");
++    expect(formatCompactNumber(0)).toBe("0");
++  });
++});
++
++describe("formatDuration", () => {
++  it("returns null for null or negative input", () => {
++    expect(formatDuration(null)).toBeNull();
++    expect(formatDuration(-5)).toBeNull();
++  });
++
++  it("formats seconds under an hour as m:ss", () => {
++    expect(formatDuration(45)).toBe("0:45");
++    expect(formatDuration(125)).toBe("2:05");
++  });
++
++  it("formats an hour or more as h:mm:ss", () => {
++    expect(formatDuration(3723)).toBe("1:02:03");
++  });
++});
++
++describe("formatPublishedDate", () => {
++  it("returns null for null or invalid input", () => {
++    expect(formatPublishedDate(null)).toBeNull();
++    expect(formatPublishedDate("not a date")).toBeNull();
++  });
++
++  it("formats a valid ISO timestamp", () => {
++    expect(formatPublishedDate("2024-03-15T00:00:00Z")).toBe("Mar 15, 2024");
++  });
++});
+diff --git a/src/components/content-analysis/real-report.tsx b/src/components/content-analysis/real-report.tsx
+new file mode 100644
+index 0000000..c1dfe2d
+--- /dev/null
++++ b/src/components/content-analysis/real-report.tsx
+@@ -0,0 +1,144 @@
++import { Reveal } from "@/components/landing/reveal";
++import { Eyebrow } from "@/components/landing/eyebrow";
++import { ContentAnalysisFinalCta } from "@/components/content-analysis/final-cta";
++import { isSafeHttpUrl } from "@/lib/safe-url";
++import { formatCompactNumber, formatDuration, formatPublishedDate } from "@/components/content-analysis/report-format";
++import type { ContentAnalysisReportResult, ContentAnalysisReportVideo } from "@/lib/content-analysis-report";
++
++function Stat({ label, value }: { label: string; value: string | null }) {
++  if (value === null) return null;
++  return (
++    <div>
++      <p className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">{label}</p>
++      <p className="mt-1 font-display text-2xl font-bold tracking-[-0.02em] text-text">{value}</p>
++    </div>
++  );
++}
++
++function VideoCard({ video, index }: { video: ContentAnalysisReportVideo; index: number }) {
++  const link = isSafeHttpUrl(video.canonicalUrl) ? video.canonicalUrl : null;
++  const thumbnail = isSafeHttpUrl(video.thumbnailUrl) ? video.thumbnailUrl : null;
++
++  return (
++    <Reveal delay={index * 90}>
++      <div className="grid grid-cols-1 gap-6 border-b border-border py-10 sm:grid-cols-12 sm:gap-8">
++        <div className="sm:col-span-4">
++          {thumbnail ? (
++            // eslint-disable-next-line @next/next/no-img-element
++            <img
++              src={thumbnail}
++              alt={video.title ?? "Video thumbnail"}
++              className="aspect-video w-full rounded-xl border border-border object-cover"
++              loading="lazy"
++            />
++          ) : (
++            <div className="flex aspect-video w-full items-center justify-center rounded-xl border border-border bg-bg-elevated">
++              <span className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">
++                No thumbnail
++              </span>
++            </div>
++          )}
++        </div>
++
++        <div className="sm:col-span-8">
++          <span className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">
++            {video.platform} · {String(index + 1).padStart(2, "0")}
++          </span>
++          <h3 className="mt-2 text-balance font-display text-xl font-bold text-text">
++            {video.title ?? "Untitled video"}
++          </h3>
++          <p className="mt-1 text-sm text-text-muted">
++            {video.authorName ?? "Unknown creator"}
++            {video.publishedAt ? ` · ${formatPublishedDate(video.publishedAt)}` : ""}
++          </p>
++
++          <div className="mt-6 grid grid-cols-2 gap-6 sm:grid-cols-4">
++            <Stat label="Views" value={formatCompactNumber(video.views)} />
++            <Stat label="Likes" value={formatCompactNumber(video.likes)} />
++            <Stat label="Comments" value={formatCompactNumber(video.comments)} />
++            <Stat label="Duration" value={formatDuration(video.durationSeconds)} />
++          </div>
++
++          {video.hashtags.length > 0 && (
++            <div className="mt-6 flex flex-wrap gap-2">
++              {video.hashtags.slice(0, 8).map((tag) => (
++                <span
++                  key={tag}
++                  className="rounded-full border border-border-strong px-3 py-1 font-mono-ui text-xs text-text-muted"
++                >
++                  #{tag}
++                </span>
++              ))}
++            </div>
++          )}
++
++          {link && (
++            <a
++              href={link}
++              target="_blank"
++              rel="noopener noreferrer nofollow"
++              className="mt-6 inline-block font-mono-ui text-xs uppercase tracking-[0.15em] text-accent hover:underline"
++            >
++              View original →
++            </a>
++          )}
++        </div>
++      </div>
++    </Reveal>
++  );
++}
++
++export function ContentAnalysisRealReport({ result }: { result: ContentAnalysisReportResult }) {
++  const { videos, failedUrls } = result;
++
++  return (
++    <main className="flex-1 bg-bg">
++      <section className="px-6 pb-16 pt-20 sm:px-10 sm:pt-28">
++        <div className="mx-auto max-w-6xl">
++          <Reveal>
++            <Eyebrow>Your Content Analysis</Eyebrow>
++            <h1 className="mt-6 text-balance font-display text-[clamp(2.25rem,6vw,4.5rem)] font-bold leading-[0.98] tracking-[-0.03em] text-text">
++              Here&apos;s what we found.
++            </h1>
++          </Reveal>
++          <Reveal delay={120}>
++            <p className="mt-6 max-w-xl text-balance text-sm leading-relaxed text-text-muted">
++              Real, public metadata pulled directly from{" "}
++              {videos.length === 1 ? "your video" : `your ${videos.length} videos`} — no
++              simulated scores, just what&apos;s actually there.
++            </p>
++          </Reveal>
++        </div>
++      </section>
++
++      <section className="border-t border-border px-6 py-16 sm:px-10 sm:py-20">
++        <div className="mx-auto max-w-6xl">
++          <div className="border-t border-border">
++            {videos.map((video, i) => (
++              <VideoCard key={`${video.platform}-${video.externalId}`} video={video} index={i} />
++            ))}
++          </div>
++        </div>
++      </section>
++
++      {failedUrls.length > 0 && (
++        <section className="border-t border-border px-6 py-16 sm:px-10 sm:py-20">
++          <div className="mx-auto max-w-6xl">
++            <Eyebrow>Couldn&apos;t retrieve {failedUrls.length === 1 ? "this link" : "these links"}</Eyebrow>
++            <ul className="mt-8 flex flex-col gap-3">
++              {failedUrls.map((f) => (
++                <li key={f.url} className="text-sm text-text-muted">
++                  <span className="break-all text-text">{f.url}</span>
++                  {" — "}
++                  {f.reason}
++                </li>
++              ))}
++            </ul>
++          </div>
++        </section>
++      )}
++
++      <ContentAnalysisFinalCta location="content_analysis_report_final_cta" />
++    </main>
++  );
++}
+diff --git a/src/components/content-analysis/report-content.tsx b/src/components/content-analysis/report-content.tsx
+index 41fc588..30c07f8 100644
+--- a/src/components/content-analysis/report-content.tsx
++++ b/src/components/content-analysis/report-content.tsx
+@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
+ import { Reveal } from "@/components/landing/reveal";
+ import { Eyebrow } from "@/components/landing/eyebrow";
+ import { ContentAnalysisFinalCta } from "@/components/content-analysis/final-cta";
++import { ContentAnalysisRealReport } from "@/components/content-analysis/real-report";
+ import {
+   CA_GOALS,
+   CA_PLATFORMS,
+@@ -17,6 +18,7 @@ import {
+   generateContentAnalysisReport,
+   type ContentAnalysisReport,
+ } from "@/lib/content-analysis-engine";
++import type { ContentAnalysisReportResult } from "@/lib/content-analysis-report";
+ 
+ // Static placeholder shown before hydration and whenever no valid demo
+ // session is found in sessionStorage — this is the "safe fallback" copy.
+@@ -103,16 +105,28 @@ function readDemoSession(): ContentAnalysisSession | null {
+   }
+ }
+ 
++type ReportGateState =
++  | { kind: "checking" }
++  | { kind: "demo" }
++  | { kind: "real"; result: ContentAnalysisReportResult }
++  | { kind: "unavailable" };
++
++function isReportResultShape(value: unknown): value is ContentAnalysisReportResult {
++  if (typeof value !== "object" || value === null) return false;
++  const o = value as Record<string, unknown>;
++  return typeof o.fetchedAt === "string" && Array.isArray(o.videos) && Array.isArray(o.failedUrls);
++}
++
+ // When the URL carries a persisted analysis id (from the real
+-// submit → queued → analyzing flow), this page must not show the static/
+-// demo report unless that analysis is genuinely COMPLETED — otherwise it
+-// would look like a real result was produced when none exists yet. No id
+-// in the URL (e.g. a direct visit) keeps the previous demo-only behavior.
+-function usePersistedGate(): "checking" | "ok" {
++// submit → queued → analyzing flow), this page must render that
++// analysis's real, persisted result — never the static/demo report —
++// once it's genuinely COMPLETED. No id in the URL (e.g. a direct visit)
++// keeps the previous demo-only behavior.
++function useReportGate(): ReportGateState {
+   const router = useRouter();
+   const searchParams = useSearchParams();
+   const id = searchParams.get("id");
+-  const [state, setState] = useState<"checking" | "ok">(id ? "checking" : "ok");
++  const [state, setState] = useState<ReportGateState>(id ? { kind: "checking" } : { kind: "demo" });
+ 
+   useEffect(() => {
+     if (!id) return;
+@@ -125,17 +139,26 @@ function usePersistedGate(): "checking" | "ok" {
+         if (!res.ok) {
+           // Unknown/foreign id — fall back to the static demo copy rather
+           // than blocking the page.
+-          setState("ok");
++          setState({ kind: "demo" });
+           return;
+         }
+         const data = await res.json();
+-        if (data.status === "completed") {
+-          setState("ok");
+-        } else {
++        if (data.status !== "completed") {
++          // Includes "failed": the analyzing page already renders a clear
++          // failure state, so route there instead of showing anything
++          // report-shaped here.
+           router.replace(`/content-analysis/analyzing?id=${encodeURIComponent(id)}`);
++          return;
++        }
++        if (isReportResultShape(data.result)) {
++          setState({ kind: "real", result: data.result });
++        } else {
++          // Completed but no usable result (missing/invalid JSON) — never
++          // silently fall back to demo data for a real analysis id.
++          setState({ kind: "unavailable" });
+         }
+       } catch {
+-        if (!cancelled) setState("ok");
++        if (!cancelled) setState({ kind: "demo" });
+       }
+     })();
+ 
+@@ -147,9 +170,8 @@ function usePersistedGate(): "checking" | "ok" {
+   return state;
+ }
+ 
+-function ReportBody() {
++function DemoReportBody() {
+   const [report, setReport] = useState<ContentAnalysisReport>(FALLBACK_REPORT);
+-  const gate = usePersistedGate();
+ 
+   useEffect(() => {
+     const session = readDemoSession();
+@@ -166,16 +188,6 @@ function ReportBody() {
+     }
+   }, []);
+ 
+-  if (gate === "checking") {
+-    return (
+-      <main className="flex min-h-[60vh] flex-1 items-center justify-center bg-bg px-6">
+-        <p className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">
+-          Loading…
+-        </p>
+-      </main>
+-    );
+-  }
+-
+   return (
+     <main className="flex-1 bg-bg">
+       {/* Content Score */}
+@@ -361,6 +373,47 @@ function ReportBody() {
+   );
+ }
+ 
++function UnavailableReportBody() {
++  return (
++    <main className="flex min-h-[60vh] flex-1 flex-col items-center justify-center gap-6 bg-bg px-6 text-center">
++      <Eyebrow>Content Analysis</Eyebrow>
++      <p className="max-w-md text-balance text-sm leading-relaxed text-text-muted">
++        We couldn&apos;t load this report right now. Please start a new analysis.
++      </p>
++      <a
++        href="/content-analysis"
++        className="inline-block rounded-full border border-border-strong px-6 py-3 font-mono-ui text-xs uppercase tracking-[0.15em] text-text-muted transition-colors hover:border-accent hover:text-accent"
++      >
++        Start a new analysis
++      </a>
++    </main>
++  );
++}
++
++function ReportBody() {
++  const gate = useReportGate();
++
++  if (gate.kind === "checking") {
++    return (
++      <main className="flex min-h-[60vh] flex-1 items-center justify-center bg-bg px-6">
++        <p className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">
++          Loading…
++        </p>
++      </main>
++    );
++  }
++
++  if (gate.kind === "real") {
++    return <ContentAnalysisRealReport result={gate.result} />;
++  }
++
++  if (gate.kind === "unavailable") {
++    return <UnavailableReportBody />;
++  }
++
++  return <DemoReportBody />;
++}
++
+ export function ContentAnalysisReportContent() {
+   return (
+     <Suspense>
+diff --git a/src/components/content-analysis/report-format.ts b/src/components/content-analysis/report-format.ts
+new file mode 100644
+index 0000000..8efbbfa
+--- /dev/null
++++ b/src/components/content-analysis/report-format.ts
+@@ -0,0 +1,28 @@
++export function formatCompactNumber(value: number | null): string | null {
++  if (value === null) return null;
++  try {
++    return new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(
++      value
++    );
++  } catch {
++    return String(value);
++  }
++}
++
++export function formatDuration(totalSeconds: number | null): string | null {
++  if (totalSeconds === null || totalSeconds < 0) return null;
++  const hours = Math.floor(totalSeconds / 3600);
++  const minutes = Math.floor((totalSeconds % 3600) / 60);
++  const seconds = Math.floor(totalSeconds % 60);
++  const pad = (n: number) => String(n).padStart(2, "0");
++  return hours > 0 ? `${hours}:${pad(minutes)}:${pad(seconds)}` : `${minutes}:${pad(seconds)}`;
++}
++
++export function formatPublishedDate(iso: string | null): string | null {
++  if (!iso) return null;
++  const date = new Date(iso);
++  if (Number.isNaN(date.getTime())) return null;
++  return new Intl.DateTimeFormat("en-US", { year: "numeric", month: "short", day: "numeric" }).format(
++    date
++  );
++}
+diff --git a/src/lib/__tests__/content-analysis-report.test.ts b/src/lib/__tests__/content-analysis-report.test.ts
+new file mode 100644
+index 0000000..f84e082
+--- /dev/null
++++ b/src/lib/__tests__/content-analysis-report.test.ts
+@@ -0,0 +1,126 @@
++import { describe, it, expect } from "vitest";
++import { buildReportResult, resolveReportAccess, type ReportAccessRecord } from "../content-analysis-report";
++import type { NormalizedVideoMetadata } from "../video-providers/types";
++
++function makeVideo(overrides: Partial<NormalizedVideoMetadata> = {}): NormalizedVideoMetadata {
++  return {
++    platform: "YouTube",
++    sourceUrl: "https://www.youtube.com/watch?v=abc12345678",
++    externalId: "abc12345678",
++    canonicalUrl: "https://www.youtube.com/watch?v=abc12345678",
++    title: "A video",
++    description: "Some description with a secret internal note",
++    authorName: "A creator",
++    authorHandle: null,
++    thumbnailUrl: "https://i.ytimg.com/vi/abc12345678/hqdefault.jpg",
++    publishedAt: "2024-01-01T00:00:00Z",
++    durationSeconds: 42,
++    views: 1000,
++    likes: 50,
++    comments: 5,
++    shares: null,
++    hashtags: ["fyp"],
++    transcript: "some transcript text",
++    captionsAvailable: true,
++    ...overrides,
++  };
++}
++
++function validRaw(videos = [makeVideo()]) {
++  return JSON.stringify({
++    isDemo: false,
++    provider: "youtube-data-api-v3",
++    fetchedAt: "2024-01-01T00:00:00Z",
++    videos,
++    failedUrls: [],
++  });
++}
++
++describe("buildReportResult", () => {
++  it("strips internal-only fields (provider id, description, transcript)", () => {
++    const dto = buildReportResult(validRaw());
++    expect(dto).not.toBeNull();
++    const video = dto?.videos[0] as unknown as Record<string, unknown>;
++    expect(video.description).toBeUndefined();
++    expect(video.transcript).toBeUndefined();
++    expect(dto).not.toHaveProperty("provider");
++  });
++
++  it("returns null for invalid raw input", () => {
++    expect(buildReportResult("not json")).toBeNull();
++    expect(buildReportResult(null)).toBeNull();
++  });
++});
++
++describe("resolveReportAccess", () => {
++  const owner = "anon-owner";
++  const stranger = "anon-stranger";
++
++  it("treats a missing record as not_found", () => {
++    expect(resolveReportAccess(null, owner)).toEqual({ kind: "not_found" });
++  });
++
++  it("treats a record owned by a different anonymousId as not_found (IDOR)", () => {
++    const record: ReportAccessRecord = {
++      anonymousId: owner,
++      status: "completed",
++      result: validRaw(),
++      errorMessage: null,
++    };
++    expect(resolveReportAccess(record, stranger)).toEqual({ kind: "not_found" });
++  });
++
++  it("returns queued/processing for non-terminal statuses owned by the caller", () => {
++    const queued: ReportAccessRecord = { anonymousId: owner, status: "queued", result: null, errorMessage: null };
++    const processing: ReportAccessRecord = {
++      anonymousId: owner,
++      status: "processing",
++      result: null,
++      errorMessage: null,
++    };
++    expect(resolveReportAccess(queued, owner)).toEqual({ kind: "queued" });
++    expect(resolveReportAccess(processing, owner)).toEqual({ kind: "processing" });
++  });
++
++  it("returns failed with the stored error message", () => {
++    const record: ReportAccessRecord = {
++      anonymousId: owner,
++      status: "failed",
++      result: null,
++      errorMessage: "We couldn't retrieve data for any of the submitted videos.",
++    };
++    expect(resolveReportAccess(record, owner)).toEqual({
++      kind: "failed",
++      errorMessage: "We couldn't retrieve data for any of the submitted videos.",
++    });
++  });
++
++  it("returns completed_invalid when completed but the result JSON is invalid", () => {
++    const record: ReportAccessRecord = {
++      anonymousId: owner,
++      status: "completed",
++      result: "{not valid json",
++      errorMessage: null,
++    };
++    expect(resolveReportAccess(record, owner)).toEqual({ kind: "completed_invalid" });
++  });
++
++  it("returns completed_invalid when completed but result is null", () => {
++    const record: ReportAccessRecord = { anonymousId: owner, status: "completed", result: null, errorMessage: null };
++    expect(resolveReportAccess(record, owner)).toEqual({ kind: "completed_invalid" });
++  });
++
++  it("returns completed with a parsed multi-video result for the owner", () => {
++    const record: ReportAccessRecord = {
++      anonymousId: owner,
++      status: "completed",
++      result: validRaw([makeVideo({ externalId: "v1" }), makeVideo({ externalId: "v2" })]),
++      errorMessage: null,
++    };
++    const outcome = resolveReportAccess(record, owner);
++    expect(outcome.kind).toBe("completed");
++    if (outcome.kind === "completed") {
++      expect(outcome.result.videos).toHaveLength(2);
++    }
++  });
++});
+diff --git a/src/lib/__tests__/content-analysis-result.test.ts b/src/lib/__tests__/content-analysis-result.test.ts
+new file mode 100644
+index 0000000..cec2657
+--- /dev/null
++++ b/src/lib/__tests__/content-analysis-result.test.ts
+@@ -0,0 +1,111 @@
++import { describe, it, expect } from "vitest";
++import { parsePersistedContentAnalysisResult } from "../content-analysis-result";
++import type { NormalizedVideoMetadata } from "../video-providers/types";
++
++function makeVideo(overrides: Partial<NormalizedVideoMetadata> = {}): NormalizedVideoMetadata {
++  return {
++    platform: "YouTube",
++    sourceUrl: "https://www.youtube.com/watch?v=abc12345678",
++    externalId: "abc12345678",
++    canonicalUrl: "https://www.youtube.com/watch?v=abc12345678",
++    title: "A video",
++    description: null,
++    authorName: "A creator",
++    authorHandle: null,
++    thumbnailUrl: "https://i.ytimg.com/vi/abc12345678/hqdefault.jpg",
++    publishedAt: "2024-01-01T00:00:00Z",
++    durationSeconds: 42,
++    views: 1000,
++    likes: 50,
++    comments: 5,
++    shares: null,
++    hashtags: ["fyp"],
++    transcript: null,
++    captionsAvailable: true,
++    ...overrides,
++  };
++}
++
++function validPayload(videos = [makeVideo()], failedUrls: { url: string; reason: string }[] = []) {
++  return JSON.stringify({
++    isDemo: false,
++    provider: "youtube-data-api-v3",
++    fetchedAt: "2024-01-01T00:00:00Z",
++    videos,
++    failedUrls,
++  });
++}
++
++describe("parsePersistedContentAnalysisResult", () => {
++  it("parses a valid single-video payload", () => {
++    const result = parsePersistedContentAnalysisResult(validPayload());
++    expect(result).not.toBeNull();
++    expect(result?.videos).toHaveLength(1);
++    expect(result?.videos[0].title).toBe("A video");
++  });
++
++  it("parses multiple videos and partial failures", () => {
++    const raw = validPayload(
++      [makeVideo({ externalId: "vid1" }), makeVideo({ externalId: "vid2", title: "Second" })],
++      [{ url: "https://youtube.com/watch?v=bad", reason: "Video not found, private, or unavailable." }]
++    );
++    const result = parsePersistedContentAnalysisResult(raw);
++    expect(result?.videos).toHaveLength(2);
++    expect(result?.failedUrls).toHaveLength(1);
++    expect(result?.failedUrls[0].reason).toContain("not found");
++  });
++
++  it("returns null for missing/empty input", () => {
++    expect(parsePersistedContentAnalysisResult(null)).toBeNull();
++    expect(parsePersistedContentAnalysisResult(undefined)).toBeNull();
++    expect(parsePersistedContentAnalysisResult("")).toBeNull();
++  });
++
++  it("returns null for invalid JSON", () => {
++    expect(parsePersistedContentAnalysisResult("{not json")).toBeNull();
++  });
++
++  it("returns null when isDemo is not exactly false", () => {
++    const raw = JSON.stringify({
++      isDemo: true,
++      provider: "x",
++      fetchedAt: "2024-01-01T00:00:00Z",
++      videos: [makeVideo()],
++      failedUrls: [],
++    });
++    expect(parsePersistedContentAnalysisResult(raw)).toBeNull();
++  });
++
++  it("returns null when videos is missing or has an invalid item", () => {
++    const missingVideos = JSON.stringify({
++      isDemo: false,
++      provider: "x",
++      fetchedAt: "2024-01-01T00:00:00Z",
++      failedUrls: [],
++    });
++    expect(parsePersistedContentAnalysisResult(missingVideos)).toBeNull();
++
++    const badVideo = validPayload([{ title: "missing required fields" } as unknown as NormalizedVideoMetadata]);
++    expect(parsePersistedContentAnalysisResult(badVideo)).toBeNull();
++  });
++
++  it("returns null when videos is an empty array", () => {
++    expect(parsePersistedContentAnalysisResult(validPayload([]))).toBeNull();
++  });
++
++  it("returns null when failedUrls has a malformed entry", () => {
++    const raw = JSON.stringify({
++      isDemo: false,
++      provider: "x",
++      fetchedAt: "2024-01-01T00:00:00Z",
++      videos: [makeVideo()],
++      failedUrls: [{ url: "https://x.com/1" }],
++    });
++    expect(parsePersistedContentAnalysisResult(raw)).toBeNull();
++  });
++
++  it("returns null for a top-level array or primitive", () => {
++    expect(parsePersistedContentAnalysisResult("[]")).toBeNull();
++    expect(parsePersistedContentAnalysisResult('"just a string"')).toBeNull();
++  });
++});
+diff --git a/src/lib/__tests__/safe-url.test.ts b/src/lib/__tests__/safe-url.test.ts
+new file mode 100644
+index 0000000..066bf76
+--- /dev/null
++++ b/src/lib/__tests__/safe-url.test.ts
+@@ -0,0 +1,24 @@
++import { describe, it, expect } from "vitest";
++import { isSafeHttpUrl } from "../safe-url";
++
++describe("isSafeHttpUrl", () => {
++  it("accepts https and http URLs", () => {
++    expect(isSafeHttpUrl("https://example.com/video")).toBe(true);
++    expect(isSafeHttpUrl("http://example.com/video")).toBe(true);
++  });
++
++  it("rejects javascript: and data: URLs", () => {
++    expect(isSafeHttpUrl("javascript:alert(1)")).toBe(false);
++    expect(isSafeHttpUrl("data:text/html,<script>alert(1)</script>")).toBe(false);
++  });
++
++  it("rejects null, undefined, and empty strings", () => {
++    expect(isSafeHttpUrl(null)).toBe(false);
++    expect(isSafeHttpUrl(undefined)).toBe(false);
++    expect(isSafeHttpUrl("")).toBe(false);
++  });
++
++  it("rejects malformed URLs", () => {
++    expect(isSafeHttpUrl("not a url")).toBe(false);
++  });
++});
+diff --git a/src/lib/content-analysis-report.ts b/src/lib/content-analysis-report.ts
+new file mode 100644
+index 0000000..d35b83f
+--- /dev/null
++++ b/src/lib/content-analysis-report.ts
+@@ -0,0 +1,111 @@
++// Turns the internally-persisted provider result into the narrower shape
++// the client report is allowed to see, and centralizes the
++// ownership/status decision used by GET /api/content-analysis/[id] so it
++// can be unit tested without mocking prisma or next/headers.
++
++import { parsePersistedContentAnalysisResult } from "@/lib/content-analysis-result";
++import type { CaPlatform } from "@/lib/content-analysis";
++
++export interface ContentAnalysisReportVideo {
++  platform: CaPlatform;
++  sourceUrl: string;
++  externalId: string;
++  canonicalUrl: string;
++  title: string | null;
++  authorName: string | null;
++  authorHandle: string | null;
++  thumbnailUrl: string | null;
++  publishedAt: string | null;
++  durationSeconds: number | null;
++  views: number | null;
++  likes: number | null;
++  comments: number | null;
++  shares: number | null;
++  hashtags: string[];
++}
++
++export interface ContentAnalysisReportResult {
++  fetchedAt: string;
++  videos: ContentAnalysisReportVideo[];
++  failedUrls: { url: string; reason: string }[];
++}
++
++/**
++ * Parses the raw persisted string and strips it down to only what the
++ * report needs — no provider id, no description/transcript text, no
++ * internal fields. Returns null for anything invalid (see
++ * parsePersistedContentAnalysisResult) so a bad payload never reaches the
++ * client as if it were a real result.
++ */
++export function buildReportResult(
++  raw: string | null | undefined
++): ContentAnalysisReportResult | null {
++  const parsed = parsePersistedContentAnalysisResult(raw);
++  if (!parsed) return null;
++
++  return {
++    fetchedAt: parsed.fetchedAt,
++    videos: parsed.videos.map((v) => ({
++      platform: v.platform,
++      sourceUrl: v.sourceUrl,
++      externalId: v.externalId,
++      canonicalUrl: v.canonicalUrl,
++      title: v.title,
++      authorName: v.authorName,
++      authorHandle: v.authorHandle,
++      thumbnailUrl: v.thumbnailUrl,
++      publishedAt: v.publishedAt,
++      durationSeconds: v.durationSeconds,
++      views: v.views,
++      likes: v.likes,
++      comments: v.comments,
++      shares: v.shares,
++      hashtags: v.hashtags,
++    })),
++    failedUrls: parsed.failedUrls,
++  };
++}
++
++export interface ReportAccessRecord {
++  anonymousId: string | null;
++  status: string;
++  result: string | null;
++  errorMessage: string | null;
++}
++
++export type ReportAccessOutcome =
++  | { kind: "not_found" }
++  | { kind: "queued" }
++  | { kind: "processing" }
++  | { kind: "failed"; errorMessage: string | null }
++  | { kind: "completed_invalid" }
++  | { kind: "completed"; result: ContentAnalysisReportResult };
++
++/**
++ * Single source of truth for "can this visitor see this analysis, and
++ * what should they see". A missing record and one owned by a different
++ * anonymous visitor both resolve to `not_found` — same as the existing
++ * GET /api/content-analysis/[id] behavior — so ownership can never be
++ * probed by trying different ids.
++ */
++export function resolveReportAccess(
++  record: ReportAccessRecord | null,
++  requestingAnonymousId: string
++): ReportAccessOutcome {
++  if (!record || record.anonymousId !== requestingAnonymousId) {
++    return { kind: "not_found" };
++  }
++
++  if (record.status === "failed") {
++    return { kind: "failed", errorMessage: record.errorMessage };
++  }
++
++  if (record.status !== "completed") {
++    return record.status === "processing" ? { kind: "processing" } : { kind: "queued" };
++  }
++
++  const result = buildReportResult(record.result);
++  if (!result) return { kind: "completed_invalid" };
++
++  return { kind: "completed", result };
++}
+diff --git a/src/lib/content-analysis-result.ts b/src/lib/content-analysis-result.ts
+new file mode 100644
+index 0000000..eeec1ef
+--- /dev/null
++++ b/src/lib/content-analysis-result.ts
+@@ -0,0 +1,105 @@
++// Type-safe, defensive parsing of ContentAnalysis.result (a JSON-encoded
++// string column — see prisma/schema.prisma). The value is produced by
++// runProviderAnalysis in the create route and must match the shape
++// documented there, but since it round-trips through a plain string
++// column nothing prevents it from being missing, malformed, or stale
++// (e.g. written by a future/older patch) — so every field is validated
++// before use rather than trusted.
++
++import type { CaPlatform } from "@/lib/content-analysis";
++import type { NormalizedVideoMetadata } from "@/lib/video-providers/types";
++
++export interface PersistedContentAnalysisResult {
++  isDemo: false;
++  provider: string;
++  fetchedAt: string;
++  videos: NormalizedVideoMetadata[];
++  failedUrls: { url: string; reason: string }[];
++}
++
++function isNullableString(v: unknown): v is string | null {
++  return v === null || typeof v === "string";
++}
++
++function isNullableFiniteNumber(v: unknown): v is number | null {
++  return v === null || (typeof v === "number" && Number.isFinite(v));
++}
++
++function isCaPlatform(v: unknown): v is CaPlatform {
++  return v === "TikTok" || v === "Instagram" || v === "YouTube";
++}
++
++function isNormalizedVideoMetadata(v: unknown): v is NormalizedVideoMetadata {
++  if (typeof v !== "object" || v === null) return false;
++  const o = v as Record<string, unknown>;
++
++  return (
++    isCaPlatform(o.platform) &&
++    typeof o.sourceUrl === "string" &&
++    typeof o.externalId === "string" &&
++    typeof o.canonicalUrl === "string" &&
++    isNullableString(o.title) &&
++    isNullableString(o.description) &&
++    isNullableString(o.authorName) &&
++    isNullableString(o.authorHandle) &&
++    isNullableString(o.thumbnailUrl) &&
++    isNullableString(o.publishedAt) &&
++    isNullableFiniteNumber(o.durationSeconds) &&
++    isNullableFiniteNumber(o.views) &&
++    isNullableFiniteNumber(o.likes) &&
++    isNullableFiniteNumber(o.comments) &&
++    isNullableFiniteNumber(o.shares) &&
++    Array.isArray(o.hashtags) &&
++    o.hashtags.every((h) => typeof h === "string") &&
++    isNullableString(o.transcript) &&
++    (o.captionsAvailable === null || typeof o.captionsAvailable === "boolean")
++  );
++}
++
++function isFailedUrl(v: unknown): v is { url: string; reason: string } {
++  if (typeof v !== "object" || v === null) return false;
++  const o = v as Record<string, unknown>;
++  return typeof o.url === "string" && typeof o.reason === "string";
++}
++
++/**
++ * Parses and validates the raw `ContentAnalysis.result` string. Returns
++ * null for anything that isn't exactly the expected real-result shape —
++ * missing value, invalid JSON, wrong types, or a demo-shaped payload
++ * (`isDemo !== false`) — so callers never have to guess and never crash
++ * rendering a report.
++ */
++export function parsePersistedContentAnalysisResult(
++  raw: string | null | undefined
++): PersistedContentAnalysisResult | null {
++  if (!raw) return null;
++
++  let parsed: unknown;
++  try {
++    parsed = JSON.parse(raw);
++  } catch {
++    return null;
++  }
++
++  if (typeof parsed !== "object" || parsed === null) return null;
++  const o = parsed as Record<string, unknown>;
++
++  if (o.isDemo !== false) return null;
++  if (typeof o.provider !== "string" || o.provider.length === 0) return null;
++  if (typeof o.fetchedAt !== "string") return null;
++  if (!Array.isArray(o.videos) || !o.videos.every(isNormalizedVideoMetadata)) return null;
++  if (!Array.isArray(o.failedUrls) || !o.failedUrls.every(isFailedUrl)) return null;
++  // A completed analysis always has at least one real video (see
++  // runProviderAnalysis: zero successes forces status "failed" instead) —
++  // treat a payload without any as invalid rather than rendering an empty
++  // report.
++  if (o.videos.length === 0) return null;
++
++  return {
++    isDemo: false,
++    provider: o.provider,
++    fetchedAt: o.fetchedAt,
++    videos: o.videos,
++    failedUrls: o.failedUrls,
++  };
++}
+diff --git a/src/lib/safe-url.ts b/src/lib/safe-url.ts
+new file mode 100644
+index 0000000..5656118
+--- /dev/null
++++ b/src/lib/safe-url.ts
+@@ -0,0 +1,13 @@
++// Rendering an `href`/`src` straight from a database or third-party API
++// value is an XSS vector (e.g. a `javascript:` URL) even though the
++// visible text itself is safe under React's default escaping. This never
++// trusts scheme-relative or non-http(s) values.
++export function isSafeHttpUrl(value: string | null | undefined): value is string {
++  if (!value) return false;
++  try {
++    const url = new URL(value);
++    return url.protocol === "http:" || url.protocol === "https:";
++  } catch {
++    return false;
++  }
++}

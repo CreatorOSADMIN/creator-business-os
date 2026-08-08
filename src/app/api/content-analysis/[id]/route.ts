@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { getOrCreateAnonymousId } from "@/lib/anonymous-session";
+import { resolveReportAccess, type ContentAnalysisReportResult } from "@/lib/content-analysis-report";
+
+const GENERIC_FAILURE_MESSAGE = "This analysis failed. Please start a new one.";
+const GENERIC_UNREADABLE_MESSAGE = "This analysis result couldn't be read. Please start a new one.";
 
 export interface ContentAnalysisStatusResponse {
   id: string;
@@ -12,6 +16,13 @@ export interface ContentAnalysisStatusResponse {
   goal: string;
   videoCount: number;
   reportAvailable: boolean;
+  // Only ever present for a status of "completed" with a valid, parsed
+  // real result — never demo data, never the raw persisted string. Never
+  // includes anonymousId, creatorId, provider id, or any other internal
+  // field — see buildReportResult.
+  result?: ContentAnalysisReportResult;
+  // A safe, pre-written message only — never the raw internal error.
+  errorMessage?: string;
 }
 
 /**
@@ -49,18 +60,32 @@ export async function GET(
       videoCount: true,
       status: true,
       result: true,
+      errorMessage: true,
       createdAt: true,
       updatedAt: true,
     },
   });
 
-  // Same response whether the row is missing or owned by another visitor —
-  // never confirm that a given id exists for someone else.
-  if (!analysis || analysis.anonymousId !== anonymousId) {
+  // Ownership + status/result decision lives in one tested function so an
+  // id belonging to another anonymous visitor and a genuinely missing id
+  // are indistinguishable to the caller either way.
+  const access = resolveReportAccess(
+    analysis
+      ? {
+          anonymousId: analysis.anonymousId,
+          status: analysis.status,
+          result: analysis.result,
+          errorMessage: analysis.errorMessage,
+        }
+      : null,
+    anonymousId
+  );
+
+  if (access.kind === "not_found" || !analysis) {
     return NextResponse.json({ error: "Analysis not found" }, { status: 404 });
   }
 
-  const body: ContentAnalysisStatusResponse = {
+  const base = {
     id: analysis.id,
     status: analysis.status,
     createdAt: analysis.createdAt.toISOString(),
@@ -68,8 +93,24 @@ export async function GET(
     platform: analysis.platform,
     goal: analysis.goal,
     videoCount: analysis.videoCount,
-    reportAvailable: analysis.status === "completed" && analysis.result !== null,
   };
+
+  let body: ContentAnalysisStatusResponse;
+  switch (access.kind) {
+    case "completed":
+      body = { ...base, reportAvailable: true, result: access.result };
+      break;
+    case "completed_invalid":
+      body = { ...base, reportAvailable: false, errorMessage: GENERIC_UNREADABLE_MESSAGE };
+      break;
+    case "failed":
+      body = { ...base, reportAvailable: false, errorMessage: GENERIC_FAILURE_MESSAGE };
+      break;
+    case "processing":
+    case "queued":
+      body = { ...base, reportAvailable: false };
+      break;
+  }
 
   return NextResponse.json(body);
 }
