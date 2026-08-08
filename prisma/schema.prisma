@@ -175,8 +175,11 @@ model ContentAnalysis {
 
   errorMessage String?
 
-  // Future analysis result payload, JSON-encoded once implemented in a
-  // later patch. Intentionally untyped/nullable here.
+  // JSON-encoded provider result once a real analysis completes:
+  // { isDemo: false, provider, fetchedAt, videos: NormalizedVideoMetadata[],
+  // failedUrls: {url,reason}[] } — see src/lib/video-providers/types.ts.
+  // Intentionally untyped/nullable at the schema level; shape is enforced
+  // in application code, not the database.
   result String?
 
   createdAt   DateTime  @default(now())

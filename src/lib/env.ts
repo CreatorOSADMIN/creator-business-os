@@ -29,6 +29,12 @@ const serverSchema = z.object({
 
   SENTRY_DSN: z.string().url().optional().or(z.literal("")),
   SENTRY_AUTH_TOKEN: z.string().optional(),
+
+  // Content Analysis real-provider integration (see src/lib/video-providers).
+  // Optional: when unset, YouTube analyses are reported as provider-
+  // unavailable rather than failing app startup — this lets the app run
+  // without it configured (e.g. local dev, TikTok/Instagram-only usage).
+  YOUTUBE_API_KEY: z.string().optional(),
 });
 
 const publicSchema = z.object({

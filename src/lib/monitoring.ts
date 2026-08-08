@@ -20,7 +20,8 @@ export type MonitoringEvent =
   | "signup_cookie_failed"
   | "question_submit_failed"
   | "content_analysis_create_failed"
-  | "content_analysis_history_failed";
+  | "content_analysis_history_failed"
+  | "content_analysis_provider_failed";
 
 export type MonitoringDetails = Record<string, unknown>;
 
