@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Reveal } from "@/components/landing/reveal";
 import { Eyebrow } from "@/components/landing/eyebrow";
 import { ContentAnalysisFinalCta } from "@/components/content-analysis/final-cta";
@@ -102,8 +103,53 @@ function readDemoSession(): ContentAnalysisSession | null {
   }
 }
 
-export function ContentAnalysisReportContent() {
+// When the URL carries a persisted analysis id (from the real
+// submit → queued → analyzing flow), this page must not show the static/
+// demo report unless that analysis is genuinely COMPLETED — otherwise it
+// would look like a real result was produced when none exists yet. No id
+// in the URL (e.g. a direct visit) keeps the previous demo-only behavior.
+function usePersistedGate(): "checking" | "ok" {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const id = searchParams.get("id");
+  const [state, setState] = useState<"checking" | "ok">(id ? "checking" : "ok");
+
+  useEffect(() => {
+    if (!id) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/content-analysis/${encodeURIComponent(id)}`);
+        if (cancelled) return;
+        if (!res.ok) {
+          // Unknown/foreign id — fall back to the static demo copy rather
+          // than blocking the page.
+          setState("ok");
+          return;
+        }
+        const data = await res.json();
+        if (data.status === "completed") {
+          setState("ok");
+        } else {
+          router.replace(`/content-analysis/analyzing?id=${encodeURIComponent(id)}`);
+        }
+      } catch {
+        if (!cancelled) setState("ok");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id, router]);
+
+  return state;
+}
+
+function ReportBody() {
   const [report, setReport] = useState<ContentAnalysisReport>(FALLBACK_REPORT);
+  const gate = usePersistedGate();
 
   useEffect(() => {
     const session = readDemoSession();
@@ -119,6 +165,16 @@ export function ContentAnalysisReportContent() {
       // Any unexpected shape falls back to the static placeholder already set.
     }
   }, []);
+
+  if (gate === "checking") {
+    return (
+      <main className="flex min-h-[60vh] flex-1 items-center justify-center bg-bg px-6">
+        <p className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">
+          Loading…
+        </p>
+      </main>
+    );
+  }
 
   return (
     <main className="flex-1 bg-bg">
@@ -302,5 +358,13 @@ export function ContentAnalysisReportContent() {
 
       <ContentAnalysisFinalCta location="content_analysis_report_final_cta" />
     </main>
+  );
+}
+
+export function ContentAnalysisReportContent() {
+  return (
+    <Suspense>
+      <ReportBody />
+    </Suspense>
   );
 }

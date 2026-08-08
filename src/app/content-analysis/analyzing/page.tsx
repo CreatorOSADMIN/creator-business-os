@@ -1,47 +1,114 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
 import { Eyebrow } from "@/components/landing/eyebrow";
 
-const STEPS = [
-  "Loading videos...",
-  "Extracting metadata...",
-  "Analyzing hooks...",
-  "Detecting subtitles...",
-  "Analyzing speech...",
-  "Detecting colors...",
-  "Comparing engagement...",
-  "Building content profile...",
-  "Generating recommendations...",
-];
+const POLL_INTERVAL_MS = 2500;
 
-// Entirely simulated — no API call, no real analysis. Purely a timed
-// sequence through STEPS before redirecting to the static report page.
-export default function ContentAnalysisAnalyzingPage() {
+interface StatusResponse {
+  status: string;
+  reportAvailable: boolean;
+}
+
+type ViewState = "queued" | "processing" | "failed" | "not-found";
+
+const VIEW_COPY: Record<ViewState, { heading: string; body: string }> = {
+  queued: {
+    heading: "Queued",
+    body: "Your analysis is in the queue and will start shortly.",
+  },
+  processing: {
+    heading: "Analyzing…",
+    body: "We're working through your submitted videos. This can take a few minutes.",
+  },
+  failed: {
+    heading: "Analysis failed",
+    body: "Something went wrong while processing this analysis. Please start a new one.",
+  },
+  "not-found": {
+    heading: "Analysis not found",
+    body: "We couldn't find that analysis for this browser. Please start a new one.",
+  },
+};
+
+function viewStateFor(status: string): ViewState {
+  if (status === "processing") return "processing";
+  if (status === "failed") return "failed";
+  return "queued";
+}
+
+/**
+ * Polls the persisted analysis (created by POST /api/content-analysis) for
+ * its real status. There is no scraper/worker yet, so this page is expected
+ * to sit in "queued"/"processing" indefinitely until a later patch adds one
+ * — it never fabricates progress or a completed result to move itself
+ * along. Only a genuinely COMPLETED record navigates to the report; a
+ * genuinely FAILED one shows an error state instead.
+ */
+function AnalyzingStatus() {
   const router = useRouter();
-  const [stepIndex, setStepIndex] = useState(0);
+  const searchParams = useSearchParams();
+  const id = searchParams.get("id");
+
+  const [view, setView] = useState<ViewState>(id ? "queued" : "not-found");
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    const reduced =
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const stepDuration = reduced ? 150 : 850;
+    // No id at all is handled by the initial state above — nothing to poll.
+    if (!id) return;
 
-    if (stepIndex >= STEPS.length - 1) {
-      const finish = setTimeout(
-        () => router.push("/content-analysis/report"),
-        stepDuration
-      );
-      return () => clearTimeout(finish);
+    let cancelled = false;
+
+    async function poll() {
+      try {
+        const res = await fetch(`/api/content-analysis/${encodeURIComponent(id as string)}`, {
+          method: "GET",
+        });
+
+        if (cancelled) return;
+
+        if (res.status === 404) {
+          setView("not-found");
+          return;
+        }
+        if (!res.ok) {
+          // Transient/server error — keep the current view and retry on
+          // the next tick rather than surfacing a hard failure state.
+          timerRef.current = setTimeout(poll, POLL_INTERVAL_MS);
+          return;
+        }
+
+        const data: StatusResponse = await res.json();
+
+        if (data.status === "completed") {
+          router.push(`/content-analysis/report?id=${encodeURIComponent(id as string)}`);
+          return;
+        }
+        if (data.status === "failed") {
+          setView("failed");
+          return;
+        }
+
+        setView(viewStateFor(data.status));
+        timerRef.current = setTimeout(poll, POLL_INTERVAL_MS);
+      } catch {
+        if (cancelled) return;
+        timerRef.current = setTimeout(poll, POLL_INTERVAL_MS);
+      }
     }
 
-    const advance = setTimeout(() => setStepIndex((i) => i + 1), stepDuration);
-    return () => clearTimeout(advance);
-  }, [stepIndex, router]);
+    poll();
 
-  const progressPct = Math.round(((stepIndex + 1) / STEPS.length) * 100);
+    return () => {
+      cancelled = true;
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [id, router]);
+
+  const copy = VIEW_COPY[view];
+  const isTerminal = view === "failed" || view === "not-found";
 
   return (
     <>
@@ -53,42 +120,40 @@ export default function ContentAnalysisAnalyzingPage() {
             aria-live="polite"
             className="mt-6 text-balance font-display text-2xl font-bold tracking-[-0.02em] text-text sm:text-4xl"
           >
-            {STEPS[stepIndex]}
+            {copy.heading}
+          </p>
+          <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-text-muted">
+            {copy.body}
           </p>
 
-          <div
-            role="progressbar"
-            aria-valuenow={progressPct}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            className="mt-10 h-px w-full overflow-hidden bg-border"
-          >
+          {!isTerminal && (
             <div
-              className="h-full bg-accent transition-all duration-500 ease-out"
-              style={{ width: `${progressPct}%` }}
-            />
-          </div>
-          <p className="mt-4 font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">
-            {progressPct}% complete
-          </p>
+              role="progressbar"
+              aria-label="Analysis in progress"
+              className="mt-10 h-px w-full overflow-hidden bg-border"
+            >
+              <div className="h-full w-1/3 animate-pulse bg-accent" />
+            </div>
+          )}
 
-          <ul className="mt-14 flex flex-col gap-2 text-left">
-            {STEPS.map((step, i) => (
-              <li
-                key={step}
-                className={`flex items-center gap-3 font-mono-ui text-xs uppercase tracking-[0.1em] transition-colors ${
-                  i <= stepIndex ? "text-text-muted" : "text-text-faint/50"
-                }`}
-              >
-                <span className={i <= stepIndex ? "text-accent" : "text-text-faint/50"}>
-                  {i < stepIndex ? "✓" : i === stepIndex ? "→" : "·"}
-                </span>
-                {step}
-              </li>
-            ))}
-          </ul>
+          {isTerminal && (
+            <a
+              href="/content-analysis"
+              className="mt-10 inline-block rounded-full border border-border-strong px-6 py-3 font-mono-ui text-xs uppercase tracking-[0.15em] text-text-muted transition-colors hover:border-accent hover:text-accent"
+            >
+              Start a new analysis
+            </a>
+          )}
         </div>
       </main>
     </>
+  );
+}
+
+export default function ContentAnalysisAnalyzingPage() {
+  return (
+    <Suspense>
+      <AnalyzingStatus />
+    </Suspense>
   );
 }

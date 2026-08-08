@@ -136,7 +136,11 @@ export function AnalysisForm() {
       // and report pages fall back to their own placeholder copy.
     }
 
-    router.push("/content-analysis/analyzing");
+    router.push(
+      analysisId
+        ? `/content-analysis/analyzing?id=${encodeURIComponent(analysisId)}`
+        : "/content-analysis/analyzing"
+    );
   }
 
   return (
