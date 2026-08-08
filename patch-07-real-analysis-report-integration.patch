@@ -1,0 +1,147 @@
+diff --git a/src/components/content-analysis/__tests__/report-format.test.ts b/src/components/content-analysis/__tests__/report-format.test.ts
+index a2f1774..c20da63 100644
+--- a/src/components/content-analysis/__tests__/report-format.test.ts
++++ b/src/components/content-analysis/__tests__/report-format.test.ts
+@@ -1,5 +1,5 @@
+ import { describe, it, expect } from "vitest";
+-import { formatCompactNumber, formatDuration, formatPublishedDate } from "../report-format";
++import { formatAnalyzedAt, formatCompactNumber, formatDuration, formatPublishedDate } from "../report-format";
+ 
+ describe("formatCompactNumber", () => {
+   it("returns null for null input", () => {
+@@ -43,3 +43,16 @@ describe("formatPublishedDate", () => {
+     expect(formatPublishedDate("2024-03-15T00:00:00Z")).toBe("Mar 15, 2024");
+   });
+ });
++
++describe("formatAnalyzedAt", () => {
++  it("returns null for null or invalid input", () => {
++    expect(formatAnalyzedAt(null)).toBeNull();
++    expect(formatAnalyzedAt("not a date")).toBeNull();
++  });
++
++  it("formats a valid ISO timestamp including the time", () => {
++    const result = formatAnalyzedAt("2024-03-15T14:30:00Z");
++    expect(result).toContain("Mar 15, 2024");
++    expect(result).toMatch(/\d{1,2}:\d{2}/);
++  });
++});
+diff --git a/src/components/content-analysis/real-report.tsx b/src/components/content-analysis/real-report.tsx
+index c1dfe2d..9ce6677 100644
+--- a/src/components/content-analysis/real-report.tsx
++++ b/src/components/content-analysis/real-report.tsx
+@@ -2,7 +2,12 @@ import { Reveal } from "@/components/landing/reveal";
+ import { Eyebrow } from "@/components/landing/eyebrow";
+ import { ContentAnalysisFinalCta } from "@/components/content-analysis/final-cta";
+ import { isSafeHttpUrl } from "@/lib/safe-url";
+-import { formatCompactNumber, formatDuration, formatPublishedDate } from "@/components/content-analysis/report-format";
++import {
++  formatAnalyzedAt,
++  formatCompactNumber,
++  formatDuration,
++  formatPublishedDate,
++} from "@/components/content-analysis/report-format";
+ import type { ContentAnalysisReportResult, ContentAnalysisReportVideo } from "@/lib/content-analysis-report";
+ 
+ function Stat({ label, value }: { label: string; value: string | null }) {
+@@ -88,8 +93,24 @@ function VideoCard({ video, index }: { video: ContentAnalysisReportVideo; index:
+   );
+ }
+ 
+-export function ContentAnalysisRealReport({ result }: { result: ContentAnalysisReportResult }) {
+-  const { videos, failedUrls } = result;
++function MetaItem({ label, value }: { label: string; value: string }) {
++  return (
++    <div>
++      <p className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">{label}</p>
++      <p className="mt-1 text-sm font-medium text-text">{value}</p>
++    </div>
++  );
++}
++
++export function ContentAnalysisRealReport({
++  result,
++  platform,
++}: {
++  result: ContentAnalysisReportResult;
++  platform: string;
++}) {
++  const { videos, failedUrls, fetchedAt } = result;
++  const analyzedAt = formatAnalyzedAt(fetchedAt);
+ 
+   return (
+     <main className="flex-1 bg-bg">
+@@ -108,6 +129,17 @@ export function ContentAnalysisRealReport({ result }: { result: ContentAnalysisR
+               simulated scores, just what&apos;s actually there.
+             </p>
+           </Reveal>
++
++          <Reveal delay={180}>
++            <div className="mt-10 flex flex-wrap gap-x-10 gap-y-5 border-t border-border pt-8">
++              <MetaItem label="Platform" value={platform} />
++              <MetaItem
++                label="Videos analyzed"
++                value={`${videos.length} of ${videos.length + failedUrls.length}`}
++              />
++              {analyzedAt && <MetaItem label="Analyzed" value={analyzedAt} />}
++            </div>
++          </Reveal>
+         </div>
+       </section>
+ 
+diff --git a/src/components/content-analysis/report-content.tsx b/src/components/content-analysis/report-content.tsx
+index 30c07f8..e5a6d5b 100644
+--- a/src/components/content-analysis/report-content.tsx
++++ b/src/components/content-analysis/report-content.tsx
+@@ -108,7 +108,7 @@ function readDemoSession(): ContentAnalysisSession | null {
+ type ReportGateState =
+   | { kind: "checking" }
+   | { kind: "demo" }
+-  | { kind: "real"; result: ContentAnalysisReportResult }
++  | { kind: "real"; result: ContentAnalysisReportResult; platform: string }
+   | { kind: "unavailable" };
+ 
+ function isReportResultShape(value: unknown): value is ContentAnalysisReportResult {
+@@ -151,7 +151,8 @@ function useReportGate(): ReportGateState {
+           return;
+         }
+         if (isReportResultShape(data.result)) {
+-          setState({ kind: "real", result: data.result });
++          const platform = typeof data.platform === "string" ? data.platform : "";
++          setState({ kind: "real", result: data.result, platform });
+         } else {
+           // Completed but no usable result (missing/invalid JSON) — never
+           // silently fall back to demo data for a real analysis id.
+@@ -404,7 +405,7 @@ function ReportBody() {
+   }
+ 
+   if (gate.kind === "real") {
+-    return <ContentAnalysisRealReport result={gate.result} />;
++    return <ContentAnalysisRealReport result={gate.result} platform={gate.platform} />;
+   }
+ 
+   if (gate.kind === "unavailable") {
+diff --git a/src/components/content-analysis/report-format.ts b/src/components/content-analysis/report-format.ts
+index 8efbbfa..1bda589 100644
+--- a/src/components/content-analysis/report-format.ts
++++ b/src/components/content-analysis/report-format.ts
+@@ -26,3 +26,19 @@ export function formatPublishedDate(iso: string | null): string | null {
+     date
+   );
+ }
++
++// Same validation as formatPublishedDate but also includes the time, for
++// the report's "when this analysis ran" timestamp (result.fetchedAt) —
++// distinct from a video's own publish date.
++export function formatAnalyzedAt(iso: string | null): string | null {
++  if (!iso) return null;
++  const date = new Date(iso);
++  if (Number.isNaN(date.getTime())) return null;
++  return new Intl.DateTimeFormat("en-US", {
++    year: "numeric",
++    month: "short",
++    day: "numeric",
++    hour: "numeric",
++    minute: "2-digit",
++  }).format(date);
++}

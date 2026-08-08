@@ -2,7 +2,12 @@ import { Reveal } from "@/components/landing/reveal";
 import { Eyebrow } from "@/components/landing/eyebrow";
 import { ContentAnalysisFinalCta } from "@/components/content-analysis/final-cta";
 import { isSafeHttpUrl } from "@/lib/safe-url";
-import { formatCompactNumber, formatDuration, formatPublishedDate } from "@/components/content-analysis/report-format";
+import {
+  formatAnalyzedAt,
+  formatCompactNumber,
+  formatDuration,
+  formatPublishedDate,
+} from "@/components/content-analysis/report-format";
 import type { ContentAnalysisReportResult, ContentAnalysisReportVideo } from "@/lib/content-analysis-report";
 
 function Stat({ label, value }: { label: string; value: string | null }) {
@@ -88,8 +93,24 @@ function VideoCard({ video, index }: { video: ContentAnalysisReportVideo; index:
   );
 }
 
-export function ContentAnalysisRealReport({ result }: { result: ContentAnalysisReportResult }) {
-  const { videos, failedUrls } = result;
+function MetaItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="font-mono-ui text-xs uppercase tracking-[0.15em] text-text-faint">{label}</p>
+      <p className="mt-1 text-sm font-medium text-text">{value}</p>
+    </div>
+  );
+}
+
+export function ContentAnalysisRealReport({
+  result,
+  platform,
+}: {
+  result: ContentAnalysisReportResult;
+  platform: string;
+}) {
+  const { videos, failedUrls, fetchedAt } = result;
+  const analyzedAt = formatAnalyzedAt(fetchedAt);
 
   return (
     <main className="flex-1 bg-bg">
@@ -107,6 +128,17 @@ export function ContentAnalysisRealReport({ result }: { result: ContentAnalysisR
               {videos.length === 1 ? "your video" : `your ${videos.length} videos`} — no
               simulated scores, just what&apos;s actually there.
             </p>
+          </Reveal>
+
+          <Reveal delay={180}>
+            <div className="mt-10 flex flex-wrap gap-x-10 gap-y-5 border-t border-border pt-8">
+              <MetaItem label="Platform" value={platform} />
+              <MetaItem
+                label="Videos analyzed"
+                value={`${videos.length} of ${videos.length + failedUrls.length}`}
+              />
+              {analyzedAt && <MetaItem label="Analyzed" value={analyzedAt} />}
+            </div>
           </Reveal>
         </div>
       </section>

@@ -26,3 +26,19 @@ export function formatPublishedDate(iso: string | null): string | null {
     date
   );
 }
+
+// Same validation as formatPublishedDate but also includes the time, for
+// the report's "when this analysis ran" timestamp (result.fetchedAt) —
+// distinct from a video's own publish date.
+export function formatAnalyzedAt(iso: string | null): string | null {
+  if (!iso) return null;
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return null;
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+}

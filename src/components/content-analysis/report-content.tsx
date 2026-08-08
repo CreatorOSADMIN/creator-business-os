@@ -108,7 +108,7 @@ function readDemoSession(): ContentAnalysisSession | null {
 type ReportGateState =
   | { kind: "checking" }
   | { kind: "demo" }
-  | { kind: "real"; result: ContentAnalysisReportResult }
+  | { kind: "real"; result: ContentAnalysisReportResult; platform: string }
   | { kind: "unavailable" };
 
 function isReportResultShape(value: unknown): value is ContentAnalysisReportResult {
@@ -151,7 +151,8 @@ function useReportGate(): ReportGateState {
           return;
         }
         if (isReportResultShape(data.result)) {
-          setState({ kind: "real", result: data.result });
+          const platform = typeof data.platform === "string" ? data.platform : "";
+          setState({ kind: "real", result: data.result, platform });
         } else {
           // Completed but no usable result (missing/invalid JSON) — never
           // silently fall back to demo data for a real analysis id.
@@ -404,7 +405,7 @@ function ReportBody() {
   }
 
   if (gate.kind === "real") {
-    return <ContentAnalysisRealReport result={gate.result} />;
+    return <ContentAnalysisRealReport result={gate.result} platform={gate.platform} />;
   }
 
   if (gate.kind === "unavailable") {

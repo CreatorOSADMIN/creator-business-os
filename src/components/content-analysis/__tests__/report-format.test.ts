@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formatCompactNumber, formatDuration, formatPublishedDate } from "../report-format";
+import { formatAnalyzedAt, formatCompactNumber, formatDuration, formatPublishedDate } from "../report-format";
 
 describe("formatCompactNumber", () => {
   it("returns null for null input", () => {
@@ -41,5 +41,18 @@ describe("formatPublishedDate", () => {
 
   it("formats a valid ISO timestamp", () => {
     expect(formatPublishedDate("2024-03-15T00:00:00Z")).toBe("Mar 15, 2024");
+  });
+});
+
+describe("formatAnalyzedAt", () => {
+  it("returns null for null or invalid input", () => {
+    expect(formatAnalyzedAt(null)).toBeNull();
+    expect(formatAnalyzedAt("not a date")).toBeNull();
+  });
+
+  it("formats a valid ISO timestamp including the time", () => {
+    const result = formatAnalyzedAt("2024-03-15T14:30:00Z");
+    expect(result).toContain("Mar 15, 2024");
+    expect(result).toMatch(/\d{1,2}:\d{2}/);
   });
 });
